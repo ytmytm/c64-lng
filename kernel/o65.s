@@ -4,6 +4,7 @@
 ; 24,28,30.11.2001
 
 ; TODO
+; - this is NOT REENTRANT and NOT PROTECTED!!!
 ; - free some space
 ; - some things seem to be calculated twice
 ; - some adresses are used once -> remove them

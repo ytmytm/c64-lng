@@ -270,6 +270,36 @@ to_no_reu:
 		bne  -
 	+
 
+#ifdef HAVE_IDE64
+		;; detect IDE64 and panic if not found
+		lda  $de60
+		cmp  $de60
+		bne  noide64
+		cmp  #$49			; "I"
+		bne  noide64
+		lda  $de61
+		cmp  $de61
+		bne  noide64
+		cmp  #$44			; "D"
+		bne  noide64
+		lda  $de62
+		cmp  $de62
+		bne  noide64
+		cmp  #$45			; "E"
+		beq  ++				; found
+noide64:	ldx  #0
+	-	lda  noide64_txt,x
+		beq  +
+		jsr  lkf_printk
+		inx
+		bne  -
+	+
+	-	jmp  -
+noide64_txt:	.text "Kernel panic: IDE64 not detected",$0a
+		.text "   (missing or firmware too old)",0
+	+
+#endif
+
 #ifndef C128
 		;; read back bit 6,7 of CPU port (try to detect HMOS CPU)
 		;; (C128 in C64 mode ?)
@@ -336,6 +366,9 @@ welcome_txt:
 #endif
 #ifdef HAVE_64NET2
 		.text "  - 64net/2 support as /net64 device",$0a
+#endif
+#ifdef HAVE_IDE64
+		.text "  - IDE64 support as /ide64 device",$0a
 #endif
 ;this will be back...
 ;#ifdef HAVE_256K
