@@ -12,3 +12,7 @@
 
 - ftp sometimes has problems with longer file names, it seems to
   download the file but in fact doesn't save the received data to disc
+
+- #!interpreter works only with O65 onabled
+  (rewrite kernel/execute.s - there are 3 paths basing on first 2 bytes from file:
+   LUNIX MAGIC, O65 MAGIC and "#!")
