@@ -1,5 +1,6 @@
 from 0.18 to 0.19 ...
 -------------------------------
+added: some helpfiles, fifo64 (untested)
 fixed: misspelling of the word "libraries" mainly in lld.c and luna.c
 changed: system code is ready for dynamic console allocation (MW)
 fixed: console_close bug, that caused microshell to hang, after running

@@ -16,20 +16,21 @@ MACHINE=c64
 
 # Modules to include in package (created with "make package")
 
-MODULES=sswiftlink sfifo64 rs232std swiftlink
+MODULES=sswiftlink sfifo64 rs232std swiftlink fifo64
 
 # Applications to include in package
 # the applications (in binary form) do not depend on the machine selection
 
 APPS=getty lsmod microterm ps sh sleep testapp wc cat tee uuencode \
      uudecode 232echo 232term kill rm ls buf cp uptime time meminfo \
-     strminfo uname more beep help env date ciartc dcf77 smwrtc
+     strminfo uname more beep help env date ciartc dcf77 smwrtc \
+     hextype
 
 # Internet Applications
 # will be put in the same package als APPS now, but may go into a
 # seperate one, in case the APP-package grows to big
 
-IAPPS=connd ftp tcpipstat tcpip ppp loop slip httpd ftp telnet
+IAPPS=connd ftp tcpipstat tcpip ppp loop slip httpd telnet
 
 #============== end of configurable section ============================
 
