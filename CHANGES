@@ -1,5 +1,7 @@
 from 0.18 to 0.19 ...
 -------------------------------
+fixed: console_close bug, that caused microshell to hang, after running
+       the first command in single console mode
 removed: ancient kernel/c64/todo/cons80.s code (MW)
 added: vic 80 column console (MW)
 added: application clear (SH)

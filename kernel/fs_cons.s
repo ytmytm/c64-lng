@@ -37,14 +37,16 @@ _outofmem:
 console_open:
 fs_cons_fopen:
 		sei
+#ifdef MULTIPLE_CONSOLES
 		lda  usage_count
 		inc  usage_count
-#ifdef MULTIPLE_CONSOLES
 		cmp  #MAX_CONSOLES
-#else
-		cmp  #1
-#endif
 		bcs  _toomany
+#else
+		lda  usage_count
+		bne  _toomany
+		inc  usage_count
+#endif
 #ifndef ALWAYS_SZU
 		ldx  lk_ipid
 		lda  #tstatus_szu
@@ -116,13 +118,16 @@ fs_cons_fopen:
 		cli
 #endif
 
+		clc
+		rts
+
 #ifndef MULTIPLE_CONSOLES
 fs_cons_fclose:
-		clc
+		lda  #0
+		sta  usage_count		; must still reset the usage count
+		clc						; even if there is only a single console
 		rts
 #else
-		clc
-		rts
 
 fs_cons_fclose:	
 		ldy  #fsmb_minor
@@ -133,14 +138,15 @@ fs_cons_fclose:
 		eor bmap,y
 		sta usage_map
 		dec usage_count
-		cli		
+		cli
+		clc
 		rts
 #endif
 
 fs_cons_fputc:					; data byte is in syszp+5
 		ldy  #fsmb_minor
 		lda  (syszp),y
-		tax				; (number of console)
+		tax						; (number of console)
 		lda  syszp+5
 		jsr  cons_out
 		jmp  io_return
@@ -155,7 +161,7 @@ console_passkey:
 	+	cpx  rd_pointer
 		beq  +
 		ldy  wr_pointer
-		sta  keyboard_buffer,y		; ignore char, if buffer is already filled
+		sta  keyboard_buffer,y	; ignore char, if buffer is already filled
 		stx  wr_pointer
 	+	bit  susp_flag
 		bmi  +
@@ -171,7 +177,7 @@ fs_cons_fgetc:
 		ldy  #fsmb_minor
 		lda  (syszp),y
 		cmp  cons_visible		; is this console visible ?
-		bne  no_key			; no, then skip
+		bne  no_key				; no, then skip
 #endif
 		sei
 		ldx  rd_pointer
@@ -184,16 +190,16 @@ fs_cons_fgetc:
 		bcc  +
 		ldx  #0
 	+	stx  rd_pointer
-		cmp  #$0a			; newline ?
+		cmp  #$0a				; newline ?
 		beq  got_newline
-		cmp  #$04			; CTRL+d ?
+		cmp  #$04				; CTRL+d ?
 		beq  got_ctrld
-		sta  nlflag			; clear newline-flag
+		sta  nlflag				; clear newline-flag
 		jmp  io_return
 
 no_key:		lda  syszp+4
-		bmi  +				; blocking or nonblocking ?
-		cli				; (nonblocking)
+		bmi  +					; blocking or nonblocking ?
+		cli						; (nonblocking)
 		lda  #lerr_tryagain
 		jmp  io_return_error
 
@@ -225,11 +231,11 @@ got_ctrld:
 ;; ZEROpage: usage_map 1
 #endif
 
-;wr_pointer:		.byte 0			; index to next written char in buffer
-;rd_pointer:		.byte 0			; index to next read char in buffer
+;wr_pointer:	.byte 0			; index to next written char in buffer
+;rd_pointer:	.byte 0			; index to next read char in buffer
 ;susp_flag:		.byte 0			; set if a task is waiting for a key
 ;nlflag:		.byte 0			; newline flag (0 : last char was newline)
-;usage_count:		.byte 0			; number of opened consoles
+;usage_count:	.byte 0			; number of opened consoles
 
 #ifdef MULTIPLE_CONSOLES
 ;usage_map:		.byte 0			; bitmap of used consoles

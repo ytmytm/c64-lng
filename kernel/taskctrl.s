@@ -1,3 +1,4 @@
+		;; for emacs: -*- MODE: asm; tab-width: 4; -*-
 		;; task control
 
 #include <system.h>
