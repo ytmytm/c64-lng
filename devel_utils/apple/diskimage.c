@@ -1,6 +1,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <sys/types.h> /*for u_int8_t*/
+#include <unistd.h>
+#include <getopt.h>
 
 int verbose = 0;
 int phys2log[] = {0x00, 0x0D, 0x0B, 0x09, 0x07, 0x05, 0x03, 0x01,
@@ -99,8 +101,7 @@ void dump_block( FILE **fp, int track, int sector )
 int main( int argc, char *argv[] )
 {
   extern char *optarg;
-  extern int optind;
-  int bflag, ch, fd;
+  int ch;
 
   int formatdisk = 0;
   int dumpblock = 0;
@@ -114,21 +115,22 @@ int main( int argc, char *argv[] )
 
   disk = argv[1];
 
-  while( (ch = getopt(argc-1, &argv[1], "vdfdxb:t:s:")) != -1 ) switch(ch)
-  {
-    case 'v': { verbose = 1;		break; }
-    case 'f': { formatdisk = 1;		break; }
-    case 'd': { dumpblock = 1;		break; }
-    case 'x': { examinedisk = 1;	break; }
-    case 'b': { binary = optarg;	break; }
-    case 't': { track = atoi(optarg);	break; }
-    case 's': { sector = atoi(optarg);	break; }
-    case '?':
-    case 'h':
-    default:
+  while( (ch = getopt(argc-1, &argv[1], "vdfdxb:t:s:")) != -1 ) 
+    switch(ch)
+      {
+      case 'v': { verbose = 1; break; }
+      case 'f': { formatdisk = 1; break; }
+      case 'd': { dumpblock = 1; break; }
+      case 'x': { examinedisk = 1; break; }
+      case 'b': { binary = optarg; break; }
+      case 't': { track = atoi(optarg);	break; }
+      case 's': { sector = atoi(optarg); break; }
+      case '?':
+      case 'h':
+      default:
 	usage();
-  }
-
+      }
+  
   if( disk == NULL )
   {
     fprintf( stderr, "error: no disk image specified\n" );

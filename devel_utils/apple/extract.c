@@ -1,6 +1,8 @@
 #include <stdio.h>
 #include <strings.h>
 #include <sys/types.h>
+#include <string.h>
+#include <stdlib.h>
 
 int main(int argc, char *argv[])
 {
@@ -14,7 +16,7 @@ int main(int argc, char *argv[])
   {
     fprintf( stderr, "%s: no arguments, assuming file a.o65, start 768\n",
 	argv[0] );
-    filename = strdup( "a.o65" );
+    filename = "a.o65";
     program_loc = 768;
   }
   else if( argc == 2 )
