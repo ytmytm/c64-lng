@@ -1,5 +1,5 @@
 ;; for emacs: -*- MODE: asm; tab-width: 4; -*-
-	
+
 ;********************************************
 ; excerpt of keyscanning routine  
 ; this code should be included in the boot
@@ -14,7 +14,7 @@
 #include MACHINE_H
 #include <keyboard.h>
 #include <zp.h>
-	
+
 		;; initialize and install keyboard scanning routine
 keyboard_init:
 		ldx  #<lkf_keyb_scan
@@ -44,4 +44,3 @@ _startmsg:
 		.text "C128-Keyboard module version 1.1"
 #endif
 		.byte $0a,$00
-

@@ -1,5 +1,5 @@
 ;; for emacs: -*- MODE: asm; tab-width: 4; -*-
-	
+
 ;********************************************
 ; LUnix - keyscanning
 ;   invented for old and dusty keyboards :-)
@@ -19,6 +19,8 @@
 ; other can be placed in tables - $e0-$e3 are modyfing higher nibble of altflags
 ; these are 'lock' keys - twostate
 ; that stuff is unconditional and will be assembled to both C64 and C128 configurations
+; 23.12.2000
+; added $df keycode handler for previous console
 
 ; for now PETSCII table is not updated
 
@@ -91,12 +93,12 @@ _keytab_shift:
 
 #define dunno $7f
 #define f1_c            $f1		;  internal code! -> switch to console 1
-#define f2_c            dunno
+#define f2_c            $f5
 #define f3_c            $f2		;  internal code! -> switch to console 2 (..7)
-#define f4_c            dunno
-#define f5_c            dunno
+#define f4_c            $f6
+#define f5_c            $f3
 #define f6_c            dunno
-#define f7_c            dunno
+#define f7_c            $f4
 #define f8_c            dunno
 #define pound_c         $1e
 #define home_c          dunno
@@ -120,8 +122,8 @@ _keytab_shift:
 #define sarrow_up_c     $1c     ; shift + arrow_up = pi
 #define sarrow_left_c   $60     ; shift + arrow_left = ` (reverse quote)
 #define sspc_c          $20     ; shift + space = space
-#define scommo_c        $f0	;  internal code! -> toggle consoles
-#define srs_c		dunno
+#define scommo_c        $df	;  internal code! -> prev console
+#define srs_c		$f0	;  internal code! -> next console
 
 # ifdef C128
 ; these are for C128 keys
@@ -459,6 +461,8 @@ _addkey:
 		bcc  +
 		cmp  #$f0
 		bcs  to_toggle_console
+		cmp #$df				; one special key...
+		beq ++
 
 		cmp  #$85				; $81/$82/$83/$84 - csr codes
 		bcs  +
@@ -472,9 +476,11 @@ _addkey:
 		eor  #$c0				; $8x becomes $4x
 	+ 	jmp  console_passkey			; pass ascii code to console driver
 
+	+	lda #$88
+		bne +
 to_toggle_console:
 		and  #$07
-		jmp  console_toggle			; call function of console driver
+	+	jmp  console_toggle			; call function of console driver
 							; (console_toggle is defined is console.s)
 
 
