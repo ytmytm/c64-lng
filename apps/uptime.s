@@ -6,7 +6,8 @@
 	
 #include <system.h>
 #include <stdio.h>
-#include <c64.h>
+#include <config.h>
+#include MACHINE_H
 
 		start_of_code equ $1000
 
