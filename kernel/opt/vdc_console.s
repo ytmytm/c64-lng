@@ -61,7 +61,7 @@ console_toggle:
 do_next:	lda cons_visible
 		clc
 		adc #1
-		cmp #MAX_CONSOLES
+		cmp lk_consmax
 		bcs ++
 		bne +
 
@@ -307,7 +307,7 @@ cons1out:
 
 		;; print char to console, X=number of console
 cons_out:
-		cpx  #MAX_CONSOLES
+		cpx  lk_consmax
 		bcs  -				; (silently ignore character, when X>1)
 		jsr  locktsw			; (this code isn't reentrant!!)
 		sta  cchar

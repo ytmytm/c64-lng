@@ -1,5 +1,6 @@
 from 0.18 to 0.19 ...
 -------------------------------
+changed: system code is ready for dynamic console allocation (MW)
 fixed: console_close bug, that caused microshell to hang, after running
        the first command in single console mode
 removed: ancient kernel/c64/todo/cons80.s code (MW)

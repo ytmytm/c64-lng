@@ -127,10 +127,10 @@ console_init:
 
                 lda #MAX_CONSOLES		; set number of consoles
                 sta lk_consmax
-#ifdef MULTIPLE_CONSOLES
                 lda #0				; initialize fs_cons stuff
-                sta usage_map
                 sta usage_count
+#ifdef MULTIPLE_CONSOLES
+                sta usage_map
 #endif
 
 		lda #>SCREEN_BASE

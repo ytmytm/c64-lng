@@ -399,7 +399,7 @@ cons1out:
 
 		;; print char to console, X=number of console
 cons_out:
-		cpx  #MAX_CONSOLES
+		cpx  lk_consmax
 		bcs  -					; (silently ignore character, when X>0)		
 		jsr  locktsw			; (this code isn't reentrant!!)
 		sta  cchar

@@ -36,10 +36,10 @@ console_init:
 		sty  tmpzp+4
 		jsr  lkf__raw_alloc		; (does unlocktsw)
 
+		lda #0				; initialize fs_cons stuff
+		sta usage_count
 ;#ifdef MULTIPLE_CONSOLES
-;		lda #0				; initialize fs_cons stuff
 ;		sta usage_map
-;		sta usage_count
 ;#endif
 		lda  #MAX_CONSOLES
 		sta  lk_consmax

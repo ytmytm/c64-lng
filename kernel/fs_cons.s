@@ -40,7 +40,7 @@ fs_cons_fopen:
 #ifdef MULTIPLE_CONSOLES
 		lda  usage_count
 		inc  usage_count
-		cmp  #MAX_CONSOLES
+		cmp  lk_consmax
 		bcs  _toomany
 #else
 		lda  usage_count
@@ -71,7 +71,7 @@ fs_cons_fopen:
 	-	lsr a
 		bcc +
 		iny
-		cpy #MAX_CONSOLES
+		cpy lk_consmax
 		bne -
 		;; we can fall through here because we exit above if there are no free consoles
 	+	tya

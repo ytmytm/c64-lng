@@ -90,7 +90,7 @@ console_init:
 		sta sbase
 		inc tmpzp
 		lda tmpzp
-		cmp #MAX_CONSOLES
+		cmp lk_consmax
 		bne -
 
 		lda #>CONSOLE_OFFS			; back to the first one

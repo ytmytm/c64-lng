@@ -39,13 +39,15 @@ console_init:
 
 		lda #0				; initialize fs_cons stuff
 		sta usage_map
-		sta usage_count
 
 		lda  #MAX_CONSOLES			; we have 2 consoles
 #else
 		lda  #1					; we have just 1 console		
 #endif
 		sta  lk_consmax
+
+		lda #0				; initialize fs_cons stuff
+		sta usage_count
 
 		;; initialize VIC
 		lda  CIA2_PRA
