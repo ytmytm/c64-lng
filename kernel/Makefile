@@ -1,5 +1,5 @@
 # list of modules
-MODULES=sswiftlink sfifo64 rs232std swiftlink
+MODULES=sswiftlink sfifo64 rs232std swiftlink fifo64
 
 #============== end of configurable section ============================
 

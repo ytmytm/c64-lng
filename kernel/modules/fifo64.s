@@ -10,7 +10,9 @@
 		fifo64_base equ $de00
 
 		start_of_code equ $1000
+
 		.org start_of_code
+		
 		.byte >LNG_MAGIC,   <LNG_MAGIC
 		.byte >LNG_VERSION, <LNG_VERSION
 		.byte >(end_of_code-start_of_code+255)
@@ -24,20 +26,21 @@
 		.word +					; relocator jump
 
 rcv_errcnt:			.buf 1		; receiver error count
+		
+		;; variables, that are initialized by the hardware detection
 xmit_fifo64_size:	.buf 1
 uart_type:			.buf 1
 		
-		
+		;; baudrates for use with a 1.8432MHz oszillator
 baud_tab_lo:
 		.byte <96, <96, <96, <48, <24, <12, <6, <3, <3
 baud_tab_hi:
 		.byte >96, >96, >96, >48, >24, >12, >6, >3, >3
-		
+
+
 		send_flag equ nmizp
 		recv_flag equ nmizp+1
 						
-		.byte $0c
-		.word +					; relocator jump
 
 module_struct:
 		.asc "ser"      ; module identifier
@@ -67,9 +70,9 @@ module_struct:
 		;;  5:  9600
 		;;  6:  19200
 		;;  7:  38400
-		;;  8:  57600 (16x external clock for swiftlink)
+		;;  8:  57600
 
-		;; base address of swiftlink is hardcoded (for fast/short code)
+		;; base address of uart is hardcoded (for fast/short code)
 
 nmi_struct:
 		jmp  nmi_handler
@@ -89,104 +92,221 @@ nmi_struct:
 		fifo64_scr  equ fifo64_base+7
 
 		bit  nmi_struct
+
+
+		;; rs232_lock
+		;; gain exclusive access to the rs232 device
 rs232_lock:
 		jsr  lkf_disable_nmi
 		ldx  #<nmi_struct
 		ldy	 rs232_lock-1		; #>nmi_struct
 		jsr  lkf_hook_nmi		; hook into system
 		nop
-		lda  #1					; allocate receive buffer in context
-		jsr  lkf_palloc			; of calling process
-		nop						; error is not allowed
-		stx  _bufptr1+2			; update absolute pointers into buffer
-		stx  _bufptr2+2		
-		
+
+		lda  #$80
+		sta  send_flag
+		sta  recv_flag
+
+		ldx  #1
+		bit  default_handler
+		jsr  rs232_ctrl
+		ldx  #2
+		bit  default_handler
+		jsr  rs232_ctrl
+
 		;; initialize 16550A chip
 		lda  #0
 		sta  fifo64_ier			; disale all interrupts
-		sta  nmizp+2
-		sta  nmizp+3
-		sta  nmizp+6
-		sta  rcv_errcnt
-		lda  #%00000			; Loop=0, Out2=0, Out1=0, RTS=0, DTR=0
+		sta  _intmask
+
+		lda  #%00000001			; Loop=0, Out2=0, Out1=0, RTS=0, DTR=1
 		sta  fifo64_mcr
+
 		ldx  #0
-		jsr  rs232_ctrl			; set default buadrate
+		jsr  rs232_ctrl			; set default baudrate
+
 		lda  #%10000111			; rectrigger=8, DMA=0, FIFO reset, FIFO ena
 		sta  fifo64_fcr
 		lda  fifo64_ier			; clear all errors and interrupts
 		lda  fifo64_lsr
 		lda  fifo64_msr
 		jmp  lkf_enable_nmi
-		
+
+
+		;; rs232 unlock
+		;; release exclusive access
 rs232_unlock:
 		jsr  lkf_disable_nmi
-		ldx  _bufptr1
-		jsr  lkf_free			; free receive buffer
+
 		ldx  #lsem_nmi
 		jsr  lkf_unlock		; unlock NMI system semaphore (calls nmi_disable)
+
+		lda  #%00000000			; Loop=0, Out2=0, Out1=0, RTS=0, DTR=0
+		sta  fifo64_mcr
+
 		jmp  lkf_enable_nmi
+
 		
+		;; rs223_ctrl
+		;;  X=0:		set baudrate (A=baud code)
+		;;  X=1:		set receivebyte_handler (bit$xxxx=address)
+		;;  X=2:		set sendbyte_handler (bit$xxxx=address)
+		;;  X=3:		trigger start of send
+		;;  X=4:		trigger start of receive
+
 rs232_ctrl:
+		txa
+		beq  set_baudrate
+		dex
+		beq  set_recvhndl
+		dex
+		beq  set_sendhndl
+		dex
+		beq  trig_startsend
+		dex
+		beq  trig_startrecv
+		sec						; error
+	-	rts
+
+		;; set baudrate and do some basic initialisations
+set_baudrate:
+		tax
+		cpx  #9					; (highest possible baud rate is 8)
+		bcs  -
 		lda  #%10000011			; DLAB=1, noBreak, noParity, 1 Stopbit, 8 Data
 		sta  fifo64_lcr
 		lda  baud_tab_lo,x
-		sta  fifo64_data			; (set divisor byte lo)
+		sta  fifo64_data		; (set divisor byte lo)
 		lda  baud_tab_hi,x
 		sta  fifo64_data+1		; (set divisor byte hi)
 		lda  #%00000011			; DLAB=0, noBreak, noParity, 1 Stopbit, 8 Data
 		sta  fifo64_lcr
+		rts						; (return with carry cleared)
+
+		;; set address of receive handler
+		;; (called every time a byte has been received)
+set_recvhndl:
+		jsr  lkf_get_bitadr
+		stx  rech_ptr+1
+		sty  rech_ptr+2
+		clc
+default_handler:
 		rts
 
-...
-_rtsup:
-		bit  nmizp+6
-		bpl  +
-		lda  fifo64_ier			; clear interrupt (?)
-		lda  #%00000001			; enable receiver-interrupts
-		sta  nmizp+6
-		sta  fifo64_ier
-	+	lda  #%00011			; Loop=0, Out2=0, Out1=0, RTS=1, DTR=1
-		sta  fifo64_mcr
-		bne  -
-		
-		;; NMI handler
-		
-nmi_handler:
-		ldx  nmizp+2
-		
-	-	lda  fifo64_iir
-		lda  fifo64_lsr
-		and  #%10011111
-		lsr  a
-		bne  rcv_error
-		bcc  _nmi_done
-		lda  fifo64_data
-_bufptr2:
-		sta  SELFMOD,x
-		inx
-		inx
-		cpx  nmizp+3
-		beq  _fifo64_full
-		dex
-		jmp  -
-		
-_fifo64_full:
-		lda  #0
-		sta  fifo64_ier			; disale all further interrupts
-		lda  #$80
-		sta  nmizp+6
-		dex
+		;; set address of send handler
+		;; (called every time a byte is ready to be sent)
+set_sendhndl:
+		jsr  lkf_get_bitadr
+		stx  sndh_ptr+1
+		sty  sndh_ptr+2
+		clc
+		rts
 
-_nmi_done:
-		txa
-		eor  #$ff
-		adc  nmizp+3
-		cmp  #20				; less than 20 left ?
-		bcs  +
-		lda  #%00001			; Loop=0, Out2=0, Out1=0, RTS=0, DTR=1
+trig_startsend:
+		bit  send_flag
+		bpl  +					; already enabled, skip
+		sei
+		lda  #0
+		sta  send_flag
+		sta  fifo64_ier			; disable all interrupts
+		lda  _intmask
+		ora  #%00000010			; (will) enable THRE interrupt
+		sta  _intmask
+		lda  lk_nmidiscnt
+		bne  +					; respect diabled NMI state
+		sta  fifo64_ier			; re-enable interrupts
+	+	cli
+		clc
+		rts
+
+trig_startrecv:
+		bit  recv_flag
+		bpl  +					; already enabled, skip
+		sei
+		lda  #0
+		sta  recv_flag
+		sta  fifo64_ier			; disable all interrupts
+		lda  _intmask
+		ora  #%00000001			; (will) enable Received data interrupt
+		sta  _intmask
+		lda  lk_nmidiscnt
+		bne  +					; don't set RTS, if NMI is disabled
+		lda  fifo64_mcr
+		ora  #%00000010			; set RTS
 		sta  fifo64_mcr
-	+	stx  nmizp+2
+		lda  _intmask
+		sta  fifo64_ier			; re-enable interrupts
+	+	clc
+		cli
+		rts
+
+
+		;; NMI handler
+
+nmi_handler:
+		lda  #%0000				; switch to polled mode!
+		sta  fifo64_ier			; disable all interrupts
+
+ckloop:
+		lda  fifo64_lsr			; check line status register
+		lsr  a
+		bcc  no_data_ready
+
+		;; there are bytes in the receive FIFO
+
+	-	lda  fifo64_data		; (read receive buffer register (RBR))
+		bit  recv_flag
+		bmi  ckloop				; skip, if receive handler is busy
+
+rech_ptr:	jsr  SELFMOD
+		bcc  +
+
+		;; receive-handler has no more bufferspace left
+		lda  #$80				; set recv_flag
+		sta  recv_flag
+		lda  fifo64_mcr
+		and  #%11111101			; clear RTS
+		sta  fifo64_mcr
+		lda  _intmask
+		and  #%11111110			; disable receive data interrupt
+		sta  _intmask
+		;; (what about lost bytes???)
+
+	+	lda  fifo64_lsr			; check Data Ready (DR), it is set until
+		lsr  a					; receive buffer is emptied
+		bcs  -
+		jmp  ckloop				; check for other pending interrupts
+
+
+no_data_ready:
+		and  #%01100000			; look at "THRE" and "TEMT" bits
+		;;  THRE = transmitter holding register empty
+		;;  TEMT = transmitter empty
+		beq  no_job_todo
+
+		;; transmitter FIFO is empty
+		;; (could write up to 16/32 bytes at once !!)
+
+		bit  send_flag
+		bne  no_job_todo
+
+sndh_ptr: jsr  SELFMOD
+		bcs  wrstop
+		sta  fifo64_data		; write to transmitter holding register (THR)
+		jmp  ckloop				; check for other pending interrupts
+		
+wrstop:
+		lda  #$80
+		sta  send_flag
+		lda  _intmask
+		and  #%11111101			; disable THRE interrupt
+		sta  _intmask
+
+no_job_todo:
+_intmask equ *+1
+		lda  #<SELFMOD
+		sta  fifo64_ier			; enable interrupts
+		
 		pla						; restore memory-configuration
         sta  1
 		pla						; restore register and return
@@ -196,21 +316,27 @@ _nmi_done:
 		pla
 		rti
 
-rcv_error:
-		inc  rcv_errcnt
-		jmp  -
 
-nmi_disable:	
+		;; disable NMI
+nmi_disable:
+		lda  #0
+		sta  fifo64_ier			; disable all interrupts
+		lda  fifo64_mcr
+		and  #%11111101			; clear RTS
+		sta  fifo64_mcr
 		plp		
 		rts
 		
-nmi_enable:
 		;; enable NMI
-		lda  #%00000001			; enable receiver-interrupts
-		sta  fifo64_ier
-		lda  #%00011			; Loop=0, Out2=0, Out1=0, RTS=1, DTR=1
-		sta  fifo64_mcr
-		plp		
+nmi_enable:
+		lda  #%00000001			; Loop=0, Out2=0, Out1=0, RTS=0, DTR=1
+		bit  recv_flag			; check, if receive-handler is ready
+		bmi  +
+		ora  #%00000010			; RTS=1
+	+	sta  fifo64_mcr
+		lda  _intmask
+		sta  fifo64_ier			; re-enable interrupts
+		plp
 		rts
 
 ;;; -----------------------------------------------------------------------
@@ -223,13 +349,13 @@ initialize:
 		beq  normal_mode
 		cpx  #2
 		beq  goon1
-		
+
 HowTo:	ldx  #stdout
 		bit  howto_txt
 		jsr  lkf_strout
 		lda  #1
 		rts						; exit(1)
-		
+
 normal_mode:
 		sei
 		jsr  detect
@@ -259,7 +385,11 @@ goon1:	ldy  #0
 		cmp  #$66				; "f"
 		bne  HowTo
 
-		bit  module_struct	
+		;; forced loading ...
+		jsr  uart_reset
+
+		bit  module_struct
+		;; hardware detected ...
 is_detected:
 		ldx  #<module_struct
 		ldy  is_detected-1		; #>module_struct
@@ -363,21 +493,28 @@ detect:
 	+	lda  #16
 		sta  xmit_fifo64_size
 		stx  fifo64_lcr
+
 		;; port_16550A
 		lda  #3
-		.byte $2c
+		bne  +
+		
 port_16450:
 		lda  #1
-		.byte $2c
+		bne  +
+
 port_unknown:
 		lda  #0
-		.byte $2c
+		beq  +
+
 port_16550:
 		lda  #2
-		.byte $2c
+		bne  +
+
 port_16650:
 		lda  #4
-		sta  uart_type
+	+	sta  uart_type
+
+uart_reset:
 		;; reset UART
 		lda  #$00
 		sta  fifo64_mcr
@@ -405,8 +542,8 @@ out:
 		jsr  fputc
 		nop
 		rts
-		
-		.byte $02
+
+.endofcode		; end of relocated code
 
 hextab:	.text "0123456789abcdef"
 				
@@ -427,5 +564,10 @@ txt_errdetect:
 		.text "error: can't detect uart"
 		.byte $0a,$00
 
+howto_txt:
+		.text "usage: fifo64 [-f]",$0a
+		.text "  -f  force loading",$0a
+		.text "      (bypass hardware detection)",$0a,0
+
+
 end_of_code:
-		
