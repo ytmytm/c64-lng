@@ -382,6 +382,8 @@ special_chars:
 		beq  _tab
 		cmp  #8
 		beq  _del
+		cmp  #7
+		beq  _beep
 		jmp  _back
 #endif
 				
@@ -421,6 +423,8 @@ _del:		ldx  csrx
 		lda #32					; space
 		jsr bputvdcreg
 	+	jmp  _back
+_beep:		jsr beep
+		jmp _back
 
 do_escapes:
 		cpx  #2

@@ -369,6 +369,8 @@ special_chars:
 		beq  _tab
 		cmp  #8
 		beq  _del
+		cmp  #7
+		beq  _beep
 		jmp  _back
 #endif
 				
@@ -413,7 +415,10 @@ _del:	ldx  csrx
 		sta  (tmpzp),y
 		plp
 	+	jmp  _back
-		
+
+_beep:		jsr beep
+		jmp _back
+
 do_escapes:
 		cpx  #2
 		beq  do_esc2			; state2

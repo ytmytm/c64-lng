@@ -2,9 +2,35 @@
 		;; simple console driver
 
 #include <config.h>
-		
+#include <sid.h>
+
+#define BEEP_FREQ $3000		; beep frequency
+
 .global	console_toggle
 
+		;; function: beep
+		;; no parameters
+		;; do beep (the same as in C128 rom)
+		;; changes: A
+.global beep
+
+beep:
+		lda #%00011001
+		sta SID_VOL		; set volume
+		lda #$09		; attack 2ms, decay 750ms
+		sta SID_ATDCY1
+		lda #$00		; sustain 2ms, release 6ms
+		sta SID_SUREL1
+		lda #<BEEP_FREQ
+		sta SID_FRELO1
+		lda #>BEEP_FREQ
+		sta SID_FREHI1
+		lda #%00100000		; turn off any previous sound on channel #1
+		sta SID_VCREG1
+		lda #%00100001		; turn on sound
+		sta SID_VCREG1
+		rts
+		
 		;; function: printk
 		;; < A=char
 		;; print (kernel) messages to console directly all registers

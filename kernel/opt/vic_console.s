@@ -453,18 +453,20 @@ special_chars:
 		beq  _tab
 		cmp  #8
 		beq  _del
+		cmp  #7
+		beq  _beep
 		jmp  _back
 #endif
-				
+
 _crlf:	lda  csry
 		cmp  scrl_y2
 		bne  +
-		
+
 		jsr  cons_scroll_up
 		jmp  _cr
-		
+
 	+	jsr  cons_csrdown
-		
+
 _cr:	ldx  #0
 		ldy  csry
 		jsr  cons_setpos
@@ -472,7 +474,7 @@ _cr:	ldx  #0
 _esc:	lda  #1
 		sta  esc_flag
 		jmp  _back
-		
+
 _tab:	lda  csrx				; tab-width=4
 		lsr  a
 		lsr  a
@@ -484,7 +486,7 @@ _tab:	lda  csrx				; tab-width=4
 		ldy  csry
 		jsr  cons_setpos		; (only done, if position is valid)
 		jmp  _back
-		
+
 _del:	ldx  csrx
 		beq  +					; skip if already on left border
 		dex
@@ -501,7 +503,10 @@ _del:	ldx  csrx
 		sta  (tmpzp),y
 		plp
 	+	jmp  _back
-		
+
+_beep:		jsr beep
+		jmp _back
+
 do_escapes:
 		cpx  #2
 		beq  do_esc2			; state2
