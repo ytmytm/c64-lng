@@ -4,50 +4,22 @@
 ; packetdriver MUST keep the order of the packets
 ; in both, send and receive direction !
 
+
+;;  #define DEBUG
+
 #include <system.h>
 #include <jumptab.h>
 #include <rs232.h>
 #include <kerrors.h>
 #include <stdio.h>
+#include <debug.h>
 
-		;;  #define debug
-		
 #begindef print_string(pointer)
 	ldx  #stdout
 	bit  pointer
 	jsr  lkf_strout
 	nop
 #enddef
-
-#ifdef debug
-#  begindef db(textstring)
-	php
-	pha
-	txa
-	pha
-	tya
-	pha
-	ldx  #stdout
-	bit  db%%next,push,next,pcur%%
-	jsr  lkf_strout
-	nop
-	jmp  db%%ptop%%
-	.byte $0c
-	.word db%%ptop%%
-db%%pcur%%:
-	.text "textstring"
-	.byte $0a,$00
-db%%ptop,pop%%:		
-	pla
-	tay
-	pla
-	tax
-	pla
-	plp
-#  enddef
-#else
-#  define db(text)
-#endif
 
 #define SELFMOD     $ff00		
 #define maxbufs     12         ; max number of handled buffers

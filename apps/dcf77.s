@@ -40,8 +40,12 @@
 ; result in an error. This behaviour is not specified by the
 ; DCF signal description and also has never happened.
 
+; #define DEBUG
+
 #include <stdio.h>
-#include <cia.h>
+#include <config.h>
+#include MACHINE_H
+#include <debug.h>
 
 ; select cia port for radio receiver
 ; User port PB5 is not taken by manufacturer, but this is not used by rs232
@@ -55,13 +59,13 @@
 #ifdef BLINK_SCREEN
 #  begindef BLINK_INIT
 		lda	#"0"
-		sta	$0427
-		sta	$0426
-		sta	$0425
+		sta	debug3+39
+		sta	debug3+38
+		sta	debug3+37
 #  enddef
 #  begindef BLINK(num,onoff)
 		lda	#"0"+(onoff)
-		sta	$0427-(num)
+		sta	debug3+39-(num)
 #  enddef
 #else
 #  define BLINK_INIT

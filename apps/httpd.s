@@ -1,45 +1,16 @@
 		;; for emacs: -*- MODE: asm; tab-width: 4; -*-
 		;; simple webserver
 	
+;#define DEBUG
+
 #include <system.h>
 #include <stdio.h>
 #include <kerrors.h>
 #include <cstyle.h>
 #include <ipv4.h>
+#include <debug.h>
 
 #define HTTP_PORT 80
-
-
-
-#ifdef debug
-#  begindef db(textstring)
-	php
-	pha
-	txa
-	pha
-	tya
-	pha
-	ldx  #stdout
-	bit  db%%next,push,next,pcur%%
-	jsr  lkf_strout
-	nop
-	jmp  db%%ptop%%
-	.byte $0c
-	.word db%%ptop%%
-db%%pcur%%:
-	.text "textstring"
-	.byte $0a,$00
-db%%ptop,pop%%:		
-	pla
-	tay
-	pla
-	tax
-	pla
-	plp
-#  enddef
-#else
-#  define db(text)
-#endif
 
 		start_of_code equ $1000
 
@@ -212,7 +183,7 @@ havename:
 	-	sta  filename,y
 		sty  filename_len
 		db("have filename")
-#ifdef debug
+#ifdef DEBUG
 		ldx  stdout
 		bit  filename
 		jsr  lkf_strout

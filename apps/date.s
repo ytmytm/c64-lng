@@ -18,8 +18,11 @@
 
 ; Alexander Bluhm <mam96ehy@studserv.uni-leipzig.de>
 
+; #define DEBUG
+
 #include <system.h>
 #include <stdio.h>
+#include <debug.h>
 
 start_of_code:
 		

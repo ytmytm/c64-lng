@@ -9,11 +9,12 @@
 ;           has to "mfree" the memory used by the packet.
 ;   getpack  > a=address, x/y=length, c=error
 
+;; #define DEBUG
+
 #include <stdio.h>
 #include <slip.h>
 #include <kerrors.h>
-
-;; #define debug
+#include <debug.h>
 
 ; Constants you have to use, when calling TCP/IP routines
 
@@ -54,36 +55,6 @@
 #define TCP_TIMEWAIT     $0a
 
 #define BUFMARKER	memown_netbuf
-		
-#ifdef debug
-#  begindef db(textstring)
-	php
-	pha
-	txa
-	pha
-	tya
-	pha
-	ldx  #stdout
-	bit  db%%next,push,next,pcur%%
-	jsr  lkf_strout
-	nop
-	jmp  db%%ptop%%
-	.byte $0c
-	.word db%%ptop%%
-db%%pcur%%:
-	.text "textstring"
-	.byte $0a,$00
-db%%ptop,pop%%:		
-	pla
-	tay
-	pla
-	tax
-	pla
-	plp
-#  enddef
-#else
-#  define db(text)
-#endif
 
 ;------------------------------------------------------------------------
 ; magic header, API to other processes
@@ -133,7 +104,7 @@ ipv4_unlock:
 ; packet delivery subsystem
 ;------------------------------------------------------------------------
 
-#ifdef debug
+#ifdef DEBUG
 	-	db("*** sent illegal MID")
 		pla
 		pla
@@ -147,7 +118,7 @@ ipv4_unlock:
 ;         < X=buf
 
 sendpacket:
-#ifdef debug
+#ifdef DEBUG
 		cpx  #BUFNUM
 		bcs  -
 #endif
@@ -158,7 +129,7 @@ sendpacket:
 		inc  packid
 	+	lda  buf_mid,x
 		pha
-#ifdef debug
+#ifdef DEBUG
 		tay
 		lda  lk_memown,y
 		cmp  #BUFMARKER
@@ -264,8 +235,8 @@ pack_poll:
 		;; allocate new buffer for receiving packets (if neccessary)
 allocate_memory:
 		lda  availbuf
-#ifdef debug
-		sta  2023
+#ifdef DEBUG
+		sta  debug3+999
 		bpl  +
 		db("Availbuf went negative")
 		ldx  #0
@@ -3505,8 +3476,8 @@ main_loop:
 		cli
 		bmi  --
 
-#ifdef debug
-		inc  53280
+#ifdef DEBUG
+		inc  debug1
 #endif
 
 		;; another core loop
@@ -3899,7 +3870,7 @@ txt_syntax:
 		.text "<num>.<num>.<num>.<num> with each",$0a
 		.text "number in the range of 0 to 255 !",$0a,0
 txt_ok:
-#ifdef debug
+#ifdef DEBUG
 		.text " (debug version)",$0a
 #endif
 		.text "TCP/IP started with IP=",0

@@ -10,50 +10,21 @@
 ; packetdriver MUST keep the order of the packets
 ; in both, send and receive direction !
 
+;; 	#define DEBUG
+
 #include <system.h>
 #include <jumptab.h>
 #include <rs232.h>
 #include <kerrors.h>
 #include <stdio.h>
-
-		;; 	#define debug
-		
+#include <debug.h>
+	
 #begindef print_string(pointer)
 	ldx  #stdout
 	bit  pointer
 	jsr  lkf_strout
 	nop
 #enddef
-
-#ifdef debug
-#  begindef db(textstring)
-	php
-	pha
-	txa
-	pha
-	tya
-	pha
-	ldx  #stdout
-	bit  db%%next,push,next,pcur%%
-	jsr  lkf_strout
-	nop
-	jmp  db%%ptop%%
-	.byte $0c
-	.word db%%ptop%%
-db%%pcur%%:
-	.text "textstring"
-	.byte $0a,$00
-db%%ptop,pop%%:		
-	pla
-	tay
-	pla
-	tax
-	pla
-	plp
-#  enddef
-#else
-#  define db(text)
-#endif
 
 #define SELFMOD    $ff00		
 #define MAXBUFS    12			; max number of handled buffers
@@ -201,23 +172,23 @@ recframing:
 		rts
 		
 recendframe:
-#ifdef debug
-		inc  $404
+#ifdef DEBUG
+		inc  debug3+4
 #endif
 
 		bit  recstat2
 		bmi  recnewframe		; between frames
-#ifdef debug
-		dec  $404
-		inc  $403
+#ifdef DEBUG
+		dec  debug3+4
+		inc  debug3+3
 #endif
 		lda  recstat
 		cmp  #$80
 		beq  recnewframe		; (after discarded packet)
 		
-#ifdef debug
-		dec  $403
-		inc  $402
+#ifdef DEBUG
+		dec  debug3+3
+		inc  debug3+2
 #endif
 		;; check the fcs
 		lda	 recfcs
@@ -227,8 +198,8 @@ recendframe:
 		cmp  #$f0
 		bne  recbadframe		; ditto
 		
-#ifdef debug
-		dec  $402
+#ifdef DEBUG
+		dec  debug3+2
 #endif
 		;; subtract 2 from frame length
 		sec
@@ -262,8 +233,8 @@ recendframe:
 
 		;; setup for a new frame (discard current)
 recbadframe:
-#ifdef debug
-		inc $d020				; shows if we got an error..
+#ifdef DEBUG
+		inc debug1				; shows if we got an error..
 #endif
 recnewframe:	
 		ldy  #$ff
@@ -279,8 +250,8 @@ recnewframe:
 		;; completed packet code
 reckeep:
 		          
-#ifdef debug
-		inc  $400
+#ifdef DEBUG
+		inc  debug3
 #endif
 		ldx  reclst_c			; x=current rec buf
 		lda  dest_addr+1
@@ -498,8 +469,8 @@ snp:	bit  sndlock			; get next buffer
 		sta  buf_stat,x			; mark buffer ("done")
 		lda  buf_l2nx,x			; get the next buffer in list
 		sta  sndlst_c			; make the current one that buf
-#ifdef debug
-		inc  $40b
+#ifdef DEBUG
+		inc  debug2
 #endif
 
 		;; start a new packet
@@ -569,8 +540,8 @@ ppp_lock:
 		;; > c=0: A=startpage, X/Y=length of packet
 
 ppp_getpacket:
-#ifdef debug
-		inc  $401
+#ifdef DEBUG
+		inc  debug3+1
 #endif
 		lda  #$41				; (wana have an IP buffer)
 		jsr  get_filledbuf

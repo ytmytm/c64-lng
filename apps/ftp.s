@@ -1,45 +1,16 @@
 		;; for emacs: -*- MODE: asm; tab-width: 4; -*-
 		;; simple ftp client
+
+#define DEBUG
 		
 #include <stdio.h>
 #include <ipv4.h>
 #include <kerrors.h>
+#include <debug.h>
 
 		;; BUFLEN must be larger than IPV4_TCPINFOSIZE!
 #define BUFLEN 80
 
-#define debug
-										
-#ifdef debug
-#  begindef db(textstring)
-	php
-	pha
-	txa
-	pha
-	tya
-	pha
-	ldx  #stdout
-	bit  db%%next,push,next,pcur%%
-	jsr  lkf_strout
-	nop
-	jmp  db%%ptop%%
-	.byte $0c
-	.word db%%ptop%%
-db%%pcur%%:
-	.text "textstring"
-	.byte $0a,$00
-db%%ptop,pop%%:		
-	pla
-	tay
-	pla
-	tax
-	pla
-	plp
-#  enddef
-#else
-#  define db(text)
-#endif
-		
 		start_of_code equ $1000
 
 		.org start_of_code
