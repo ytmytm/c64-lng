@@ -20,6 +20,11 @@
 		.global fs_iec_fcmd
 		.global fs_iec_freaddir
 
+		.global enter_atomic
+		.global leave_atomic
+		.global unix2cbm
+		.global cbm2unix
+
 bit_count		equ tmpzp
 byte_count		equ syszp+5
 byte			equ syszp+6

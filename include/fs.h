@@ -5,7 +5,8 @@
 #define MAJOR_IEC     2
 #define MAJOR_CONSOLE 3
 #define MAJOR_USER    4
-#define MAJOR_SYS     5
+#define MAJOR_IDE64   5
+#define MAJOR_SYS     6
 
 #define fmode_ro  0
 #define fmode_wo  1

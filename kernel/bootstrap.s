@@ -16,6 +16,38 @@ start:
 		ldx  #255
 		txs						; init stack pointer
 
+#ifdef HAVE_IDE64
+		;; get vectors from $03xx to LNG space...
+		lda  $031a
+		ldx  $031b
+		sta  lkf_ide64_rom_open+1
+		stx  lkf_ide64_rom_open+2
+		lda  $031c
+		ldx  $031d
+		sta  lkf_ide64_rom_close+1
+		stx  lkf_ide64_rom_close+2
+		lda  $031e
+		ldx  $031f
+		sta  lkf_ide64_rom_chkin+1
+		stx  lkf_ide64_rom_chkin+2
+		lda  $0320
+		ldx  $0321
+		sta  lkf_ide64_rom_chkout+1
+		stx  lkf_ide64_rom_chkout+2
+		lda  $0324
+		ldx  $0325
+		sta  lkf_ide64_rom_chrin+1
+		stx  lkf_ide64_rom_chrin+2
+		lda  $0326
+		ldx  $0327
+		sta  lkf_ide64_rom_chrout+1
+		stx  lkf_ide64_rom_chrout+2
+		lda  #0
+		sta  $9d			; make sure that there are no messages
+		;; need to copy out some stuff before cleaning
+		jsr  lkf_ide64_swap_bytes
+#endif
+
 #ifndef C128
 		;; Idea from Nicolas Welte who answered a question of
 		;;  Richard Atkinson on cbm-hackers@dot.tcm.hut.fi

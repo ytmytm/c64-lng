@@ -1,3 +1,7 @@
+from 0.20 to 0.21
+-----------------
+added: basic IDE64 support (as /ide64 MAJOR_IDE64) (MW)
+
 from 0.19 to 0.20 (Dec 27 2001)
 -------------------------------
 added: httpd default root document (index.html) (Jools Smyth)

@@ -128,6 +128,10 @@ pprefix:
 		.byte 0, MAJOR_IEC,8
 		.text "disk9"
 		.byte 0, MAJOR_IEC,9
+#ifdef HAVE_IDE64
+		.text "ide64"
+		.byte 0, MAJOR_IDE64, 0
+#endif
 #ifdef HAVE_64NET2
 		.text "net64"
 		.byte 0, MAJOR_IEC,15
@@ -158,6 +162,9 @@ mtab_fopen equ [*]-2
 		.word fs_iec_fopen-1
 		.word fs_cons_fopen-1
 		.word err_notimp-1		; fs_user
+#ifdef HAVE_IDE64
+		.word fs_ide64_fopen-1
+#endif
 		;; .word err_notimp-1		; fs_sys
 		
 mtab_fgetc equ [*]-2
@@ -165,6 +172,9 @@ mtab_fgetc equ [*]-2
 		.word fs_iec_fgetc-1
 		.word fs_cons_fgetc-1
 		.word fs_user_fgetc-1
+#ifdef HAVE_IDE64
+		.word fs_ide64_fgetc-1
+#endif
 		;; .word err_notimp-1		; fs_sys
 		
 mtab_fputc equ [*]-2
@@ -172,6 +182,9 @@ mtab_fputc equ [*]-2
 		.word fs_iec_fputc-1
 		.word fs_cons_fputc-1
 		.word fs_user_fputc-1
+#ifdef HAVE_IDE64
+		.word fs_ide64_fputc-1
+#endif
 		;; .word err_notimp-1		; fs_sys
 		
 mtab_fclose equ [*]-2
@@ -179,6 +192,9 @@ mtab_fclose equ [*]-2
 		.word fs_iec_fclose
 		.word fs_cons_fclose
 		.word fs_user_fclose
+#ifdef HAVE_IDE64
+		.word fs_ide64_fclose
+#endif
 		;; .word err_notimp		; fs_sys
 		
 mtab_fcmd equ [*]-2
@@ -186,6 +202,9 @@ mtab_fcmd equ [*]-2
 		.word fs_iec_fcmd-1
 		.word err_notimp-1		; fs_cons
 		.word err_notimp-1		; fs_user
+#ifdef HAVE_IDE64
+		.word fs_ide64_fcmd-1
+#endif
 		;; .word err_notimp-1		; fs_sys
 		
 mtab_fopendir equ [*]-2
@@ -193,6 +212,9 @@ mtab_fopendir equ [*]-2
 		.word fs_iec_fopendir-1
 		.word err_notimp-1		; fs_cons
 		.word err_notimp-1		; fs_user
+#ifdef HAVE_IDE64
+		.word fs_ide64_fopendir-1
+#endif
 		;; .word err_notimp-1		; fs_sys
 		
 mtab_freaddir equ [*]-2
@@ -200,6 +222,9 @@ mtab_freaddir equ [*]-2
 		.word fs_iec_freaddir-1
 		.word err_notimp-1		; fs_cons
 		.word err_notimp-1		; fs_user
+#ifdef HAVE_IDE64
+		.word fs_ide64_freaddir-1
+#endif
 		;; .word err_notimp-1		; fs_sys
 
 		;; function: resolve_fileno

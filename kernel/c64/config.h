@@ -110,9 +110,20 @@
 ;// to it, you can enable 64net/2 support for IEC bus. This will currently
 ;// allow you to do disk operations on partition 0
 ;// for more information about 64net/2 go to
-;// http://sourceforge.net/projects/c64net
+;// http://sourceforge.net/projects/c64net/
 
 ;#define HAVE_64NET2
+
+
+;// IDE64 support
+;// -------------
+;// IDE64 is a cartridge that allows for connecting two IDE devices to C64
+;// You can enable support for it. This will currently allow you to do
+;// disk operation on current directory of master disk.
+;// for more information about IDE64 go to
+;// http://ide64.come.to/ or http://www.volny.cz/dundera/
+
+;#define HAVE_IDE64
 
 
 ;// .o65 file format support
@@ -131,6 +142,7 @@
 ;// slows taskswitching down (up to 160us per taskswitch)
 
 ;#define ALWAYS_SZU
+
 
 
 ;//---------------------------------------------------------------------------
