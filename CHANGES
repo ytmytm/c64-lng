@@ -1,5 +1,9 @@
 from 0.18 to 0.19 ...
 -------------------------------
+changed: updated keyboard modules to allow to switch to any console,
+	 and support next/previous console shortcut (MW)
+changed: fs_cons stuff is flexible now and supports up to 8 consoles,
+	 vdc console can do all of them (on 16/64k VDC), vic console only two (MW)
 changed: Makefile: package files now created in the pkg-subdirectory (DD)
 changed: c64arch renamed to mksfxpgk and added way to specify architecture (DD)
 changed: small changes to the TCP/IP main loop (improves performance??),
