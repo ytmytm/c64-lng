@@ -23,8 +23,6 @@
 ; this format to unix time.
 
 ; IMPORTANT NOTES:
-; - It wasn't clearly stated by Alexander Bluhm, but I assume that all values are
-;   stored as BCD
 ; - I don't know if SmartWatch has Y2K problem
 ; - my documents are ambigous, I don't know if first returned/stored value is
 ;   seconds/10 or seconds/100
@@ -106,7 +104,7 @@ read_byte:
 		lda	#%00001110		; config lsb as input
 		sta	CIA1_DDRA
 		lda	#0
-		sta	tmpzp
+		sta	tmpzp+2
 		ldx	#8
 	-	lda	#%00001110		; setup for read all output bits hi
 		sta	CIA1_PRA
@@ -114,9 +112,9 @@ read_byte:
 		sta	CIA1_PRA
 		lda	CIA1_PRA		; read data
 		ror	a			; rotate data bit to C flag
-		lda	tmpzp
+		lda	tmpzp+2
 		ror	a			; roll C flag into bit 7
-		sta	tmpzp
+		sta	tmpzp+2
 		dex
 		bne	-
 		rts
@@ -155,7 +153,7 @@ select_smartwatch:
 		lda	#%00001110
 		sta	CIA1_PRA
 		lda	#2
-		sta	tmpzp
+		sta	tmpzp+2
 	-	lda	#$c5
 		jsr	write_byte
 		lda	#$3a
@@ -164,7 +162,7 @@ select_smartwatch:
 		jsr	write_byte
 		lda	#$5c
 		jsr	write_byte
-		dec	tmpzp
+		dec	tmpzp+2
 		bne	-
 		rts
 

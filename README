@@ -409,10 +409,11 @@ Modules
 
   API: "SER" Version 1  (ctrl, getc, putc)
     sswiftlink - swiftlink device driver
-    sfifo64 - driver for 16550 UART based rs232-cards)
-    srs232std - driver for standard userport RS232 interface *not complete*
+    sfifo64    - driver for 16550 UART based rs232-cards)
+    srs232std  - driver for standard userport RS232 interface *not complete*
 
   API: "SER" Version 2 (ctrl)
+    fifo64    - driver for 16550 UART based rs232-cards)
     rs232std  - driver for standard userport RS232 interface
     swiftlink - swiftlink device driver should also support Turbo232
 
@@ -425,7 +426,10 @@ Modules
     tcpip - TCP/IP packet wise communication
 
   API: "RTC" Version 1 (time_read,time_write, date_read, date_write, raw_write)
-    ciartc - emulate real time clock using timer alarm of CIA1
+    ciartc   - emulate real time clock using timer alarm of CIA1
+    dcf77    - read German time signal from user port (radio)
+    ide64rtc - RTC on IDE64 interface card
+    smwrtc   - for the Smart Watch (Dallas DS1216 B series)
 
 
 Module-Dependencies
