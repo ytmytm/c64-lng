@@ -145,13 +145,24 @@ compiling lunix
      make distclean
      make devel
      make
-     make package
+     make disc
 
      which will result in bootable floppy image: pkg/lngboot.atr
      Don't worry with errors after 'make' step because currently applications
      for Atari cannot be built now. However they are binary compatible across
      all supported architectures so you might build system for C64/128 and
      copy applications from there.
+
+
+   o Make a Commodore floppy
+
+     Do
+
+     make disc
+
+     to build a ready for use floppy with all tools/modules/docs/scripts
+     extracted. You can use this floppy with emulator or transfer it to a
+     physical media.
 
 
    o Notes to the Commodore 128 version

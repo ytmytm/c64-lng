@@ -46,7 +46,7 @@ IAPPS=connd ftp tcpipstat tcpip ppp loop slip httpd telnet popclient
 .PHONY : all apps kernel libstd help package clean distclean devel
 
 export PATH+=:$(PWD)/devel_utils/:$(PWD)/devel_utils/atari:.
-export LUPO_INCLUDEPATH=:$(PWD)/kernel
+export LUPO_INCLUDEPATH=:$(PWD)/kernel:$(PWD)/include
 export LNG_LIBRARIES=$(PWD)/lib/libstd.a
 export COMPFLAGS
 export MACHINE
@@ -56,9 +56,9 @@ BINDIR=$(patsubst c%,bin%,$(MACHINE))
     BINDIR="binatari"
   endif
 
-all : kernel libstd apps help samples
+all : kernel libstd apps help
 
-apps : devel libstd
+apps : devel kernel libstd
 	$(MAKE) -C apps
 
 samples : devel libstd

@@ -1,5 +1,17 @@
 from 0.20 to 0.21
 -----------------
+changed: updated TODO list, documentation (MW)
+added: pwd tool (G)
+added: sh -r -s options, can take input from file given as an argument, not only stdin (G)
+fixed: sh quote-bug
+added: some shell scripts (man, sysinfo, ...) (G)
+added: fasthead/fastload utilities for C64 (G)
+added: silver surfer support in fifo64/sfifo64 drivers (G)
+changed: relate tool is always used now to generate kernel docs (G)
+added: option for init script lunixrc instead microshell (G)
+added: scripting support with #!interpreter (only if O65 is enabled) (G)
+changed: top level Makefile: disc target, dependencies (G)
+added: samples directory with example programs for luna, cc65 and scc6502 (G)
 added: atari makeatr program that prepares bootable floppies (JJ)
 fixed: atari makeimage reports errors and accepts full paths as input (MW)
 fixed: o65.s uses system semaphores now (MW)

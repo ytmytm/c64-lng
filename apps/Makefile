@@ -1,10 +1,5 @@
 .PHONY : all clean
 
-COMPFLAGS=
-
-export LUPO_INCLUDEPATH=../include
-export LNG_LIBRARIES=../lib/libstd.a
-
 VPATH=../include
 
 # list of applications

@@ -61,7 +61,7 @@ parse_commandline:
 
 		;; now (userzp),y points to first char of first option string
 
-		...
+		;...
 		rts
 
 		;; main programm code
@@ -70,7 +70,7 @@ main_code:
 								; bytes we need
 								; (set_zeropage_size() is a macro defined
 								; in include/cstyle.h) 
-		...
+		;...
 
 		lda  #0					; (error code, 0 for "no error")
 		rts						; return with no error
