@@ -984,8 +984,6 @@ readdir_eof:	ldx  #lerr_eof
 		bne  -
 
 alloc_secadr:
-		;; X=ch_device (range 8..15)
-;;		lda  adrmap-8,x
 		lda  adrmap
 		ldy  #7
 	-	lsr  a
@@ -995,8 +993,6 @@ alloc_secadr:
 		rts					; return with carry set
 
 	+	lda  btab2r,y
-;;		ora  adrmap-8,x
-;;		sta  adrmap-8,x
 		ora  adrmap
 		sta  adrmap
 		iny
@@ -1004,11 +1000,9 @@ alloc_secadr:
 		rts					; return with carry clear, y=secadr (2..9)
 
 free_secadr:
-		;; X=ch_device (range 8..15), Y=secadr (range 2..9)
+		;; Y=secadr (range 2..9)
 		lda  btab2r-2,y
 		eor  #$ff
-;;		and  adrmap-8,x
-;;		sta  adrmap-8,x
 		and  adrmap
 		sta  adrmap
 		rts
