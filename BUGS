@@ -13,8 +13,10 @@
 - ftp sometimes has problems with longer file names, it seems to
   download the file but in fact doesn't save the received data to disc
 
-- PWD is not changed with cd tool
+- parent process' environment PWD is not changed with cd tool
 
 - hangs on atari 130xe due to PIA init
 
 - lunixrc is only on disk image, not in package release
+
+- sh treats whitespace on the left side as part of the command name
