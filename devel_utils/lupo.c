@@ -1,4 +1,4 @@
-/* LUnix-preprocessor (lupo) Version 0.20
+/* LUnix-preprocessor (lupo) Version 0.21
 
    Written by Daniel Dallmann (aka Poldi) in Sep 1996.
    This piece of software is freeware ! So DO NOT sell it !!
@@ -7,6 +7,8 @@
 
    If you've noticed a bug or created an additional feature, let me know.
    My (internet) email-address is dallmann@heilbronn.netsurf.de
+
+ Sep 30 2001 *poldi* fixed bug in process_line()
 
  Apr 11 2001 *poldi* DEFINES_MAX now 1000 (was 500)
 
@@ -111,7 +113,7 @@ void macroout(char *);
 #define USE_GETENV     /* use LUPO_INCLUDEPATH to find includefiles */
 
 #ifdef _AMIGA
- const char *VERsion="$VER: lupo 0.20 "__AMIGADATE__" $";
+ const char *VERsion="$VER: lupo 0.21 "__AMIGADATE__" $";
 # define PATH_SEPARATOR ','      /* character used as path separator */
 #else
 # define PATH_SEPARATOR ':'      /* character used as path separator */
@@ -185,7 +187,7 @@ void error(char *message)
 void Howto() 
 {
   printf("lupo [-dloqrs] file\n");
-  printf("  little universal preprocessor version 0.20\n");
+  printf("  little universal preprocessor version 0.21\n");
   printf("  -dname[=macro] - predefine macro\n");
   printf("  -l             - Insert .line directives for error tracking\n");
   printf("  -o file        - define outputfile (default lupo.out)\n");
@@ -591,6 +593,7 @@ void process_line(char *l)
                 tmp2=loc_mpar[tmp[a++]-2];
                 while (tmp2[b]!='\0') l[i++]=tmp2[b++]; }
               else l[i++]=tmp[a++]; }
+	    if (repl[x]!='\0') i--; /* step one back, i++ follows! */
 
 #           ifdef debug
             printf("replaced, now:\"%s\"\n",l);
