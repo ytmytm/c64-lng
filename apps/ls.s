@@ -35,24 +35,31 @@ HowTo:
 	-	iny
 		lda  (userzp),y
 		bne  -					; skip first argument
-		iny
+	-	iny
 
-	-	lda  (userzp),y
+		lda  (userzp),y
 		beq  do_open
 		cmp  #"-"
 		bne  do_open
 
-		iny
+	-	iny
 		lda  (userzp),y
-		cmp  #"l"				; "l"
-		bne  HowTo
+		beq  --					; no more opts
+		cmp  #"l"
+		beq  set_longopt
+		cmp  #"a"
+		beq  set_allopt
+		jmp  HowTo				; unknown option
+
+set_longopt:
 		lda  #$80
 		sta  long_flag
-		iny
-		lda  (userzp),y
-		bne  HowTo
-		iny
-		jmp  -
+		bne  -					; (always jump)
+		
+set_allopt:
+		lda  #$80
+		sta  list_all_flag
+		bne  -					; (always jump)
 		
 		;; print the first filename 4/30/2000 bburns@wso.williams.edu
 print_file:
@@ -124,12 +131,18 @@ loop:
 		jsr  freaddir
 		bcs  loop_end
 
-		bit  long_flag
+		bit  list_all_flag
+		bmi  +
+		lda  dir_struct+12		; first char of filename
+		cmp  #"."
+		beq  loop				; hide files beginning with "."
+
+	+	bit  long_flag
 		bmi  long_form
 
 out_finish:
 		ldx  #stdout
-		bit  dir_struct+12
+		bit  dir_struct+12		; position of filename
 		jsr  lkf_strout
 		nop
 		lda  #$0a
@@ -235,7 +248,7 @@ no_such_txt:
 		.byte $00
 						
 howto_txt:
-		.text "Usage: ls [-l] [dir]"
+		.text "Usage: ls [-al] [dir]"
 		.byte $0a,$00
 
 noperm_txt:  ;"dwrx " 
@@ -249,6 +262,8 @@ nodate_txt:  ;"30Jun19:28 "
 		
 long_flag:
 		.byte 0					; short is default
+list_all_flag:
+		.byte 0					; default is to hide files beginning with "."
 		
 dir_struct:
 		.buf DIRSTRUCT_LEN
