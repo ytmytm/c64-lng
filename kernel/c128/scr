@@ -1,6 +1,0 @@
-#!/bin/sh
-rm $1
-cat >$1 << EOF
-;// same as C64 $1
-#include "c64/$1"
-EOF

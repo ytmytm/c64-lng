@@ -47,16 +47,6 @@
 
 ;#define HAVE_REU
 
-;// 256k expansion support
-;// ----------------------
-;// define this if you have C128 ram expanded to 256k (as described by Marko Makela)
-;// currently it gives you nothing, but little fix in tasksw.s
-;// please e-mail me (ytm@friko.onet.pl) and tell me if Lunix runs on your
-;// expanded C128 with and without this definition
-;// (on mine it refuses to work without it)
-
-;#define HAVE_256K
-
 ;// VDC console
 ;// -----------
 ;// if you run LUnix on a C128 in C64 mode, you might want to use
@@ -78,6 +68,14 @@
 
 #define MULTIPLE_CONSOLES
 
+;// PC AT-compatible keyboard support
+;// ---------------------------------
+;// this allows you to use PC-compatible keyboard as the only input device
+;// read docs for info about interface (it's very easy to build)
+;// WARNING: currently the driver isn't 100% reliable on VIC console, so try to not
+;// use this option if you're about to type much, you'll avoid stress ;)
+
+;#define PCAT_KEYB
 
 ;// SuperCPU support
 ;// ----------------
@@ -89,7 +87,7 @@
 ;// (second console $0800-$0fff is not updated by SCPU! - to be confirmed)
 ;// (costs 39 (+ 512) bytes)
 
-#define HAVE_SCPU
+;#define HAVE_SCPU
 
 
 ;// Misc stuff
@@ -102,6 +100,14 @@
 
 ;//---------------------------------------------------------------------------
 ;// end of configurable section
+
+;// plain C128 can do stackswapping using MMU features
+#define MMU_STACK
+
+#ifdef HAVE_SCPU
+;// however, SCPU for C128 has this support broken
+# undef MMU_STACK
+#endif
 
 #ifdef HAVE_SCPU
 # include <scpu.h>
