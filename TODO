@@ -1,6 +1,6 @@
 note to self: RELEASE PROCEDURE
 - change version number in bootstrap.s, system.h
-- for IDE64: packages and .lunixrc (with ide64rtc) and ide64loader onto disk image
+- for IDE64: PWD=/ide64 in init.s, packages and .lunixrc (with ide64rtc) and ide64loader onto disk image
 - for C64/128: make cbmdisc
 
 my to-do list:
