@@ -1,0 +1,12 @@
+This should grow to a standard library for use in application code
+lld has to be improved to support multiple code segments (code, initialised
+data, uninitialised data)
+
+Table of functions and how they are portioned:
+
+libc_malloc   ( A/Y=size ), returns A/Y=pointer
+---
+libc_free     ( A/Y=pointer ), returns nothing
+---
+libc_remalloc ( A/Y=pointer, (X)=new_size ), returns A/Y=pointer
+
