@@ -67,37 +67,56 @@ compiling lunix
 
   o  Make the develompent tools
 
-     Change into the devel_utils subdirectory and type "make".
-     You should get the binaries of luna, lupo and lld. Move
-     the binaries into a common place (eg. /usr/local/bin) and/or
+     Do a "make devel" in the top level directory. You can also
+     change into the devel_utils subdirectory and type "make" there.
+     You should get the binaries of luna, lupo and lld. If you want, you
+     can move the binaries into a common place (eg. /usr/local/bin) and/or
      add the path of the binaries to the system's search path
 
      PATH=/path/to/the/binaries:$PATH
 
-  o  Make the Commodore64 binaries
+     This may not be neccassary since the PATH variable will also be changed
+     in the top level makefile.
 
-     Leave devel_utils, go back into the parent directory
-     and type "make". 
+
+  o  Make the Commodore64/Commodore128 binaries
+
+     If your target is different from the C64, edit the top level
+     makefile - line 14, replace c64 by c128 for example.
+
+     Go into the parent directory and type "make". 
+
+     If you've chaned the target or edited the makefile do a "make clean"
+     first !
 
      Optional: Before making the binaries, change/optimize the
                configuration (edit "Makefile" and/or
                "kernel/<Machine>/config.h")
 
+
   o  Make a Commodore64 disk
 
-     type "make package", this will create a selfextracting archive in
-     the bin64 or bin128 (depending on the target machine).
+     type "make package", this will create some selfextracting archives in
+     the pkg subdirectory.
 
-     Copy the file "bin64/lng.c64" 
-     to an empty floppy
+     for example:
+       core.c64       -> system core
+       apps.c64       -> applications
+       help.c64       -> optional help files (used by "help" application)
+
+     Copy these files to an empty (commodore-) floppy
      disk. On the C64 type (after inserting the newly created
      disk into drive 8, connected to your C64...)
       
-       load"lng.c64",8,1
+       load"core.c64",8,1
        run 
-       (will install LNG)
+       (will install the archived files)
 
        new
+       load"...
+       ...
+
+     When every thing is installed
 
        load"loader",8
        run
@@ -106,7 +125,8 @@ compiling lunix
      floppy. (I use a null modem connection between a PC running Linux and
      the Commodore64 running Novaterm9.5)
 
-   o Commodore 128
+
+   o Notes to the Commodore 128 version
 
      Edit the toplevel makefile and change the line
 
@@ -117,11 +137,11 @@ compiling lunix
      MACHINE=c128
 
      Configure the kernel to your needs by editing kernel/c128/config.h.
-     Do a "make clean" (maybe even a "make maintainer-clean" in the kernel
+     Do a "make clean" (maybe even a "make distclean" in the kernel
      subdirectory is required) then "make" and "make package" to get
-     a selfextracting archive in bin128 (named "lng.c128")
+     a selfextracting archives in pkg (named "*.c128")
      
-     Note: lng.c128 can only be extracted in c64 mode (sorry)
+     Note: the *.c128 files can only be extracted in c64 mode (sorry)
 
    Note2: The applications in the apps subdirectory are architecture 
           independent and run on the C64 and C128 version of LNG
