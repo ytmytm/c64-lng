@@ -594,8 +594,9 @@ throwaway2:						; IP address mismatch, might have to learn
 		ora  ownip+2
 		ora  ownip+3
 	-	bne  throwaway			; already have my IP, discard packet
-		ldy  #16				; check dest.IP field
-		lda  (userzp+2),y		; (must match my own IP)
+
+		ldy  #16				; learn own IP from
+		lda  (userzp+2),y		; dest field of incoming packet
 		sta  ownip
 		iny
 		lda  (userzp+2),y
@@ -607,9 +608,11 @@ throwaway2:						; IP address mismatch, might have to learn
 		lda  (userzp+2),y
 		sta  ownip+3
 
-	+	ldy  #6					; check fragmented-flag
-		lda  (userzp+2),y
-		and  #$20
+	+	ldy  #6					; check for IP fragments (not supported)
+		lda  (userzp+2),y		; discard if either MF (more fragments) set
+		and  #$3f				; or FramentOffset>0 (indicates last fragment)
+		iny						; (Fix by Alexander Bluhm)
+		ora  (userzp+2),y
 		bne  -
 
 		lda  #$ff
