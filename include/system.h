@@ -3,7 +3,7 @@
 
 ;// LNG-magic and version
 #define LNG_MAGIC   $fffe
-#define LNG_VERSION $0010
+#define LNG_VERSION $0011
 
 ;// jumptab-addresses are adapted at runtime (by the code relocator)
 ;// (i want binary compatible apps on all supported machines)
@@ -65,12 +65,15 @@
 #define tsp_zpsize  $1c ; must be the last zero initialized item here !  (->addtask.s)
 #define tsp_ftab    $1d ; MAX_FILES bytes file-table (fileno to SMB-ID mapping)
 #  define MAX_FILES      8
-#define tsp_pdmajor $25 ; current device (major)
-#define tsp_pdminor $26 ; current device (minor)
 ;//
-#define tsp_pid     $27 ; (2 bytes)
-#define tsp_ippid   $29 ; IPID of parent
-#define tsp_stsize  $2a
+#define tsp_pid     $25 ; (2 bytes)
+#define tsp_ippid   $27 ; IPID of parent
+#define tsp_stsize  $28
+;// inherited stuff
+#define tsp_pdmajor $29 ; current device (major) (first inherited item!)
+#define tsp_pdminor $2a ; current device (minor)
+#define tsp_termwx  $2b ; width of attached terminal (X)
+#define tsp_termwy  $2c ; width of attached terminal (Y) (last inherited item!)
 
 #define tsp_syszp   $78
 #define tsp_swap    $80
@@ -113,6 +116,7 @@
 #  define larchf_type %00000011
 #   define larch_c64  0
 #   define larch_c128 1
+#  define larchf_8500 %00010000
 #  define larchf_pal  %00100000
 #  define larchf_reu  %01000000
 #  define larchf_scpu %10000000

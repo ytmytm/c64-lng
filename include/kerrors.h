@@ -28,6 +28,7 @@
 #define lerr_nosuchpid     $e9
 #define lerr_killed        $e8
 #define lerr_nosuchdir     $e7
+#define lerr_segfault      $e6
 
 #endif
 
