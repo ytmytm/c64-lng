@@ -7,10 +7,10 @@
 ; or by using hardware. lastrnd is 16 bit, but only lower 8 bits are used
 
 		lda lastrnd
-		adc $d012
-		adc $d011
-		adc $dc04
-		adc $dc05
+		adc VIC_RC
+		adc VIC_YSCL
+		adc CIA1_TALO
+		adc CIA1_TAHI
 		;; SID stuff?
 		sta lastrnd
 		rts

@@ -1,7 +1,7 @@
 from 0.19 to 0.20
 -------------------------------
-added: srandom/random functions
-changed: debug stuff is common for all, please use debug.h only
+added: srandom/random functions (MW)
+changed: debug stuff is common for all, please use debug.h only (MW)
 fixed: lock returns with c=1 without error (AT)
 changed: bmap renamed to bit_n_set (table of values 2**n) (AT)
 fix: lib/print_hex8i.s possible stack corruption on error (Anton Treuenfels)
