@@ -37,6 +37,9 @@
 #define HAVE_VIC
 #include <vic.h>
 
+#define HAVE_SID
+#include <sid.h>
+
 #include <mmu.h>
 
 #endif
