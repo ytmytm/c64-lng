@@ -10,11 +10,11 @@ VPATH=../include
 # list of applications
 APPS=testapp microterm ps lsmod sh wc getty sleep cat tee uuencode uudecode \
      232echo 232term sliptst telnet kill rm ls connd ftp buf cp tcpipstat \
-     meminfo strminfo uptime date uname more loop slip ppp tcpip help \
+     meminfo strminfo uptime time uname more loop slip ppp tcpip help \
      b-cs b-co env beep
 
 # list of applications that must be linked against libstd
-LAPPS=amalloc
+LAPPS=amalloc date ciartc dcf77
 
 all : $(APPS) $(LAPPS)
 

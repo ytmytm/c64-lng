@@ -23,9 +23,10 @@ print_hex8:
 		lsr  a
 		lsr  a
 		jsr  +
-		
 		pla
+		bcs  ++
 		and  #$0f
+
 	+	tay
 		lda  hex_tab,y
 		sec
@@ -34,5 +35,8 @@ print_hex8:
 		bcs  +
 		rts
 
+		pla
 	+	jmp  lkf_catcherr
+
+
 

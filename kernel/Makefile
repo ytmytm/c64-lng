@@ -80,6 +80,6 @@ clean   :
 	-rm *.o $(patsubst %,modules/%,$(MODULES)) ../include/config.h
 
 maintainer-clean : clean
-	-rm ../include/zp.h ../include/junptab.h lunix.c* boot.c* \
+	-rm ../include/zp.h ../include/jumptab.h lunix.c* boot.c* \
             globals.txt ../include/ksym.h
 

@@ -6,7 +6,8 @@ export LUPO_INCLUDEPATH=../include
 VPATH=../include
 
 # list of applications
-PARTS=libc_malloc libc_free libc_remalloc sreadline print_hex8
+PARTS=libc_malloc libc_free libc_remalloc sreadline print_hex8 getopt \
+      bcdtohex checkbcd
 
 all : libstd.a
 

@@ -261,10 +261,18 @@ Applications
       for small files (smaller than 30kbyte), i suggest to use 
       "cat source ! buf ! tee destination" instead
 
-    date [-s hh:mm[:ss](a|p)m]
+    date [-t hh:mm:ss.tt|-d ccyy.mm.dd|-w ww|-z (+|-)hhmm]
+      Get/set date and time of RTC clock. You need a supported
+      RTC module (or emulate one using ciartc)
+
+    dcf77
+      Read time signal from the DCF-77 module and sets time
+      and date once a minute using a RTC module (eg. ciartc)
+
+    time [-s hh:mm[:ss](a|p)m]
       set/get time of day
       e.g.
-        date -s 11:25am
+        time -s 11:25am
 
     ftp host 
       connect to a remote host (via TCP/IP) using the Internet
@@ -395,6 +403,9 @@ Modules
 
   API: "IP4" Version 1 (connect, listen, accept, sockinfo)
     tcpip - TCP/IP packet wise communication
+
+  API: "RTC" Version 1 (time_read,time_write, date_read, date_write, raw_write)
+    ciartc - emulate real time clock using timer alarm of CIA1
 
 
 Module-Dependencies
