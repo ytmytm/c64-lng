@@ -103,7 +103,7 @@ fs_cons_fopen:
 		lda (syszp),y
 		tay
 		lda usage_map
-		ora bmap,y
+		ora bit_n_set,y
 		sta usage_map
 #endif
 
@@ -135,7 +135,7 @@ fs_cons_fclose:
 		tay
 		lda usage_map
 		sei
-		eor bmap,y
+		eor bit_n_set,y
 		sta usage_map
 		dec usage_count
 		cli

@@ -1,7 +1,13 @@
-from 0.18 to 0.19 (Apr 11 2001)
+from 0.19 to 0.20
 -------------------------------
+fixed: lock returns with c=1 without error (AT)
+changed: bmap renamed to bit_n_set (table of values 2**n) (AT)
+fix: lib/print_hex8i.s possible stack corruption on error (Anton Treuenfels)
 added: IEC bus via 64net/2 support (as /net64 MAJOR_IEC, #15) (MW)
 fixed: ls lists directory a bit faster and works on 1571 from another drive (MW)
+
+from 0.18 to 0.19 (Apr 11 2001)
+-------------------------------
 added: -a option for ls (ls now hides files beginning with ".") (DD)
 changed: fs_iec now does character conversion (unix2cbm) (DD)
 changed: more code is common in keyboard.s (MW)

@@ -67,7 +67,7 @@ raw_alloc:
 		asl  a
 		ora  syszp
 		sta  tmpzp+2			; SBM-ID
-		lda  bmap,y				; A=2**Y
+		lda  bit_n_set,y		; A=2**Y
 		eor  lk_smbmap,x
 		sta  lk_smbmap,x
 		lda  lk_smbpage,x
@@ -137,10 +137,10 @@ smb_free:
 		txa
 		and  #7
 		tax
-		lda  bmap,x
+		lda  bit_n_set,x
 		and  lk_smbmap,y
 		bne  +					; already freed
-		lda  bmap,x
+		lda  bit_n_set,x
 		ora  lk_smbmap,y
 		sta  lk_smbmap,y
 		cmp  #$ff
@@ -174,7 +174,7 @@ get_smbptr:
 		txa
 		and  #7
 		tax
-		lda  bmap,x				; A=2**x
+		lda  bit_n_set,x		; A=2**x
 		and  lk_smbmap,y
 		cmp  #1					; carry cleared, when SMB is valid
 		rts						; c=1 means illegal SMB-ID

@@ -117,6 +117,7 @@
 #  define lsem_irq3  2        ; byte 0, bit 2
 #  define lsem_alert 3        ; byte 0, bit 3
 #  define lsem_nmi   4        ; byte 0, bit 4
+;//       lsem_nmi marks end of handler semaphores (see kernel/lock.s)
 #  define lsem_iec   5        ; byte 0, bit 5  (access to IEC serial bus)
 #define lk_nmidiscnt $ffea  ; counts number of "nonmi" tasks
 #define lk_taskcnt   $ffeb  ; counts number of tasks (16 bit)
