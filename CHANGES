@@ -1,10 +1,11 @@
 from 0.20 to 0.21
 -----------------
+changed: Makefile fixes so package/disc works for all archs (MW)
 added: lkf_loado65 kernel-function; it loads o65 modules without running them (GK)
 changed: improved the documentation-comments for the spawn functions (GK)
 changed: lunixrc --> .lunixrc on disk image (MW)
 fixed: init.s warnings, now SKIP_WORD/SKIPWORDV is used everywhere in kernel (MW)
-addded: configuration option for DIN keyboard layout (MW)
+added: configuration option for DIN keyboard layout (MW)
 removed: all PETSCII references (obsoleted for quite some time anyway) (MW)
 changed: updated TODO list, documentation (MW)
 added: pwd tool (G)

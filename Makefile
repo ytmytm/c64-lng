@@ -12,7 +12,7 @@ COMPFLAGS=
 # MACHINE=c128 for Commodore128 version (binaries in bin128)
 # MACHINE=atari for Atari 65XE/800/130 version (no binaries right now)
 
-MACHINE=c64
+MACHINE=atari
 
 # Modules to include in package (created with "make package")
 
@@ -51,12 +51,17 @@ export LNG_LIBRARIES=$(PWD)/lib/libstd.a
 export COMPFLAGS
 export MACHINE
 
-BINDIR=$(patsubst c%,bin%,$(MACHINE))
-  ifeq "$(MACHINE)" "atari"
-    BINDIR="binatari"
-  endif
+ifeq "$(MACHINE)" "atari"
+    BINDIR=binatari
+else
+    BINDIR=$(patsubst c%,bin%,$(MACHINE))
+endif
 
+ifeq "$(MACHINE)" "atari"
+all : kernel
+else
 all : kernel libstd apps help
+endif
 
 apps : devel kernel libstd
 	$(MAKE) -C apps
@@ -65,6 +70,7 @@ samples : devel libstd
 	-$(MAKE) -C samples
 
 kernel : devel
+	-rm -f include/config.h
 	$(MAKE) -C kernel
 
 libstd : devel
@@ -79,53 +85,55 @@ devel :
 	$(MAKE) -C devel_utils/apple
 
 binaries: all
-	-@cp kernel/boot.$(MACHINE) kernel/lunix.$(MACHINE) $(MODULES:%=kernel/modules/%) $(BINDIR)
+	-mkdir $(BINDIR)
+	-cp kernel/boot.$(MACHINE) kernel/lunix.$(MACHINE) $(MODULES:%=kernel/modules/%) $(BINDIR)
 
 package : binaries
-	-mkdir $(BINDIR) pkg
+	-mkdir pkg
 	cd $(BINDIR) ; mksfxpkg $(MACHINE) ../pkg/core.$(MACHINE) \
            "*loader" boot.$(MACHINE) lunix.$(MACHINE) $(MODULES)
 	cd apps ; mksfxpkg $(MACHINE) ../pkg/apps.$(MACHINE) $(APPS) $(IAPPS)
 	cd help ; mksfxpkg $(MACHINE) ../pkg/help.$(MACHINE) *.html
 	cd scripts ; mksfxpkg $(MACHINE) ../pkg/scripts.$(MACHINE) $(SAPPS)
-	cd samples ; \
-	  cp --target-directory=. luna/skeleton ca65/skeleton.o65 cc65/hello ; \
-	  mksfxpkg $(MACHINE) ../pkg/samples.$(MACHINE) skeleton skeleton.o65 hello ; \
-	  rm skeleton skeleton.o65 hello
+# allowed to fail because ca65 may be not present
+	-cd samples ; \
+	 cp --target-directory=. luna/skeleton ca65/skeleton.o65 cc65/hello ; \
+	 mksfxpkg $(MACHINE) ../pkg/samples.$(MACHINE) skeleton skeleton.o65 hello ; \
+	 rm skeleton skeleton.o65 hello
 
 ataridisc: binaries
-	  makeimage $(BINDIR)/boot.$(MACHINE) $(BINDIR)/lunix.$(MACHINE) $(BINDIR)/atari.bin
-	  makeatr pkg/lng$(MACHINE).atr $(BINDIR)/atari.bin
+	makeimage $(BINDIR)/boot.$(MACHINE) $(BINDIR)/lunix.$(MACHINE) $(BINDIR)/atari.bin
+	makeatr lng-$(MACHINE).atr $(BINDIR)/atari.bin
 
 cbmdisc: binaries
 
 	echo creating LUnix disc image for $(MACHINE)
-	c1541 -format lunix,00 d64 lunix64.d64 > /dev/null
+	c1541 -format lunix,00 d64 lunix-$(MACHINE).d64 > /dev/null
 
 	cd $(BINDIR); for i in \
 		loader fasthead fastloader \
 		boot.$(MACHINE) lunix.$(MACHINE) $(MODULES) \
-		; do c1541 -attach ../lunix64.d64 -write $$i > /dev/null \
+		; do c1541 -attach ../lunix-$(MACHINE).d64 -write $$i > /dev/null \
 		; done
 
 	cd kernel; for i in \
 		lunixrc \
-		; do c1541 -attach ../lunix64.d64 -write $$i .$$i > /dev/null \
+		; do c1541 -attach ../lunix-$(MACHINE).d64 -write $$i .$$i > /dev/null \
 		; done
 
 	cd apps; for i in \
 		$(APPS) $(IAPPS) $(TAPPS) \
-		; do c1541 -attach ../lunix64.d64 -write $$i > /dev/null \
+		; do c1541 -attach ../lunix-$(MACHINE).d64 -write $$i > /dev/null \
 		; done
 
 	cd help; for i in \
 		*.html \
-		; do c1541 -attach ../lunix64.d64 -write $$i > /dev/null \
+		; do c1541 -attach ../lunix-$(MACHINE).d64 -write $$i > /dev/null \
 		; done
 
 	cd scripts; for i in \
 		$(SAPPS) \
-		; do c1541 -attach ../lunix64.d64 -write $$i > /dev/null \
+		; do c1541 -attach ../lunix-$(MACHINE).d64 -write $$i > /dev/null \
 		; done
 
 ifeq "$(MACHINE)" "atari"
