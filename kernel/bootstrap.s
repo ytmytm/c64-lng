@@ -329,7 +329,7 @@ noide64_txt:	.text "Kernel panic: IDE64 not detected",$0a
 welcome_txt:
 		.byte $0a
 		.text "Welcome to LUnix next generation (LNG)",$0a
-		.text "Version 0.19, 11 Apr 2001",$0a,$0a
+		.text "Version 0.20, 27 Dec 2001",$0a,$0a
 		.text "Compile time options:",$0a
 #ifdef PETSCII
 		.text "  - PETSCII character encoding",$0a
