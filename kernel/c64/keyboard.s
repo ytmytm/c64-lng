@@ -139,6 +139,16 @@ _keytab_shift:
 # endif ; C128
 
 _keytab_normal:
+# ifdef DIN
+  .byte  $08,$0a,csr_right_c,f7_c,f1_c,f3_c,f5_c,csr_down_c
+  .byte  "3",$77,$61,"4",$79,$73,$65,~keyb_lshift
+  .byte  "5",$72,$64,"6",$63,$66,$74,$78
+  .byte  "7",$7a,$67,"8",$62,$68,$75,$76
+  .byte  "9",$69,$6a,"0",$6d,$6b,$6f,$6e
+  .byte  $2b,$70,$6c,$2d,$2e,$3a,$40,$2c
+  .byte  "[","+",$3b,home_c,~keyb_rshift,"#","]","-"
+  .byte  "1","<",~keyb_ctrl,"2"," ",commo_c,$71,rs_c
+# else
   .byte  $08,$0a,csr_right_c,f7_c,f1_c,f3_c,f5_c,csr_down_c
   .byte  $33,$77,$61,$34,$7a,$73,$65,~keyb_lshift
   .byte  $35,$72,$64,$36,$63,$66,$74,$78
@@ -147,6 +157,7 @@ _keytab_normal:
   .byte  $2b,$70,$6c,$2d,$2e,$3a,$40,$2c
   .byte  pound_c, $2a,$3b,home_c,~keyb_rshift,$3d,arrow_up_c,$2f
   .byte  $31,arrow_left_c,~keyb_ctrl,$32,$20,commo_c,$71,rs_c
+# endif ; DIN
 # ifdef C128
   ; for C128
   .byte help_c, $38, $35, tab_c, $32, $34, $37, $31
@@ -155,6 +166,16 @@ _keytab_normal:
 # endif ; C128
 		
 _keytab_shift:
+# ifdef DIN
+  .byte  sdel_c,$0a,csr_left_c,f8_c,f2_c,f4_c,f6_c,csr_up_c
+  .byte  $40,$57,$41,"$",$59,$53,$45,$ff
+  .byte  "%",$52,$44,"&",$43,$46,$54,$58
+  .byte  "/",$5a,$47,"(",$42,$48,$55,$56
+  .byte  ")",$49,$4a,"=",$4d,$4b,$4f,$4e
+  .byte  "?",$50,$4c,smin_c,":",$ff,sat_c,";"
+  .byte  arrow_up_c,"*",$ff,shome_c,$ff,snull_c,spound_c,arrow_left_c
+  .byte  "!",">",$ff,"\"",sspc_c,scommo_c,$51,srs_c
+# else
   .byte  sdel_c,$0a,csr_left_c,f8_c,f2_c,f4_c,f6_c,csr_up_c
   .byte  $23,$57,$41,$24,$5a,$53,$45,$ff
   .byte  $25,$52,$44,$26,$43,$46,$54,$58
@@ -163,6 +184,7 @@ _keytab_shift:
   .byte  splus_c,$50,$4c,smin_c,$3e,$5b,sat_c,$3c
   .byte  spound_c,sstar_c,$5d,shome_c,$ff,sequ_c,sarrow_up_c,$3f
   .byte  $21,sarrow_left_c,$ff,$22,sspc_c,scommo_c,$51,srs_c
+# endif ; DIN
 # ifdef C128
   ; for C128 - for now exactly the same as unshifted
   .byte help_c, $38, $35, tab_c, $32, $34, $37, $31
