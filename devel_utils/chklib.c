@@ -44,6 +44,9 @@ void main(int argc, char **argv)
   int  lo,hi;
 
   fname=argv[1];
+  if (fname==NULL) {
+  printf("Usage: %s libfile\n",argv[0]);
+  exit(-1); }
   fin=fopen(fname,"rb");
   if (fin==NULL) {
     printf("i/o error\n");
