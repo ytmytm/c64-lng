@@ -1,0 +1,8 @@
+Compiling the applications:
+
+ a simple make should do it.
+
+To compile some applications by hand do...
+
+ export LUPO_INCLUDEPATH=../kernel
+ luna -R -o lsmod lsmod.s

@@ -1,0 +1,12 @@
+
+    * minor changes in vdc_console.s
+	- beq + -> .byte $2c
+	- some optimizations in console-switching code, few bytes saved
+20.12.1999 
+    * C128 full keyboard extension - see notes in keyboards.s at the top and near
+      unix-tables definitions
+    * keyboard_init.s and keyboard.s in kernel/c128
+      there are only little changes, so this could go to c64 version into
+      clauses
+    * added one line to keyboard.h
+31.12.1999

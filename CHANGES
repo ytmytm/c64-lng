@@ -1,0 +1,170 @@
+from 0.16 to 0.17 (Sep 7 2000)
+------------------------------
+adapt source tree to CVS environment
+means:
+  try to get rid of all the symbolic links!
+  (use a dummy file with only a include statement in)
+  vdc_console moved one directory up (is not that machine dependent)
+changed: INCLUDE_DEPTH_MAX of lupo changed from 5 to 8 and fixed seg.fault
+         on hitting the limit
+
+from 0.15 to 0.16 (Jan 27 2000)
+-------------------------------
+added: 256kRAM C128 compatibility (MW)
+added: hardware stack swapping (see README.ytm and c128/README for more) (MW)
+changed: virtual addresses for kernel functions (run-time adaped)
+added:  turbo232 code added to swiftlink driver
+fixed:  swiftlink driver doesn't load @ 1st time after software reset
+uups:   wrote 51200 instead of 57600 baud at some places
+changed: PAL/NTSC detection algorithm
+cleaned: VDC console code - minor changes (Maciej Witkowiak)
+added:  c128 keyboard support (Maciej Witkowiak)
+fixed:  ppp reading username and pw from commandline
+
+from 0.14 to 0.15 (Dec 23 1999)
+-------------------------------
+fixed:  small glitch in lupo (specialfunctions with -r switch)
+fixed:  bug in calibration (bogoMIPS calculation) fixed
+added:  TCP/IP automatic address configuration
+added:  PAL/NTSC, 50/60Hz awareness
+added:  Errol Smith's PPP code 
+changed: moved modules directory into the kernel sub-tree
+added:  Maciej Witkowiak's code for a native C128 version of LNG
+changed: console and keyboard driver splitted into static and init part
+fixed:  c64arch created binary with start address $ce01 instead of $0801
+cleaned: access to address 1 now encapsulated in macros (GET/SETMEMCONF)
+added:  VDC console (by Maciej Witkowiak)
+added:  -f switch to bypass hardware detection (rs232std,swiftlink)
+added:  minimal support for SuperCPU (disc access at 1MHz)
+added:  more command (view outptu page by page)
+added:  uptime command (get system's uptime by reading CIA2 clock)
+added:  date command (get/set current time)
+added:  meminfo command (internal memory statistics)
+added:  strminfo command (streams statistics)
+fixed:  use of undefined memown-codes in tcpip and console
+
+from 0.13 to 0.14 (Oct 16 1999)
+-------------------------------
+fixed:  reu-console crash in cons_clear (called at init)
+added:  ftp download uses heavy buffering (up to all available internal mem.)
+added:  ipv4_tcpinfo call to ipv4-API (in tcpip.s and ftp.s)
+fixed:  bug in console driver (garbled output)
+fixed:  wrong formatted output of ps (wait state "cons" added)
+changed: moved all header files into ./include/...
+fixed:  lk_sleepipid initialized wrong (system hang after 17 minutes)
+fixed:  slip registers broken module, when started with unsupported baudrate
+added:  usage of formerly unused parts of the zeropage
+fixed:  "[0001] unhandled: 00" error message from micro shell
+
+from 0.12 to 0.13 (Sep 22 1999)
+-------------------------------
+added:  console driver now supports 2 virtual consoles (compile option 
+        MULTIPLE_CONSOLES)
+added:  new driver for standard RS232 userport interface (for SLIP)
+changed: moved compile time switches from Makefile into config.h
+fixed:  bug in bootstrapping code (cause of crash when the code exceeds 256byt)
+added:  minimal REU support (compile option HAVE_REU)
+added:  compile option ALWAYS_SZU for use with REU speeded taskswitching
+
+from 0.11 to 0.12 (Aug 11 1999)
+-------------------------------
+-----:  small changes to the kernel code (comments)
+fixed:  weakness in TCP/IP (freeing unused bufferspace)
+added:  "loop" loop back packet driver
+app:    simple "cp" by Gene MyCully
+
+from 0.10 to 0.11 (Jul 9 1999)
+------------------------------
+fixed:  bug in fs_iec (too many files, after 8 unsuccessfull fopen calls)
+fixed:  some TCP/IP fixes
+fixed:  memory leak in sh
+changed: print_error now uses stderr if available (instead of printk)
+tuned:  some more CBM errors understood
+added:  connd application (TCP/IP connect demon)
+added:  user stream (create own stream with fgetc/fputc/fclose functions)
+added:  wc [file] (not just stdin)
+added:  fcmd-call and "rm" application
+fixed:  signal handling (some bugs in sendsignal/signal)
+added:  SLIP, TCP/IP support (based on SLIPdemo/LUnix0.1, alpha-quality)
+added:  telnet application
+
+from 0.09 to 0.10 (Jun 13 1999)
+-------------------------------
+added:  uuencode/uudecode (ported from LUnix0.1)
+added:  console stream
+fixed:  small bug in shell ("PS ! WC", spaces after "!" didn't work)
+added:  translation of CBM to LNG errors (LNG just reported ioerror)
+added:  support for fmode_wo, fmode_a in fs_iec (write only, append)
+added:  support for >1 opened files in fs_iec
+added:  application: cat, tee by Piotr Roszatycki
+fixed:  error in lock-call (was always non-blocking)
+added:  compile switch for textual kernel error messages
+fixed:  unprotected atomic section in fopen/fgetc/fputc (cause of random crash)
+fixed:  add_task errors (outofmemory instead of illarg/toomanytasks)
+fixed:  sh parameter handling (was cause of outofmemory or broken args)
+fixed:  exe_reloc problems (was cause of crash)
+fixed:  fix_module leaves illegal lk_memnxt-pointer
+added:  simple getty application
+fixed:  swiftlink module buffer-allocation (was cause of crash)
+fixed:  swiftlink module and RTS/CTS handling
+
+from 0.08 to 0.09 (May 16 1999)
+-------------------------------
+tuned:  init (microshell) response time
+fixed:  fork_to return value
+fixed:  fs_pipe_fputc hang instead of broken_pipe bug
+added:  ansi compatible escape codes for cursor movement (up/down/left/right)
+        in keyboard and console module
+changed: micros-hell renamed to init
+added:  kernel support for commandline arguments (max 252 bytes)
+fixed:  completed NMI-locking
+fixed:  bugs in NMI-Handling
+fixed:  crash in unlock(nmi) fixed
+tuned:  fopen (IEC serial bus) 1541 search wait-time changed from 6 to 2.5s
+fixed:  fgetc (pipe) returned TRY_AGAIN instead of EOF
+fixed:  ugly side effect when task switching with ZPsize=0
+added:  shell passes keystrokes through to the application
+added:  inheritance of default device (addtask)
+
+
+from 0.07 to 0.08 (Mar 26 1999)
+-------------------------------
+too much to count!
+added:  basic serial i/o routines
+        basic filesystem stuff (not yet complete)
+        code relocator 
+        simple shell ("micros-hell")
+        ...
+fixes:  countless .-)
+
+
+from 0.06 to 0.07 (Dec 6 1997)
+------------------------------
+added:         signals
+changed:       machine dependencies
+
+from 0.05 to 0.06 (Nov 8 1997)
+------------------------------
+added:         some ANSI escape codes for console.s (enough for running IRC 
+               remotely)
+added:         microterminal for swiftlink (NMI, $de00, 9600 Baud, 8N1)
+
+from 0.04 to 0.05 (Nov 2 1997)
+------------------------------
+added:         scheduling with priorities (1..7)
+
+from 0.03 to 0.04 (Oct 18 1997)
+-------------------------------
+removed bugs:  p_insert/p_remove/taskswitching.. with many tasks
+added:         exitcodes + time
+
+from 0.02 to 0.03 (Oct 12 1997)
+-------------------------------
+removed bugs:  sleep/taskswitch/... with many tasks
+added:         pagewise memory management (internal RAM)
+added:         addtask routine
+
+from 0.01 to 0.02 (Oct 6 1997)
+------------------------------
+removed bugs:  sleep/suspend very buggy (unusable) with more than 1 task
+

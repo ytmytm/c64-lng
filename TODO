@@ -1,0 +1,15 @@
+my to-do list:
+-- environment for a working "more" command (partly done)
+-- driver for UP9600 (enhanced userport rs232 interface)
+-- driver for 16550 based RS232 interfaces
+-- RAM disc for REU
+-- general support for external RAM
+-- environment for "ps" with command names
+-- better vt100/ansi emulation
+-- better handling of lines longer than 40 chars
+-- shell command completion (from history buffer ?)
+-- shell wildcard expansion
+-- command cache
+-- move parts of the kernel into a library
+-- distribute lunix in a >compressed< archive
+-- execute shell scripts like binaries
