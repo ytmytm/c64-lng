@@ -1,3 +1,6 @@
+		;; for emacs: -*- MODE: asm; tab-width: 4; -*-
+		;; TCP/IP application
+		;; simple telnet client (and test server)
 
 #include <stdio.h>
 #include <ipv4.h>
@@ -48,15 +51,20 @@ read_decimal:
 		clc
 		rts
 
-; read IP address from commandline
-
+		;;
+		
 	-	ldx  #stderr
 		bit  txt_howto
 		jsr  lkf_strout
 		lda  #1
 		jmp  lkf_suicide			; exit(1)
 
+; read IP address from commandline
+
 read_IPnPort:
+		lda  #0
+		sta  passive_flag		; default is to open socket actively
+		
 		lda  userzp
 		cmp  #3
 		bne  -					; need exactly 2 arguments
@@ -67,8 +75,17 @@ read_IPnPort:
 		lda  (userzp),y
 		bne  -
 		iny
-		
-		jsr  read_decimal
+
+		lda  (userzp),y
+		cmp  #"a"				; check for "*" passive mode flag
+		bne  +					; not, then expect IP address of server
+		iny
+		lda  (userzp),y
+		bne  err_syntax
+		dec  passive_flag
+		bmi  read_Port			; skip reading IP address of server
+
+	+	jsr  read_decimal
 		bcs  err_syntax
 		sta  remote_ip
 		ldx  #1
@@ -85,6 +102,7 @@ read_IPnPort:
 		cpx  #4
 		bne  -
 
+read_Port:		
 		iny
 		
 		jsr  read_decimal
@@ -156,7 +174,7 @@ print_ip:
 initialize:
 		lda  #4
 		jsr  lkf_set_zpsize
-		
+
 		jsr  read_IPnPort
 
 		ldx  userzp+1
@@ -170,8 +188,10 @@ initialize:
 		jsr  lkf_get_moduleif
 		nop
 
-		;; ok, try to connect
-		
+		bit  passive_flag
+		bmi  open_passively
+
+		;; ok, try to connect		
 		ldx  #stdout
 		bit  txt_trying
 		jsr  lkf_strout
@@ -188,7 +208,30 @@ initialize:
 		bit  ip_struct
 		jsr  IPv4_connect
 		bcc  +
-		jmp  telnet_err
+	-	jmp  telnet_err
+
+open_passively:
+		clc						; (open)
+		ldx  #IPV4_TCP			; (TCP)
+		lda  remote_port		; (port number)
+		ldy  remote_port+1
+		jsr  IPv4_listen
+		bcs  -
+		
+		ldx  #stdout
+		bit  txt_listening
+		jsr  lkf_strout
+		lda  remote_port
+		jsr  print_decimal
+		lda  #$0a
+		jsr  putc
+		
+		sec						; (blocking)
+		lda  remote_port		; (port number)
+		ldy  remote_port+1
+		jsr  IPv4_accept
+		bcs  -
+		
 	+	stx  tcp_fd_read
 		sty  tcp_fd_write
 
@@ -359,6 +402,7 @@ telnet_err:
 		
 tcp_fd_read:	.buf 1
 tcp_fd_write:	.buf 1
+passive_flag:	.buf 1			; set if, telnet should open socket as listener
 		
 ip_struct:
 		.buf 8
@@ -373,6 +417,8 @@ chbuf:    .byte 0
 ipv4_struct:
 		IPv4_struct8			; defined in ipv4.h
 		
+txt_listening:
+		.text "Listening on port ",0
 txt_trying:
 		.text "Trying ",0
 txt_conn:
