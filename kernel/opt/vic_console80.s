@@ -5,12 +5,6 @@
 		;; (static screens)
 		;; changed to support one 80x25 console
 
-;; TODO:
-;; - scrollup with REU
-;; - erase rest of line with ESC
-;; BUGS:
-;; - in sh delete has problems on 2->1 screen transport
-
 #include <console.h>
 
 		;; additional globals needed by
@@ -122,7 +116,7 @@ loc2 equ *+2
 		sta  REU_command
 		lda  #>screenR_base
 		sta  REU_intbase+1
-		lda  #REUcmd_reu2int|REUcmd_noff00|REUcmd_execute
+		lda  #REUcmd_reu2int|REUcmd_load|REUcmd_noff00|REUcmd_execute
 		sta  REU_command
 		lda  #5					; fill with $000405 which is $05 (green)
 		sta  REU_reubase
@@ -141,29 +135,20 @@ cons_home:
 
 cons_setpos:
 		cpx  #size_x
-		bcs  +++
+		bcs  +
 		cpy  #size_y
-		bcs  +++				; ignore invalid settings
+		bcs  +					; ignore invalid settings
 		stx  csrx
 		sty  csry
-		;; calculate position in RAM
-		lda  #>screenL_base
-		sta  tmpzp
-		txa
-		sec
-		sbc  #40
-		bmi  +
-		lda  #>screenR_base
-		sta  tmpzp
-		bne  ++
-	+	txa
-	+	clc
-		adc  ypos_table_lo,y
+cons_setpos_sane:
+		lda  ypos_table_lo,y
+		clc
+		adc  xpos_table_offset,x
 		sta  mapl
 		lda  ypos_table_hi,y
-		adc  tmpzp
+		adc  xpos_table_sbase,x
 		sta  maph
-
+		clc
 	+	rts
 
 cons_csrup:
@@ -203,25 +188,8 @@ cons_csrleft:
 		beq  err				; error
 		dex
 		stx  csrx
-		cpx  #39				; from right to left console?
-		bne  +					; no
-		;; yes - change addresses
-		lda  mapl				; go to end of line
-		clc
-		adc  #40
-		sta  mapl
-		lda  maph
-		adc  #0
-		and  #%00000011
-		ora  #>screenL_base			; fix base screen address
-		sta  maph
-
-	+	lda  mapl				; go to previous character
-		bne  +
-		dec  maph
-	+	dec  mapl
-		clc
-		rts
+		ldy  csry
+		jmp  cons_setpos_sane
 
 cons_csrright:	
 		ldx  csrx
@@ -229,24 +197,8 @@ cons_csrright:
 		beq  err
 		inx
 		stx  csrx
-		cpx  #40				; from left to right console?
-		bne  +					; no
-		;; yes - change adresses
-		lda  mapl
-		sec
-		sbc  #40
-		sta  mapl
-		lda  maph
-		sbc  #0
-		and  #%00000011
-		ora  #>screenR_base
-		sta  maph
-
-	+	inc  mapl
-		bne  +
-		inc  maph
-	+	clc
-		rts
+		ldy  csry
+		jmp  cons_setpos_sane
 
 cons_scroll_up:
 #ifndef HAVE_REU
@@ -306,12 +258,23 @@ scrl_loop2:
 		rts
 #else
 		;; scrolling with REU
+		
+		;; scroll left screen
+		lda  #>screenL_base
+		sta  tmpzp
+		jsr  cons_reu_scrollscr
+		;; scroll right screen
+		lda  #>screenR_base
+		sta  tmpzp
+
+		;; scroll up y1-y2 lines, with screenbase in tmpzp, erase lowest line
+cons_reu_scrollscr:
 		ldy  scrl_y1
 		lda  ypos_table_lo+1,y
 		sei						; (must sei until REU command is issued)
 		sta  REU_intbase
 		lda  ypos_table_hi+1,y
-		ora  sbase
+		ora  tmpzp
 		sta  REU_intbase+1
 		lda  #0
 		sta  REU_reubase
@@ -333,7 +296,7 @@ scrl_loop2:
 		lda  ypos_table_lo,y
 		sta  REU_intbase
 		lda  ypos_table_hi,y
-		ora  sbase				; base of screen
+		ora  tmpzp			; base of screen
 		sta  REU_intbase+1
 		lda  #REUcmd_reu2int|REUcmd_noff00|REUcmd_execute
 		sta  REU_command		; copy portion back to screen (one line above)
@@ -351,7 +314,8 @@ scrl_loop2:
 		lda  #REUcmd_reu2int|REUcmd_noff00|REUcmd_execute
 		sta  REU_command		; erase lowest line (fill with $20)
 		cli
-		rts	
+		rts
+
 #endif
 
 cons_showcsr:
@@ -655,18 +619,29 @@ esc_com3:
 		bne  +
 		php
 		sei
+		lda  mapl				; save mapl/h
+		sta  tmpzp+2
+		lda  maph
+		sta  tmpzp+3
+
+		ldx  csrx
+	-	ldy  csry
+		jsr  cons_setpos_sane
 		lda  mapl
 		sta  tmpzp
 		lda  maph
 		sta  tmpzp+1
 		ldy  #0
-		ldx  csrx
 		lda  #32
-	-	sta  (tmpzp),y
-		iny
+		sta  (tmpzp),y
 		inx
 		cpx  #size_x
 		bne  -
+
+		lda  tmpzp+3				; restore mapl/h
+		sta  maph
+		lda  tmpzp+2
+		sta  mapl
 		plp
 	+	jmp  leave_esc
 
@@ -777,6 +752,34 @@ ypos_table_hi:
 		.byte >400, >440, >480, >520, >560
 		.byte >600, >640, >680, >720, >760
 		.byte >800, >840, >880, >920, >960
+
+xpos_table_offset:
+		.byte  0,  1,  2,  3,  4,  5,  6,  7,  8,  9
+		.byte 10, 11, 12, 13, 14, 15, 16, 17, 18, 19
+		.byte 20, 21, 22, 23, 24, 25, 26, 27, 28, 29
+		.byte 30, 31, 32, 33, 34, 35, 36, 37, 38, 39
+		.byte  0,  1,  2,  3,  4,  5,  6,  7,  8,  9
+		.byte 10, 11, 12, 13, 14, 15, 16, 17, 18, 19
+		.byte 20, 21, 22, 23, 24, 25, 26, 27, 28, 29
+		.byte 30, 31, 32, 33, 34, 35, 36, 37, 38, 39
+
+xpos_table_sbase:
+		.byte >screenL_base, >screenL_base, >screenL_base, >screenL_base, >screenL_base
+		.byte >screenL_base, >screenL_base, >screenL_base, >screenL_base, >screenL_base
+		.byte >screenL_base, >screenL_base, >screenL_base, >screenL_base, >screenL_base
+		.byte >screenL_base, >screenL_base, >screenL_base, >screenL_base, >screenL_base
+		.byte >screenL_base, >screenL_base, >screenL_base, >screenL_base, >screenL_base
+		.byte >screenL_base, >screenL_base, >screenL_base, >screenL_base, >screenL_base
+		.byte >screenL_base, >screenL_base, >screenL_base, >screenL_base, >screenL_base
+		.byte >screenL_base, >screenL_base, >screenL_base, >screenL_base, >screenL_base
+		.byte >screenR_base, >screenR_base, >screenR_base, >screenR_base, >screenR_base
+		.byte >screenR_base, >screenR_base, >screenR_base, >screenR_base, >screenR_base
+		.byte >screenR_base, >screenR_base, >screenR_base, >screenR_base, >screenR_base
+		.byte >screenR_base, >screenR_base, >screenR_base, >screenR_base, >screenR_base
+		.byte >screenR_base, >screenR_base, >screenR_base, >screenR_base, >screenR_base
+		.byte >screenR_base, >screenR_base, >screenR_base, >screenR_base, >screenR_base
+		.byte >screenR_base, >screenR_base, >screenR_base, >screenR_base, >screenR_base
+		.byte >screenR_base, >screenR_base, >screenR_base, >screenR_base, >screenR_base
 
 		;; zeropage assignments
 

@@ -1,7 +1,7 @@
 from 0.18 to 0.19 ...
 -------------------------------
 removed: ancient kernel/c64/todo/cons80.s code (MW)
-added: vic 80 column console (still needs some work) (MW)
+added: vic 80 column console (MW)
 added: application clear (SH)
 changed: ident.h and skeleton (Stefan A. Haubenthal)
 added: minimal support for Atari 65XE/800X?/130XE port (only kernal+microshell) (MW)
