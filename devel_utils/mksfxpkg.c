@@ -1,9 +1,11 @@
+/* package generator */
+
 #include <stdio.h>
 #include <string.h>
 
-#define head_length 398
+#define c64_header_length 398
 
-static unsigned char archive_head[]= { 
+static unsigned char c64_archive_head[]= { 
 	0x01, 0x08, 0x00, 0x19, 0xcd, 0x07, 0x9e, 0xc2, 
 	0x28, 0x34, 0x33, 0x29, 0xaa, 0x32, 0x35, 0x36, 
 	0xac, 0xc2, 0x28, 0x34, 0x34, 0x29, 0xaa, 0x32, 
@@ -66,26 +68,33 @@ main(int argc, char **argv)
   unsigned char sum;
   int conv_flag;
   char *ctmp;
+  char *format;
   
-  if (argc<3) {
+  if (argc<4) {
     /* print howto */
-    printf("usage: c64arch outfile infiles...\n"
+    printf("usage: %s format outfile infiles...\n"
 	   "  infile-names prefixed with * will be converted into\n"
-	   "  petscii\n");
-    exit(0);
+	   "  propretary machine-bios-native format\n"
+	   "  supported formats: c64, c128\n",argv[0]);
+    exit(1);
   }
 
-  outfile=fopen(argv[1],"w");
+  format=argv[1];
+  if (strcmp(format,"c64") && strcmp(format,"c128")) {
+    fprintf(stderr,"%s: unsupported target \"%s\"\n",argv[0],format);
+    exit(1); }
+
+  outfile=fopen(argv[2],"w");
   if (outfile==NULL) {
-    printf("can't open output file \"%s\".\n",argv[1]);
+    printf("can't open output file \"%s\".\n",argv[2]);
     exit(1); }
   
   i=0;
-  while (i<head_length) 
-    fputc(archive_head[i++], outfile);
-  total=head_length+0x0801;
+  while (i<c64_header_length) 
+    fputc(c64_archive_head[i++], outfile);
+  total=c64_header_length+0x0801;
     
-  i=2;  
+  i=3;  
   while (i<argc) {
     sum=0;
     ctmp=argv[i];

@@ -21,20 +21,25 @@ MODULES=sswiftlink sfifo64 rs232std swiftlink
 # the applications (in binary form) do not depend on the machine selection
 
 APPS=getty lsmod microterm ps sh sleep testapp wc cat tee uuencode \
-     uudecode 232echo 232term telnet kill rm ls connd ftp buf cp tcpipstat \
-     uptime time meminfo strminfo uname more slip tcpip ppp loop beep \
-     help env date ciartc dcf77 httpd smwrtc
+     uudecode 232echo 232term kill rm ls buf cp uptime time meminfo \
+     strminfo uname more beep help env date ciartc dcf77 smwrtc
+
+# Internet Applications
+# will be put in the same package als APPS now, but may go into a
+# seperate one, in case the APP-package grows to big
+
+IAPPS=connd ftp tcpipstat tcpip ppp loop slip httpd ftp
 
 #============== end of configurable section ============================
 
-.PHONY : all apps kernel libstd help package clean distclean 
+.PHONY : all apps kernel libstd help package clean distclean devel
 
 export PATH+=:$(PWD)/devel_utils/:.
 export LUPO_INCLUDEPATH=../kernel
 export COMPFLAGS
 export MACHINE
 
-all : kernel libstd apps
+all : kernel libstd apps help
 
 apps : libstd
 	$(MAKE) -C apps
@@ -48,14 +53,18 @@ libstd :
 help :
 	$(MAKE) -C help
 
+devel :
+	$(MAKE) -C devel_utils
+
 BINDIR=$(patsubst c%,bin%,$(MACHINE))
 
 package : 
-	-mkdir $(BINDIR)
-	cp kernel/boot.$(MACHINE) kernel/lunix.$(MACHINE) \
-         $(MODULES:%=kernel/modules/%) $(APPS:%=apps/%) $(BINDIR)
-	cd $(BINDIR) ; c64arch lng.$(MACHINE) "*loader" \
-         boot.$(MACHINE) lunix.$(MACHINE) $(APPS) $(MODULES)
+	-mkdir $(BINDIR) pkg
+	cp kernel/boot.$(MACHINE) kernel/lunix.$(MACHINE) $(MODULES:%=kernel/modules/%) $(BINDIR)
+	cd $(BINDIR) ; mksfxpkg $(MACHINE) ../pkg/core.$(MACHINE) \
+         "*loader" boot.$(MACHINE) lunix.$(MACHINE) $(MODULES)
+	cd apps ; mksfxpkg $(MACHINE) ../pkg/apps.$(MACHINE) $(APPS) $(IAPPS)
+	cd help ; mksfxpkg $(MACHINE) ../pkg/help.$(MACHINE) *.html
 
 clean :
 	$(MAKE) -C kernel clean
@@ -65,8 +74,9 @@ clean :
 
 distclean : clean
 	-cd kernel ; rm boot.c* lunix.c* globals.txt
-	-cd bin64 ; rm $(APPS) $(MODULES) boot.* lunix.* lng.c64
-	-cd bin128 ;  rm $(APPS) $(MODULES) boot.* lunix.* lng.c128
+	-cd bin64 ; rm $(MODULES) boot.* lunix.* lng.c64
+	-cd bin128 ;  rm $(MODULES) boot.* lunix.* lng.c128
 	-cd include ; rm jumptab.h ksym.h zp.h
+	-rm -rf pkg
 	find . -name "*~" -exec rm -v \{\} \;
 	find . -name "#*" -exec rm -v \{\} \;
