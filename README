@@ -290,7 +290,7 @@ Applications
       and date once a minute using a RTC module (eg. ciartc)
 
     time [-s hh:mm[:ss](a|p)m]
-      set/get time of day
+      set/get time of day directly from CIA1 TOD
       e.g.
         time -s 11:25am
 

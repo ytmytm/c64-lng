@@ -1,5 +1,6 @@
 from 0.18 to 0.19 (Apr 11 2001)
 -------------------------------
+fixed: ls lists directory a bit faster and works on 1571 from another drive (MW)
 added: -a option for ls (ls now hides files beginning with ".") (DD)
 changed: fs_iec now does character conversion (unix2cbm) (DD)
 changed: more code is common in keyboard.s (MW)
