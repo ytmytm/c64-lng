@@ -39,8 +39,7 @@
 
 		SELFMOD equ $fe00		; placeholder
 		
-		.byte $0c
-		.word +					; relocator jump
+		RELO_JMP(+)				; relocator jump
 
 module_struct:
 		.asc "ser"      ; module identifier
@@ -269,8 +268,7 @@ rs232_putc:
 		cli
 		rts
 
-		.byte $0c
-		.word +					; (don't relocate data-inlay)
+		RELO_JMP(+)				; (don't relocate data-inlay)
 		
 baudtable:		.byte 5, 6, 7, 8, 10, 12, 14, 15, 0
 		
@@ -402,7 +400,7 @@ is_available:
 	+	ldx  #0
 		jmp  lkf_fix_module		
 
-		.byte $02				; end of relocated code
+		RELO_END ; no more code to relocate
 
 not_txt:
 		.text "sorry, no swiftlink detected"

@@ -1,5 +1,7 @@
 from 0.19 to 0.20
 -------------------------------
+added: RELO_JMP(addr) and RELO_END macros (DD) idea by (AT)
+added: SKIP_BYTE, SKIP_WORD macros (replaces .byte $24, .byte $2c) (DD/AT)
 added: srandom/random functions (MW)
 changed: debug stuff is common for all, please use debug.h only (MW)
 fixed: lock returns with c=1 without error (AT)

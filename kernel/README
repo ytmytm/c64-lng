@@ -616,8 +616,8 @@ eg.
        lda  table,x
        rts
 
-       .byte $0c    ; <- pseodo opcode for a pseudo 3byte instruction
-       .word end_of_data_inlay
+       ; insert pseodo opcode that is  evaluated by the code relocator
+       RELO_JMP(end_of_data_inlay) 
 
    table:
        .text "Hello World!"
@@ -644,7 +644,7 @@ Example 1 for illegal code
       (...)
    case1:
       lda  #$03
-      .byte $2c
+      .byte $2c             ; use "SKIP_WORD" macro anyway
    case2:
       lda  #$01
       (...)

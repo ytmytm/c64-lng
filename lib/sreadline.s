@@ -72,8 +72,7 @@ io_eof:	tya
 		lda  #lerr_eof
 		jmp  catcherr
 
-		.byte $0c
-		.word +
+		RELO_JMP(+)
 		
 len_limit:		
 		.buf 1

@@ -95,7 +95,7 @@ decout:
 		beq  +
 		ldx  #"0"
 		ora  #"0"
-		.byte $2c
+		SKIP_WORD
 	+	lda  #" "
 		stx  userzp+2
 		jsr  out
@@ -127,8 +127,7 @@ hexout:
 		lda  hextab,x
 		jmp  out
 				
-		.byte $02
-		.byte $ff
+		RELO_END ; no more code to relocate
 
 dectab:	.byte 1,10,100
 titleline:

@@ -90,8 +90,7 @@ testfunc:
 		jmp  lkf_io_return
 	+	rts
 		
-		.byte $0c
-		.word +
+		RELO_JMP(+)
 
 sig_txt:
 		.text "Caught Signal"
@@ -103,8 +102,7 @@ text:
 		.text "These are my args:"
 		.byte $0a,$00
 		
-	+	.byte $02
-		.byte $ff
+	+	RELO_END ; no more code to relocate
 
 end_of_code:
 

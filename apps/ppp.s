@@ -66,8 +66,7 @@
 
 		jmp  initialize
 
-		.byte $0c
-		.word +					; (don't try to relocate data)
+		RELO_JMP(+)             ; (don't try to relocate data)
 
 module_struct:
 		.asc "pkg"				; module identifier
@@ -269,7 +268,7 @@ reckeep:
 		cmp  #>PROTO_IP
 		bne  +
 		lda  #$41				; (done + "is IP")
-		.byte $2c				; (bit $40xx is ok - not relocated)
+		SKIP_WORD				; (bit $40xx is ok - not relocated)
 	+	lda  #$40
 		sta  buf_stat,x			; mark buffer ("done")
 		lda  buf_l2nx,x			; switch current to next buffer
@@ -1726,8 +1725,7 @@ main_loop:
 		jsr  lkf_force_taskswitch
 		jmp  main_loop
 
-		.byte $0c
-		.word tab_end
+		RELO_JMP(tab_end)
 		
 ;-------------------------------------------------------------------
 ; variables
@@ -2072,7 +2070,7 @@ get_namenpw:
 		inx
 		cpx  #16
 		bne  -					; (limit to 16 chars)
-		.byte $24 			; skip iny
+		SKIP_BYTE 			; skip iny
 	-	iny
 		lda  (userzp),y
 		bne  -
@@ -2227,7 +2225,7 @@ send_faked_ip:
 
 		rts
 		
-		.byte $02				; end of code (relocator ends here)
+		RELO_END ; no more code to relocate
 
 		;; -----------------------------------------------------
 

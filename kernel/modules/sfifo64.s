@@ -25,8 +25,7 @@
 
 		SELFMOD equ $fe00		; placeholder
 		
-		.byte $0c
-		.word +					; relocator jump
+		RELO_JMP(+)				; relocator jump
 
 		;; nmizp+2  - write offset
 		;; nmizp+3  - read offset
@@ -372,16 +371,16 @@ detect:
 		stx  fifo64_lcr
 		;; port_16550A
 		lda  #3
-		.byte $2c
+		SKIP_WORD
 port_16450:
 		lda  #1
-		.byte $2c
+		SKIP_WORD
 port_unknown:
 		lda  #0
-		.byte $2c
+		SKIP_WORD
 port_16550:
 		lda  #2
-		.byte $2c
+		SKIP_WORD
 port_16650:
 		lda  #4
 		sta  uart_type
@@ -413,7 +412,7 @@ out:
 		nop
 		rts
 		
-		.byte $02
+		RELO_END ; no more code to relocate
 
 hextab:	.text "0123456789abcdef"
 				

@@ -79,8 +79,8 @@ cat_help:
 		lda #1
 		jmp lkf_suicide
 
-		.byte $02				; End Of Code - marker !
-		
+		RELO_END ; no more code to relocate
+	
 cat_helptext:
 		.text "Usage: cat [file]"
 		.byte $0a,$00

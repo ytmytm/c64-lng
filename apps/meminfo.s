@@ -89,25 +89,25 @@ print_explanation:
 		
 p_task:	
 		ldy  #o_task
-		.byte $2c
+		SKIP_WORD
 p_smb:	
 		ldy  #o_smb
-		.byte $2c
+		SKIP_WORD
 p_cache:
 		ldy  #o_cache
-		.byte $2c
+		SKIP_WORD
 p_sys:	
 		ldy  #o_sys
-		.byte $2c
+		SKIP_WORD
 p_modul:
 		ldy  #o_modul
-		.byte $2c
+		SKIP_WORD
 p_scr:	
 		ldy  #o_scr
-		.byte $2c
+		SKIP_WORD
 p_netbuf:	
 		ldy  #o_netbuf
-		.byte $2c
+		SKIP_WORD
 p_none:
 		ldy  #o_none
 	-	lda  txt_misc,y
@@ -151,7 +151,7 @@ print_space:
 		lda  #" "
 		jmp  putc
 
-		.byte $02				; end of code
+		RELO_END ; no more code to relocate
 		
 text:
 		.text "memory usage (internal pages)",$0a

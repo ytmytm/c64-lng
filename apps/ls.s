@@ -234,7 +234,7 @@ out:	sec
 		nop
 		rts
 
-		.byte $02				; End Of Code - marker !
+		RELO_END ; no more code to relocate
 
 hextab:	.text "0123456789abcdef"
 

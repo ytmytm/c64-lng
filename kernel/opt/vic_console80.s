@@ -379,7 +379,7 @@ _is_special:
 		rts
 
 	+	lda  special_code-1,x
-		.byte $2c
+		SKIP_WORD
 
 _sub96:	
 		sbc  #95
@@ -684,7 +684,7 @@ esc_com5:
 		cmp  #7
 		bne  ++					; skip
 		lda  #$80				; activate RVS
-		.byte $2c
+		SKIP_WORD
 	+	lda  #$00				; de-activate RVS
 		sta  rvs_flag
 	+	cpy  esc_parcnt

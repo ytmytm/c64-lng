@@ -369,9 +369,9 @@ print_machine_type:
 		beq  +++
 		bne  ++++
 	+	ldy  #txt_c64-txt_c64
-		.byte $2c
+		SKIP_WORD
 	+	ldy  #txt_c128-txt_c64
-		.byte $2c
+		SKIP_WORD
 	+	ldy  #txt_atari-txt_c64
 		jsr  mout
 

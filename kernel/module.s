@@ -71,7 +71,7 @@ search_end:
 		
 not_found:
 		lda  #lerr_nosuchmodule
-		.byte $2c
+		SKIP_WORD
 		
 wrong_size:
 		lda  #lerr_illmodule

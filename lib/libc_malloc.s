@@ -53,7 +53,7 @@ _mem_boundcheck:
 		tax
 		cpx  tmpzp
 		bne  -
-		.byte $24				; ->yes
+		SKIP_BYTE				; ->yes
 
 	+	clc
 	+ 	cli
@@ -328,8 +328,7 @@ _malloc_end:
 		iny
 	+	rts
 
-.byte $0c
-.word +
+		RELO_JMP(+)
 
 .global _malloc_mc, _malloc_mc2
 .global __libcmalloc_start, __mem_bytes, __mem_end

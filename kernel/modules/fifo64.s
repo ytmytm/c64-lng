@@ -23,8 +23,7 @@
 
 		SELFMOD equ $fe00		; placeholder
 		
-		.byte $0c
-		.word +					; relocator jump
+		RELO_JMP(+)				; relocator jump
 
 rcv_errcnt:			.buf 1		; receiver error count
 		

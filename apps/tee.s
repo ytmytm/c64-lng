@@ -79,7 +79,7 @@ tee_help:
 		lda #1
 		jmp lkf_suicide
 
-		.byte $02				; End Of Code - marker !
+		RELO_END ; no more code to relocate
 		
 tee_helptext:
 		.text "Usage: tee [file]"

@@ -88,7 +88,7 @@ putc:	sec
 		nop
 		rts
 
-		.byte $02				; end of code
+		RELO_END ; no more code to relocate
 
 begin_txt:
 		.text "uptime is ",0

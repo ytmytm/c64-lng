@@ -159,7 +159,7 @@ HowTo:
 		lda  #1
 		rts
 
-		.byte $02
+		RELO_END ; no more code to relocate
 				
 HowTo_txt:
 		;;    "0123456789012345678901234567890123456789"

@@ -100,7 +100,7 @@ endall:	jsr  rs232_unlock
 		lda  #0
 		rts
 		
-		.byte $02
+		RELO_END ; no more code to relocate
 
 moddesc:
 	RS232_sstruct4	; MACRO defined in rs232.h (rs232_{unlock,ctrl,getc,putc})

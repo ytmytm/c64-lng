@@ -94,16 +94,16 @@ print_explanation:
 		
 p_pipe:	
 		ldy  #o_pipe
-		.byte $2c
+		SKIP_WORD
 p_iec:	
 		ldy  #o_iec
-		.byte $2c
+		SKIP_WORD
 p_console:
 		ldy  #o_console
-		.byte $2c
+		SKIP_WORD
 p_user:	
 		ldy  #o_user
-		.byte $2c
+		SKIP_WORD
 p_sys:
 		ldy  #o_sys
 	-	lda  txt_misc,y
@@ -147,7 +147,7 @@ print_space:
 		lda  #" "
 		jmp  putc
 
-		.byte $02				; end of code
+		RELO_END ; no more code to relocate
 		
 text:
 		.text "summary of open streams",$0a

@@ -251,7 +251,7 @@ _raw_sendsignal:
 		sta  (tmpzp),y			; write new stacksize
 #endif
 		lda  #0					; load returncode 0 ('signal sent')
-		.byte $2c				; skip next instruction
+		SKIP_WORD				; skip next instruction
 
 skip_signal:	
 		lda  #lerr_tryagain		; load returncode ('signal not sent')

@@ -94,7 +94,7 @@ out:
 		nop
 		rts		
 
-		.byte $02				; end of code
+		RELO_END ; no more code to relocate
 
 		;; help text to print on error
 		

@@ -98,7 +98,7 @@ write_loop_end:
 		lda  #0
 		rts						; exit(0)
 		
-		.byte $02
+		RELO_END ; no more code to relocate
 
 start_page:		.buf 1
 howto_txt:		.text "Usage: buf",$0a

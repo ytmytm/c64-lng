@@ -69,7 +69,7 @@ main_code:
 		;; or just
 		;; exit(0)
 		
-		.byte $02				; end of code
+		RELO_END ; no more code to relocate
 
 		;; help text to print on error
 		

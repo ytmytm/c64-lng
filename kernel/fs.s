@@ -452,7 +452,7 @@ fgetc:
 
 io_return_error:
 		sec
-		.byte $24
+		SKIP_BYTE
 io_return:
 		clc
 		sei

@@ -382,7 +382,7 @@ found:	sty  userzp
 		clc						; return with Y=offset to value 
 		rts						; (zero terminated string)
 		
-		.byte $02				; end of code
+		RELO_END ; no more code to relocate
 
 		ident(help,2.0)
 instream:		.byte 0

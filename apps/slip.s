@@ -39,8 +39,7 @@
 
 		jmp  initialize
 
-		.byte $0c
-		.word +					; (don't try to relocate data)
+		RELO_JMP(+)				; (don't try to relocate data)
 
 module_struct:
 		.asc "pkg"				; module identifier
@@ -104,7 +103,7 @@ esced:	bvs  ignore2
 		cmp  #220
 		bne  ignoreRest
 		lda  #192
-		.byte $2c				; ( "bit $dba9" is ok)
+		SKIP_WORD				; ( "bit $dba9" is ok)
 
 convtoesc:
 		lda  #219
@@ -221,7 +220,7 @@ snd_retok:
 		rts
           
 escend:	lda  #$40
-		.byte $2c
+		SKIP_WORD
 escesc:	lda  #$20
 		sta  sndstat
 		lda  #219
@@ -230,7 +229,7 @@ escesc:	lda  #$20
 		
 _010x:	;; is esced end  
 		ldx  #220
-		.byte $2c
+		SKIP_WORD
 		
 _001x:	;; is esced esc   
 		ldx  #221
@@ -490,8 +489,7 @@ main_loop:
 		jsr  lkf_force_taskswitch
 		jmp  main_loop
 
-		.byte $0c
-		.word out
+		RELO_JMP(out)
 		
 ;-------------------------------------------------------------------
 ; variables

@@ -31,8 +31,7 @@
 		
 		SELFMOD equ $fe00		; placeholder
 		
-		.byte $0c
-		.word +					; relocator jump
+		RELO_JMP(+)			; relocator jump
 
 module_struct:
 		.asc "ser"      ; module identifier
@@ -237,8 +236,7 @@ r_buf_ptr2:
 rs232_putc:
 		rts
 
-		.byte $0c
-		.word +					; (don't relocate data-inlay)
+		RELO_JMP(+)		; (don't relocate data-inlay)
 
 		;; PAL timer values
 		;;  for    300    600  1200  2400  4800  9600 baud
@@ -327,7 +325,7 @@ out:	sec
 		nop
 		rts
 		
-		.byte $02				; end of relocated code
+		RELO_END ; no more code to relocate
 
 not_txt:
 		.text "sorry, no RS232-std-interface detected"

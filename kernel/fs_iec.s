@@ -121,7 +121,7 @@ check_64net2_flag:
 		cmp #15
 		bne +
 		lda #0
-		.byte $2c
+		SKIP_WORD
 	+	lda #128
 		sta iec_dev_flag
 		plp
@@ -196,7 +196,7 @@ readout_errchannel:
 		cmp  CBMerr_tab,x
 		bne  -
 		lda  CBMerr2lng,x
-		.byte $2c
+		SKIP_WORD
 	+	lda  #lerr_ioerror	
 		sta  byte_count
 
@@ -254,10 +254,10 @@ _deep_error1:
 toomanyf:
 		jsr  leave_atomic
 		lda  #lerr_toomanyfiles
-		.byte $2c
+		SKIP_WORD
 illdev:
 		lda  #lerr_deverror
-		.byte $2c
+		SKIP_WORD
 	-	lda  #lerr_notimp
 		jmp  catcherr
 
@@ -313,9 +313,9 @@ fs_iec_fopen:
 		cmp  #fmode_wo
 		beq  +
 		lda  #65				; "a"
-		.byte $2c
+		SKIP_WORD
 	+	lda  #87				; "w"
-		.byte $2c
+		SKIP_WORD
 	+	lda  #82				; "r"
 		sta  filename+3,y
 		tya
@@ -554,7 +554,7 @@ prep_inchannel:
 		sta  (syszp),y
 		beq  -
 		lda  #lerr_ioerror
-		.byte $2c
+		SKIP_WORD
 	+	lda  #lerr_eof	
 		sec
 		rts
@@ -657,7 +657,7 @@ leave_atomic:
 
 
 	-	lda  #lerr_deverror
-		.byte $2c	
+		SKIP_WORD	
 	-	lda  #lerr_notimp
 		jmp  catcherr
 
@@ -718,9 +718,9 @@ fs_iec_fcmd:
 		rts
 
 	+	lda  byte_count
-		.byte $2c
+		SKIP_WORD
 	-	lda  #lerr_deverror
-		.byte $2c
+		SKIP_WORD
 	-	lda  #lerr_nosuchdir
 _jtocatcherr:
 		jmp  catcherr
@@ -810,7 +810,7 @@ next_entry:
 		cmp  #2
 		bne  +
 		ldx  #%00000111			; -rwx
-		.byte $2c
+		SKIP_WORD
 	+	ldx  #%00000000			; ---- if not PRG file
 		txa
 		bit  byte
@@ -819,7 +819,7 @@ next_entry:
 	+	bit  byte
 		bvc  +
 		and  #%00000101			; write protected
-	+	.byte $2c
+	+	SKIP_WORD
 skip_entry:
 		lda  #%10000000
 		ldy  #1
@@ -903,7 +903,7 @@ dir_error:
 		bne  readdir_eof		
 readdir_ioerr:
 		lda  #lerr_ioerror
-		.byte $2c
+		SKIP_WORD
 readdir_eof:
 		lda  #lerr_eof
 		pha

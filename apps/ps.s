@@ -258,7 +258,7 @@ hexout:
 		tax
 		lda  hextab,x
 		
-		.byte $2c
+		SKIP_WORD
 space:	
 		lda  #" "
 		;; print single character
@@ -304,19 +304,19 @@ print_status:
 		jmp  hexout
 st_running:
 		ldy  #str_running - str_base
-		.byte $2c
+		SKIP_WORD
 st_sleeping:
 		ldy  #str_sleeping - str_base
-		.byte $2c
+		SKIP_WORD
 st_wait:
 		ldy  #str_wait - str_base
-		.byte $2c
+		SKIP_WORD
 st_zombie:
 		ldy  #str_zombie - str_base
-		.byte $2c
+		SKIP_WORD
 st_memory:
 		ldy  #str_memory - str_base
-		.byte $2c
+		SKIP_WORD
 st_cons:
 		ldy  #str_cons - str_base
 		ldx  #5
@@ -345,8 +345,7 @@ st_sema:
 		jsr  out
 		jmp  -		
 						
-		.byte $02
-		.byte $ff
+		RELO_END ; no more code to relocate
 
 dec_tablo:		.byte <10, <100, <1000, <10000
 dec_tabhi:		.byte >10, >100, >1000, >10000

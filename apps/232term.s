@@ -190,7 +190,7 @@ putc:	sec
 		nop
 		rts
 		
-		.byte $02
+		RELO_END				; no more code to relocate
 
 moddesc:
 	RS232_struct2	; MACRO defined in rs232.h (rs232_{unlock,ctrl,getc,putc})

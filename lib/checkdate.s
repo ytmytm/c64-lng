@@ -182,8 +182,7 @@ enddate:
 
 ;;; data -------------------------------------------------------------------
 
-		.byte $0c
-		.word + 
+		RELO_JMP(+)
 
 ;; format of date and time
 ;date:

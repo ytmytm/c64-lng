@@ -47,8 +47,7 @@ start_of_code:
 
 ;;; data -------------------------------------------------------------------
 
-		.byte $0c
-		.word + 
+		RELO_JMP(+)
 
 date:
 weekday:	.byte	0	; range from 00 to 07, 00 means invalid
@@ -497,8 +496,7 @@ main_loop:
 end_of_permanent_code:	
 ;;; initialisation data ----------------------------------------------------
 
-		.byte $0c
-		.word +
+		RELO_JMP(+)
 
 howto_txt:	.text "usage: smwrtc",$0a,0
 

@@ -85,7 +85,7 @@ burst_enter_fast:				; or burst_set_out
 
 send_talk:
 		ora  #$40
-		.byte $2c
+		SKIP_WORD
 		
 send_listen:
 		ora  #$20
@@ -197,7 +197,7 @@ raw_send_cleanup:
 		
 time_out0:
 		lda  #iecstatus_timeout
-		.byte $2c
+		SKIP_WORD
 		
 dev_not_present:
 		lda  #iecstatus_devnotpresent
@@ -299,7 +299,7 @@ send_untalk:
 		jsr  CLOCK_hi
 		jsr  ATN_hi
 		lda  #$5f
-		.byte $2c
+		SKIP_WORD
 		
 send_unlisten:
 		lda  #0
@@ -450,7 +450,7 @@ readout_errchannel:
 		cmp  CBMerr_tab,x
 		bne  -
 		lda  CBMerr2lng,x
-		.byte $2c
+		SKIP_WORD
 	+	lda  #lerr_ioerror	
 		sta  byte_count
 
@@ -505,10 +505,10 @@ _deep_error1:
 toomanyf:
 		jsr  leave_atomic
 		lda  #lerr_toomanyfiles
-		.byte $2c
+		SKIP_WORD
 illdev:
 		lda  #lerr_deverror
-		.byte $2c
+		SKIP_WORD
 	-	lda  #lerr_notimp
 		jmp  catcherr
 		
@@ -560,9 +560,9 @@ fs_iec_fopen:
 		cmp  #fmode_wo
 		beq  +
 		lda  #65				; "a"
-		.byte $2c
+		SKIP_WORD
 	+	lda  #87				; "w"
-		.byte $2c
+		SKIP_WORD
 	+	lda  #82				; "r"
 		sta  filename+3,y
 		tya
@@ -800,7 +800,7 @@ prep_inchannel:
 		sta  (syszp),y
 		beq  -
 		lda  #lerr_ioerror
-		.byte $2c
+		SKIP_WORD
 	+	lda  #lerr_eof	
 		sec
 		rts
@@ -902,7 +902,7 @@ leave_atomic:
 		
 
 	-	lda  #lerr_deverror
-		.byte $2c	
+		SKIP_WORD	
 	-	lda  #lerr_notimp
 		jmp  catcherr
 
@@ -959,9 +959,9 @@ fs_iec_fcmd:
 
 		
 	+	lda  byte_count
-		.byte $2c
+		SKIP_WORD
 	-	lda  #lerr_deverror
-		.byte $2c
+		SKIP_WORD
 	-	lda  #lerr_nosuchdir
 _jtocatcherr:
 		jmp  catcherr
@@ -1052,7 +1052,7 @@ next_entry:
 		cmp  #2
 		bne  +
 		ldx  #%00000111			; -rwx
-		.byte $2c
+		SKIP_WORD
 	+	ldx  #%00000000			; ---- if not PRG file
 		txa
 		bit  byte
@@ -1061,7 +1061,7 @@ next_entry:
 	+	bit  byte
 		bvc  +
 		and  #%00000101			; write protected
-	+	.byte $2c
+	+	SKIP_WORD
 skip_entry:
 		lda  #%10000000
 		ldy  #1
@@ -1142,7 +1142,7 @@ dir_error:
 		bne  readdir_eof		
 readdir_ioerr:
 		lda  #lerr_ioerror
-		.byte $2c
+		SKIP_WORD
 readdir_eof:
 		lda  #lerr_eof
 		pha

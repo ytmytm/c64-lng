@@ -233,7 +233,7 @@ skip_line:
 		cpx  #1
 		beq  +
 		lda  buf+1,y
-		.byte $2c
+		SKIP_WORD
 	+	lda  #0
 		sta  c2
 
@@ -266,7 +266,7 @@ skip_line:
 		bit  mode
 		bmi  +
 		lda  uu_std
-		.byte $2c
+		SKIP_WORD
 	+	lda  #"="
 		jmp  ++
 
@@ -280,7 +280,7 @@ skip_line:
 		bit  mode
 		bmi  +
 		lda  uu_std
-		.byte $2c
+		SKIP_WORD
 	+	lda  #"="
 		jsr  putc
 		lda  #$0a
@@ -303,7 +303,7 @@ putc:	ldx  #stdout
 		nop
 		rts
 
-		.byte $02				; eod of code - marker
+		RELO_END ; no more code to relocate
 
 uu_std:
  .byte $60, $21, $22, $23, $24, $25, $26, $27

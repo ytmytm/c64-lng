@@ -128,7 +128,7 @@ isnodigit:
 		sec
 		rts
 
-		.byte $02				; End Of Code - marker !
+		RELO_END ; no more code to relocate
 		
 HowTo_txt:
 		.text "Usage: kill [-signo] PID",$0a

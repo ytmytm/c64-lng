@@ -47,8 +47,7 @@
 		send_flag equ nmizp
 		recv_flag equ nmizp+1
 
-		.byte $0c
-		.word +				; relocator jump
+		RELO_JMP(+)				; relocator jump
 
 module_struct:
 		.asc "ser"      ; module identifier
@@ -107,7 +106,7 @@ brate:		lda  #%00011100			; 1 stopbit, 8 databits, 9600 baud (internal)
 		bit  send_flag
 		bmi  +
 		lda  #CMDVAL_GO2
-		.byte $2c
+		SKIP_WORD
 	+	lda  #CMDVAL_GO			; no parity, no echo, no XMIT-IRQ,
 		sta  swcom+1
 		sta  swift_command		; RECV-IRQ enabled, RTS on, DTR low
@@ -166,7 +165,7 @@ sndh_ptr:	jsr  SELFMOD
 		sta  swift_io
 send_done:		
 		lda  #REC_IRQ
-		.byte $2c			; ( bit $18a9 is ok here)
+		SKIP_WORD			; ( bit $18a9 is ok here)
 
 cklast:
 		lda  #SND_IRQ|REC_IRQ
@@ -317,8 +316,7 @@ trigrecv:
 		clc
 		rts
 
-		.byte $0c
-		.word +
+		RELO_JMP(+)
 
 turbo232_flag:	.byte 0				; defaults to off
 baudtable:	.byte $05, $06, $07, $08, $0a, $0c, $0e, $0f, $20
@@ -466,7 +464,7 @@ is_available:
 	+	ldx  #0
 		jmp  lkf_fix_module		
 
-		.byte $02			; end of relocated code
+		RELO_END ; no more code to relocate
 
 need_sndtrig:	.buf 1
 

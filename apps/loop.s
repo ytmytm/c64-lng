@@ -35,8 +35,7 @@
 
 		jmp  initialize
 
-		.byte $0c
-		.word +					; (don't try to relocate data)
+		RELO_JMP(+)    ; (don't try to relocate data)
 
 module_struct:
 		.asc "pkg"				; module identifier
@@ -44,6 +43,7 @@ module_struct:
 		.byte 1					; module interface version number
 		.byte 1					; weight (num. of available virtual devices)
 		.word $0000				; (reserved)
+	
 	+	jmp  loop_lock
 		jmp  loop_unlock
 		jmp  loop_putpacket
@@ -159,8 +159,7 @@ discard:
 		clc
 		rts
 	
-		.byte $0c
-		.word +
+		RELO_JMP(+)
 			
 user_ipid:		.byte $ff
 		

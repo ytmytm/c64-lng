@@ -71,8 +71,7 @@
 
 		jmp  initialize
 
-		.byte $0c
-		.word +
+		RELO_JMP(+)
 
 packet_api:
 		SLIP_struct3			; Macro defined in slip.h
@@ -472,7 +471,7 @@ sumdata:
 		dex
 		bne  -
 
-		.byte $24
+		SKIP_BYTE
 	+	plp
 		jmp  sumend
 
@@ -1893,13 +1892,13 @@ fin_wait0: ;  is a *JOB* not a state of TCP
 		;; was it in state 'close wait' ?
 		beq  _lastack
 		lda  #TCP_FIN_WAIT1
-		.byte $2c
+		SKIP_WORD
 _lastack:
 		lda  #TCP_LAST_ACK
 		jsr  settimeout
 		cli
 		clc
-		.byte $24
+		SKIP_BYTE
 	+	sec
 	+	rts
 
@@ -1927,7 +1926,7 @@ _to_timewait:
 		jsr  ack_one
 		lda  #TCP_TIMEWAIT
 		;;   dest=time wait
-		.byte $2c
+		SKIP_WORD
 _to_closing:
 		lda  #TCP_CLOSING
 		;;   send ack of fin
@@ -2967,10 +2966,10 @@ create_fd:
 con_cleanup0:
 		jsr  close
 		lda  #0
-		.byte $2c
+		SKIP_WORD
 err_notimp:
 		lda  #E_NOTIMP
-		.byte $2c
+		SKIP_WORD
 err_nosock:
 		lda  #E_NOSOCK
 		jmp  lkf_catcherr
@@ -3067,7 +3066,7 @@ getc_stub:
 		bit  syszp+4
 		bmi  -					; wait
 		lda  #lerr_tryagain
-		.byte $2c
+		SKIP_WORD
 	+	lda  #lerr_eof
 		jmp  lkf_io_return_error
 
@@ -3092,7 +3091,7 @@ putc_stub:
 		bit  syszp+4
 		bmi  -
 		lda  #lerr_tryagain
-		.byte $2c
+		SKIP_WORD
 	+	lda  #lerr_ioerror
 		jmp  lkf_io_return_error
 
@@ -3534,8 +3533,7 @@ main_loop:
 ;; 		clc
 ;; 		jmp  slip_unlock
 
-		.byte $0c
-		.word +					; (skip data-inlay)
+		RELO_JMP(+)				; (skip data-inlay)
 
 ;------------------------------------------------------------------------
 ; global variables

@@ -395,7 +395,7 @@ toupper:
 	+	clc 
 	+	rts
 
-		.byte $02				; end of code
+		RELO_END ; no more code to relocate
 
 in_stream:		.buf 1
 in_fstream:		.buf 1

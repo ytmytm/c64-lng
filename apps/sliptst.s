@@ -99,7 +99,7 @@ out:	ldx  #stdout
 		nop
 		rts
 		
-		.byte $02
+		RELO_END ; no more code to relocate
 
 hextab:	.text "0123456789abcdef"
 				

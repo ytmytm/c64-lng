@@ -451,7 +451,7 @@ putc:
 		nop
 		rts
 						
-		.byte $02				; end of code - marker
+		RELO_END ; no more code to relocate
 
 		;base 64 table
 

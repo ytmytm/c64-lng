@@ -49,9 +49,7 @@
 		rxbits     equ nmizp+5
 		semaphore  equ nmizp+6
 						
-		.byte $0c
-		.word +					; relocator jump
-
+		RELO_JMP(+)				; relocator jump
 
 		;; times (comments please!):
 		;;  Event-to-NMIHandler      48..50 (+43) mean=49
@@ -681,7 +679,7 @@ set_timeroffset:
 	+	stx  timer_offset
 		rts
 		
-		.byte $02				; end of relocated code
+		RELO_END ; no more code to relocate
 
 		;; baud constants (NTSC - 1022727 Hz)
 ntsc_const:	.word 3408, 1704,  851,  425,  212,  106,  53

@@ -171,7 +171,7 @@ putc:	sec
 		nop
 		rts
 		
-		.byte $02
+		RELO_END				; no more code to relocate
 
 buffer_pointer:	.byte 0
 buffer_endptr:	.byte 0

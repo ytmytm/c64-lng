@@ -108,7 +108,7 @@ isnodigit:
 		sec
 		rts
 
-		.byte $02				; End Of Code - marker !
+		RELO_END ; no more code to relocate
 		
 HowTo_txt:
 		.text "Usage: sleep [seconds]"

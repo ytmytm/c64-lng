@@ -269,7 +269,7 @@ _is_special:
 		rts
 
 	+	lda  special_code-1,x
-		.byte $2c
+		SKIP_WORD
 
 _sub96:
 		sbc  #95
@@ -606,7 +606,7 @@ esc_com5:
 		cmp  #7
 		bne  ++					; skip
 		lda  #$80				; activate RVS
-		.byte $2c
+		SKIP_WORD
 	+	lda  #$00				; de-activate RVS
 		sta  rvs_flag
 	+	cpy  esc_parcnt
@@ -686,17 +686,17 @@ vdc_setregbufaddr:
 		jmp vdcsetdataddy
 
 vdcmodecopy:	lda #$80			; set block mode to copy
-		.byte $2c
+		SKIP_WORD
 vdcmodefill:	lda #0				; set block mode to fill
 		ldx #VDC_VSCROLL
 		jmp putvdcreg
 
 vdcsetscraddy:	ldx #VDC_DSPLO
-		.byte $2c
+		SKIP_WORD
 vdcsetsouaddy:	ldx #VDC_SRCLO
-		.byte $2c
+		SKIP_WORD
 vdcsetcuraddy:	ldx #VDC_CSRLO
-		.byte $2c
+		SKIP_WORD
 vdcsetdataddy:	ldx #VDC_DATALO
 
 		; A=LSB, Y=MSB, X=MSB_vdc_reg

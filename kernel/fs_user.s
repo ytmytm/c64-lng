@@ -116,10 +116,10 @@ notimpl:
 
 fs_user_fclose:
 		ldx  #fsuser_fclose
-		.byte $2c
+		SKIP_WORD
 fs_user_fputc:
 		ldx  #fsuser_fputc
-		.byte $2c
+		SKIP_WORD
 fs_user_fgetc:
 		ldx  #fsuser_fgetc
 		ldy  #usersmb_ufunc+1

@@ -124,7 +124,7 @@ single_line:
 quit:	lda  #0
 		rts
 
-		.byte $02				; end of code
+		RELO_END ; no more code to relocate
 
 txt_howto:
 		.text "usage:",$0a

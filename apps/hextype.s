@@ -29,8 +29,7 @@ start_of_code:
 
 ;;; main data---------------------------------------------------------------
 
-		.byte	$0c
-		.word	+
+		RELO_JMP(+)
 
 count:		.byte	0,0
 data:		.buf	8
@@ -141,8 +140,7 @@ main_loop:
 end_of_permanent_code:
 ;;; initialisation data ----------------------------------------------------
 
-		.byte   $0c
-		.word   +
+		RELO_JMP(+)
 
 howto_txt:      .text   "usage: hextype",$0a,0
 

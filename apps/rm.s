@@ -53,7 +53,7 @@ HowTo:
 		lda  #1
 		rts						; exit(1)
 		
-		.byte $02				; End Of Code - marker !
+		RELO_END ; no more code to relocate
 		
 howto_txt:
 		.text "Usage: rm [file]"

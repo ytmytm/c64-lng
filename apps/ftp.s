@@ -145,7 +145,7 @@ mainloop:
 		cpy  #0
 		beq  mainloop			; ignore empty lines
 		ldy  #0
-		.byte $24
+		SKIP_BYTE
 	-	iny						; skip trailing spaces
 		lda  linebuf,y
 		cmp  #" "

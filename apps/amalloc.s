@@ -170,8 +170,7 @@ putc:
 		nop
 		rts
 
-		.byte $0c
-		.word +
+		RELO_JMP(+)
 		
 line_buffer:	.buf 256
 

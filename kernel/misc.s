@@ -4,6 +4,7 @@
 #include <kerrors.h>
 #include <system.h>
 #include <config.h>
+#include MACHINE_H
 
 		.global get_bitadr
 		.global strout

@@ -280,7 +280,7 @@ print_cputype:
 	+	lda  #" "
 		jmp  putc
 		
-		.byte $02				; end of code
+		RELO_END ; no more code to relocate
 
 howto_txt:
 		.text "usage:",$0a

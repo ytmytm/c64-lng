@@ -15,7 +15,7 @@
 _omem1:	ldx syszp+4
 		jsr  smb_free
 	-	lda  #lerr_illarg
-		.byte $2c
+		SKIP_WORD
 _outofmem:
 		lda  #lerr_outofmem
 		jmp  catcherr
@@ -263,7 +263,7 @@ wrdone1:
 
 _fputc_error:
 		lda  #lerr_brokenpipe
-		.byte $2c
+		SKIP_WORD
 		
 _fgetc_EOF:
 		lda  #lerr_eof

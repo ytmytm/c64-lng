@@ -816,7 +816,7 @@ putc:	sec						; forced (blocking) putc
  ;; 	+	jmp  toerrrout
 
 		
-		.byte $02
+		RELO_END ; no more code to relocate
 
 kiltext:  
 		.text  "exec-skiped/error $"
