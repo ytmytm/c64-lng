@@ -1,6 +1,7 @@
 from 0.19 to 0.20
 -------------------------------
-fixed: bug #420906 "Microshell: 'l/' is evil"
+added: popclient application (DD)
+fixed: bug #420906 "Microshell: 'l/' is evil" (DD)
 fixed: 64net2 EOF handling (MW)
 added: stuff to help in automatic Atari disk image creation (MW)
 added: RELO_JMP(addr) and RELO_END macros (DD) idea by (AT)
