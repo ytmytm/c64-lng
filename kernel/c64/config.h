@@ -133,7 +133,7 @@
 ;// LNG applications and the output format had to be .o65. Hence enable this
 ;// if you want to execute applications built using cc65. (costs ~900 bytes)
 
-;#define HAVE_O65
+#define HAVE_O65
 
 
 ;// Misc stuff
