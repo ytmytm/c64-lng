@@ -691,15 +691,17 @@ Example 2 for illegal code
 If enabled (#define HAVE_O65 in machine config.h) LUnix supports also .o65
 relocatable file format. While it is not required to have it in order to run
 applications that come with LNG in apps/ directory, it might be handy in the
-future, when with upcoming cc65 release LUnix will be supported as one of
-targets.
+future, when with upcoming cc65 package release LUnix will be supported as
+one of the targets. Only ca65+ld65 targets, not C compiler because of cc65
+author's problems due to conflict between cc65 and GNU GPL license.
+
 You can learn more about .o65 on Andre Fachat's pages at:
 http://www.6502.org/users/andre/index.html
 
 The current implementation requires that the object file imports LUNIXKERNEL
 label, only in 16-bit relocation mode (like: jmp LUNIXKERNEL+4) with even
 offsets (0, 2, 4, ...). The order of calls is exactly the same as in
-kfunc_tab.s (LUNIXKERNEL+4 would be fopen).
+jumptab.h (LUNIXKERNEL+4 would be fopen).
 Execution address must be in the first byte of TEXT segment.
 If there is header option describing OS it must have value 2 (LUnix), version
 byte is ignored.

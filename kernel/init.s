@@ -22,6 +22,16 @@ out_of_mem:
 init:							; former called microshell
 		lda  #3
 		jsr  set_zpsize			; use 3 bytes zeropage starting with userzp
+
+		ldy  #tsp_envpage		; clean own environment page,
+		lda  (lk_tsp),y			; because it will be inherited
+		sta  userzp+1			; by all processes
+		lda  #0
+		sta  userzp
+		tay
+	-	sta  (userzp),y
+		iny
+		bne  -
 		
 		ldy  #tsp_pdmajor
 		lda  #MAJOR_IEC

@@ -1,6 +1,6 @@
 from 0.20 to 0.21
 -----------------
-added: support for environment variables (setenv/getenv), limited to 256bytes (MW)
+added: support for environment variables (setenv/getenv), limited to 256bytes per task (MW)
 added: root filesystem support "/", allows for 'ls -la /' command (MW)
 added: support for fcmd_chdir on IEC (will work on CMD devices, 64hdd and 64net/2) (MW)
 added: Cd command (MW)
