@@ -1,13 +1,13 @@
 
 ; .o65 loader for LUnix, based on original code by Andre Fachat
 ; Maciej Witkowiak <ytm@elysium.pl>
-; 24,28,30.11.2001
+; 24,28,30.11.2001, 18.11.2002
 
 ; TODO
-; - change locking into standard semaphores
 ; - some things seem to be calculated twice
 ; - get address of '_main' (entry point) from exported variables (later or never)
-;   (execute.s will need changes then too)
+;   (execute.s and addtask.s will need changes then too (addtask allows only for page-hi addr))
+; - note that load_block == fread
 
 #include <system.h>
 #include <config.h>
@@ -45,8 +45,8 @@ err_memory:	lda #lerr_outofmem
 		SKIP_WORD
 err_hdr:	lda #lerr_illcode
 		pha
-		lda #0
-		sta o65_semaphore	; unlock o65_loader
+		ldx #lsem_o65		; unlock semaphore
+		jsr unlock
 		jsr fclose
 		pla
 		sec
@@ -59,13 +59,10 @@ err_hdr:	lda #lerr_illcode
 		;; < C=0 - OK
 		;; < A/Y - execute address (0,firstpage)
 
-o65_loader:	;; now, this is UGLY!!! I hope that someone who knows how
-		;; semaphores work will fix that
-	-	lda o65_semaphore
-		bne -
-		lda #1			; lock o65_loader
-		sta o65_semaphore
-
+o65_loader:
+		sec
+		ldx #lsem_o65		; raise semaphore for o65 relocation
+		jsr lock
 		;; get mode
 		jsr fgetc
 		bcs err_hdr
@@ -274,11 +271,11 @@ _cont:
 		ldx p3
 		jsr fclose
 		;; ready to fork, A/Y is the execute address
-		ldx textm
+		ldx #lsem_o65		; unlock semaphore
+		jsr unlock
+		lda textm
 		ldy textm+1
-		lda #0
-		sta o65_semaphore	; unlock o65_loader
-		txa
+		clc
 		rts
 
 err_references:	;; too many undefined references
@@ -292,10 +289,10 @@ err_file:	;; file is corrupt, free memory, close file
 		jsr pfree
 		pla
 		SKIP_WORD
-err_filedata:	lda #lerr_ioerror
+err_filedata:	ldx #lsem_o65		; unlock semaphore
+		jsr unlock
+		lda #lerr_ioerror
 		sec
-		ldx #0
-		stx o65_semaphore	; unlock o65_loader
 		rts
 
 load_block:	;; load #p2 bytes into (p1) with fd==X
@@ -474,8 +471,6 @@ lunix_kernel:	.text "LUNIXKERNEL",0
 ;amode:		.byte 0
 ;textm:		.word 0			; aligned base address of everything
 ;datam:		.word 0
-
-o65_semaphore:	.byte 0			; to lock o65_loader
 
 ; o65_header (26 bytes)
 o65_header:

@@ -1,5 +1,6 @@
 from 0.20 to 0.21
 -----------------
+fixed: o65.s uses system semaphores now (MW)
 fixed: renumbered major device numbers (MW)
 added: expand command (DD)
 fixed: o65_loader won't relocate zeropage as this is not needed (MW)

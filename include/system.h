@@ -126,6 +126,7 @@
 #  define lsem_nmi        4   ;// byte 0, bit 4
 ;// lsem_nmi marks end of "special" semaphores("kernel/lock.s" depends on this)
 #  define lsem_iec        5   ;// byte 0, bit 5  (access to IEC serial bus)
+#  define lsem_o65        6   ;// byte 0, bit 6  (o65 relocator and its special variables)
 
 ;// other stuff
 #define lk_nmidiscnt $ffea    ;// counts number of "nonmi" tasks
