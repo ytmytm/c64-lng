@@ -1,5 +1,7 @@
 from 0.18 to 0.19 ...
 -------------------------------
+added: application clear (SH)
+chaned: ident.h and skeleton (Stefan A. Haubenthal)
 added: minimal support for Atari 65XE/800X?/130XE port (only kernal+microshell) (MW)
 changed: updated keyboard modules to allow to switch to any console,
 	 and support next/previous console shortcut (MW)
