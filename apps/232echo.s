@@ -39,13 +39,9 @@
 		jsr  lkf_get_moduleif
 		bcs  pr_error
 
-		lda  #3
+		lda  #0
 		jsr  lkf_set_zpsize
 		
-#define buffer_pointer userzp
-#define buffer_endptr  userzp+1
-#define done_flag      userzp+2
-	
 		print_string(welc_txt)
 
 		;; ask for baud rate
@@ -133,6 +129,8 @@ loop:	lda  #0
 		;;       until "trigger receive"
 rec_handler:
 		ldx  buffer_endptr
+stx $416
+sta $417
 		sta  linebuf,x
 		inx
 		stx  buffer_endptr
@@ -157,8 +155,11 @@ send_handler:
 		cpx  buffer_endptr
 		beq  r_end
 		lda  linebuf,x
+stx $416+40
+sta $417+40
 		inx
 		stx  buffer_pointer
+		
 		clc
 		rts
 
@@ -172,6 +173,10 @@ putc:	sec
 		
 		.byte $02
 
+buffer_pointer:	.byte 0
+buffer_endptr:	.byte 0
+done_flag:		.byte 0
+	
 moddesc:
 	RS232_struct2	; MACRO defined in rs232.h (rs232_{unlock,ctrl,getc,putc})
 
