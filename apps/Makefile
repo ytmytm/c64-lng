@@ -14,7 +14,7 @@ APPS=testapp microterm ps lsmod sh wc getty sleep cat tee uuencode uudecode \
      b-cs b-co env beep httpd clear
 
 # list of applications that must be linked against libstd
-LAPPS=amalloc date ciartc hextype smwrtc
+LAPPS=amalloc date ciartc hextype smwrtc dcf77
 
 all : $(APPS) $(LAPPS)
 
