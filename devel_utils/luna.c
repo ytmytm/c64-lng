@@ -10,6 +10,8 @@
 
 luna-extension-history:
 
+ Dec 03 2004 *poldi* added: support of "//" for comments
+
  Sep 30 2001 *poldi* fixed: open output files in binary mode
 
  Nov 15 2000 *mouse* added: .aasc ("apple ascii") for raw printing of chars
@@ -1641,7 +1643,7 @@ int main(int argc, char **argv)
       printf("line \"%s\" pc=$%x\n",line,pc);
 #     endif
       if ((llen=0)) continue;
-      if (line[0]==';') continue;
+      if (line[0]==';' || (line[0]=='/' && line[1]=='/')) continue;
       
       /* extract first identifier */
 
@@ -1657,7 +1659,7 @@ int main(int argc, char **argv)
 #       ifdef debug
         printf("working at \"%s\"\n",&line[i]);
 #       endif
-        if (line[i]==';') break;  /* keine Befehle mehr in dieser Zeile */
+        if (line[i]==';' || (line[i]=='/' && line[i+1]=='/')) break;  /* keine Befehle mehr in dieser Zeile */
         if (line[i]=='.') {
 	  unsigned long ltmp;
 	  
