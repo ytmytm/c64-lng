@@ -26,22 +26,23 @@ APPS=getty lsmod microterm ps sh sleep testapp wc cat tee uuencode \
 
 #============== end of configurable section ============================
 
-.PHONY : all package clean kernel apps lib
+.PHONY : all package clean kernel apps
 
+export PATH+=:$(PWD)/devel_utils/:.
 export LUPO_INCLUDEPATH=../kernel
 export COMPFLAGS
 export MACHINE
 
-all : kernel lib apps
+all : kernel libstd apps 
 
-lib :
-	make -C lib
-
-apps :
+apps : libstd
 	make -C apps
 
 kernel :
 	make -C kernel
+
+libstd :
+	make -C lib
 
 BINDIR=$(patsubst c%,bin%,$(MACHINE))
 
@@ -55,8 +56,6 @@ package :
 clean :
 	make -C kernel clean
 	make -C apps clean
-	make -C lib clean
-	make -C help clean
 
 distclean : clean
 	-cd kernel ; rm boot.c* lunix.c* globals.txt
