@@ -7,7 +7,7 @@ VPATH=../include
 
 # list of applications
 PARTS=libc_malloc libc_free libc_remalloc sreadline print_hex8 getopt \
-      bcdtohex checkbcd
+      bcdtohex checkbcd checkdate dateconvert adc_32_8 mult_32_8
 
 all : libstd.a
 
