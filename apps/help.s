@@ -1,10 +1,13 @@
 		;; for emacs: -*- MODE: asm; tab-width: 4; -*-
 		;; simple help browser
-		;; (loosely based on html)
+
+		;; 20.2.2001 <br> tag added by Stefan A. Haubenthal
+		;; (loosely based on xhtml)
 	
 #include <system.h>
 #include <stdio.h>
 #include <kerrors.h>
+#include <ident.h>
 		
 		start_of_code equ $1000
 
@@ -15,13 +18,14 @@
 		.byte >(end_of_code-start_of_code+255)
 		.byte >start_of_code
 
-;;; supported HTML tags
+;;; supported XHTML tags
 #define TAG_TITLE  1
 #define TAG_IMG    2
 #define TAG_HR     3
 #define TAG_P      4
 #define TAG_A      5
 #define TAG_B      6
+#define TAG_BR     7
 
 #define LINELENMAX    80			; (change later)
 
@@ -127,6 +131,13 @@ nchar:	jsr  get_schar
 		jsr  update_line
 		cpy  linelen
 		bcc  nchar
+		bcs  break_line
+
+break_line2:
+		lda  #$0a
+		sec
+		ldx  #stdout
+		jsr  fputc
 
 break_line:
 		lda  #$0a
@@ -179,6 +190,8 @@ got_tag:
 		beq  got_hrtag
 		cmp  #TAG_TITLE
 		beq  got_titletag
+		cmp  #TAG_BR
+		beq  got_brtag
 	-	jmp  nchar
 		
 		lda  #0					; (error code, 0 for "no error")
@@ -189,7 +202,7 @@ got_ptag:
 		tya
 		bne  -
 		jsr  update_line
-		jmp  break_line
+		jmp  break_line2
 		
 		;; title
 got_titletag:
@@ -215,6 +228,13 @@ got_hrtag:
 		bne  -
 		jmp  break_line
 
+		;; break
+got_brtag:
+		tya
+		bne  -
+		jsr  update_line
+		jmp  break_line
+		
 build_line:
 		
 getc:	sec
@@ -225,6 +245,10 @@ getc:	sec
 
 	+	cmp  #lerr_eof
 		bne  +
+		lda  #$0a
+		sec
+		ldx  #stdout
+		jsr  fputc
 end:	lda  #0
 	+	jmp  lkf_suicide
 		
@@ -360,11 +384,9 @@ found:	sty  userzp
 		
 		.byte $02				; end of code
 
-linelen:		.buf 1
+		ident(help,2.0)
 instream:		.byte 0
 spaceflag:		.byte 0
-linebuf:		.buf  LINELENMAX
-currenttag:		.buf  128
 				
 taglist:
 		.text "title",0			; 1 - title text
@@ -373,6 +395,7 @@ taglist:
 		.text "p",0				; 4 - paragraph
 		.text "a",0				; 5 - hyperlink
 		.text "b",0				; 6 - bold
+		.text "br",0			; 7 - break
 		.byte 0
 
 attrlist:
@@ -386,8 +409,11 @@ default_file:
 		;; help text to print on error
 		
 txt_howto:
-		.text "usage: man [topic]",$0a
+		.text "Usage: man [topic]",$0a
 		.text "  print help on given command or topic",$0a
 		.text "  (prints a file named ",34,"topic.html",34,")",$0a,0
 
+linelen:		.buf 1
+linebuf:		.buf LINELENMAX
+currenttag:		.buf 128
 end_of_code:
