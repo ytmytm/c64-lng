@@ -21,6 +21,4 @@
 #define fopendir lkf_fopendir
 #define freaddir lkf_freaddir
 
-#define DIRSTRUCT_LEN 29
-
 #endif

@@ -51,3 +51,6 @@
 #define fsuser_fputc  2
 #define fsuser_fclose 3
 #endif
+
+#define DIRSTRUCT_LEN 29 ; max size of dirstruct (including filename)
+#define MAX_FILENAME  17 ; max length of filename (not incl. 0 termination)
