@@ -13,6 +13,6 @@ hello.o65: hello.c
 	-ld65 -C lunix.cfg -o hello.o65 crt0.o hello.o none.lib stdio.o ctype.o
 	
 clean:
-	rm hello
-	rm *.lst
-	rm *.o
+	-rm hello
+	-rm *.lst
+	-rm *.o

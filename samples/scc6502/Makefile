@@ -41,8 +41,8 @@ TESTS=hello first second third fourth fifth case extern hexdump
 all: $(TESTS)
 
 clean:
-	@rm -f $(TESTS)
-	@rm -f *.o
-	@rm -f *.a
-	@rm -f *.s 
-	@rm -f c64.out
+	-rm -f $(TESTS)
+	-rm -f *.o
+	-rm -f *.a
+	-rm -f *.s 
+	-rm -f c64.out

@@ -38,7 +38,7 @@ $(APPS) : system.h rs232.h jumptab.h stdio.h
 $(LAPPS) : system.h rs232.h jumptab.h stdio.h ../lib/libstd.a
 
 clean   :
-	rm -f $(APPS) $(LAPPS) $(LAPPS:%=%.o) *.o65*
+	-rm -f $(APPS) $(LAPPS) $(LAPPS:%=%.o) *.o65*
 	$(MAKE) -C cc65 clean
 	$(MAKE) -C scc6502 clean
 
