@@ -1,5 +1,6 @@
 		;; for emacs: -*- MODE: asm; tab-width: 4; -*-
 		;; simple output application
+		;; © by Stefan Haubenthal 1997/2000
 	
 #include <system.h>
 #include <stdio.h>
@@ -49,7 +50,7 @@ parse_commandline:
 		beq  +					; (ok)
 		
 		cmp  #1					; need exactly NONE arguments
-		bne  howto				; (if argc != 2 goto howto)
+		bne  howto				; (if argc != 1 goto howto)
 
 	+	rts
 
@@ -60,45 +61,23 @@ main_code:
 								; (set_zeropage_size() is a macro defined
 								; in include/cstyle.h) 
 
-		lda  #27				; ANSI codes for "clear" & "home"
-		sec
 		ldx  #stdout
-		jsr  fputc
-		lda  #"["
-		sec
-		ldx  #stdout
-		jsr  fputc
-		lda  #"2"
-		sec
-		ldx  #stdout
-		jsr  fputc
-		lda  #"J"
-		sec
-		ldx  #stdout
-		jsr  fputc
-
-		lda  #27
-		sec
-		ldx  #stdout
-		jsr  fputc
-		lda  #"["
-		sec
-		ldx  #stdout
-		jsr  fputc
-		lda  #"H"
-		sec
-		ldx  #stdout
-		jsr  fputc
+		bit  txt_csi			; ANSI codes for "clear" & "home"
+		jsr  lkf_strout
 
 		exit(0)
 		
 		.endofcode
-		ident(clear,2.0)
+		ident(clear,2.1)
 
 		;; help text to print on error
 		
 txt_howto:
 		.text "Usage: clear",$0a
 		.text "  used like CLR key",$0a,0
+
+txt_csi:
+		.text 27,"[2J"
+		.text 27,"[H",0
 		
 end_of_code:
