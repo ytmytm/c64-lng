@@ -33,7 +33,7 @@ export LUPO_INCLUDEPATH=../kernel
 export COMPFLAGS
 export MACHINE
 
-all : kernel libstd apps 
+all : kernel libstd apps help
 
 apps : libstd
 	make -C apps
@@ -43,6 +43,9 @@ kernel :
 
 libstd :
 	make -C lib
+
+help :
+	make -C help
 
 BINDIR=$(patsubst c%,bin%,$(MACHINE))
 
