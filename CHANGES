@@ -1,5 +1,7 @@
 from 0.20 to 0.21
 -----------------
+addded: configuration option for DIN keyboard layout (MW)
+removed: all PETSCII references (obsoleted for quite some time anyway) (MW)
 changed: updated TODO list, documentation (MW)
 added: pwd tool (G)
 added: sh -r -s options, can take input from file given as an argument, not only stdin (G)

@@ -109,7 +109,7 @@ cons_csrup:
 		clc
 	+	rts
 
-err:	sec
+err:		sec
 		rts
 		
 cons_csrdown:	
@@ -343,21 +343,13 @@ cons_out:
 		sta  (tmpzp),y
 		plp
 		jsr  cons_csrright
-_back:	jmp  cons_showcsr
+_back:		jmp  cons_showcsr
 
 jdo_escapes:	
 		jmp  do_escapes
 		
 special_chars:
 
-#ifdef PETSCII		
-#msg PETSCII Console
-		cmp  #13
-		beq  _crlf
-		cmp  #19
-		beq  _del
-		jmp  _back
-#else
 		;; UNIX ascii (default)
 		cmp  #10
 		beq  _crlf
@@ -372,23 +364,22 @@ special_chars:
 		cmp  #7
 		beq  _beep
 		jmp  _back
-#endif
 				
-_crlf:	lda  csry
+_crlf:		lda  csry
 		cmp  scrl_y2
 		bne  +
 		jsr  cons_scroll_up
 		jmp  _cr
 		
 	+	jsr  cons_csrdown
-_cr:	ldx  #0
+_cr:		ldx  #0
 		ldy  csry
 		jsr  cons_setpos
 		jmp  _back
-_esc:	lda  #1
+_esc:		lda  #1
 		sta  esc_flag
 		jmp  _back
-_tab:	lda  csrx				; tab-width=4
+_tab:		lda  csrx			; tab-width=4
 		lsr  a
 		lsr  a
 		clc
@@ -399,8 +390,8 @@ _tab:	lda  csrx				; tab-width=4
 		ldy  csry
 		jsr  cons_setpos		; (only done, if position is valid)
 		jmp  _back
-_del:	ldx  csrx
-		beq  +					; skip if already on left border
+_del:		ldx  csrx
+		beq  +				; skip if already on left border
 		dex
 		ldy  csry
 		jsr  cons_setpos
@@ -416,7 +407,7 @@ _del:	ldx  csrx
 		plp
 	+	jmp  _back
 
-_beep:	jsr beep
+_beep:		jsr beep
 		jmp _back
 
 do_escapes:

@@ -10,7 +10,7 @@
 ; (a module that is inserted at startup) 
 ;********************************************
 
-; C128 extension by Maciej 'YTM/Alliance' Witkowiak <ytm@friko.onet.pl>
+; C128 extension by Maciej 'YTM/Elysium' Witkowiak <ytm@elysim.pl>
 ; 31.12.1999
 ; for now there's no difference between keypad and numkeys although IIRG
 ; there's special keypad mode, so these should probably emit some ESC-sequences
@@ -21,8 +21,8 @@
 ; that stuff is unconditional and will be assembled to both C64 and C128 configurations
 ; 23.12.2000
 ; added $df keycode handler for previous console
-
-; for now PETSCII table is not updated
+; 04.03.2003
+; removed petscii
 
 #include <config.h>
 #include <system.h>
@@ -51,44 +51,6 @@ btab2i2:
 locktab:	;; table for $e? keys
 		.byte keyb_alt, keyb_ex1, keyb_ex2, keyb_ex3
 
-#ifdef PETSCII
-
-		;; petscii decoding tables
-# msg PETSCII keyboard		
-_keytab_normal:
-		.byte   8, 13,136,134,128,130,132,138
-		.byte  51,119, 97, 52,122,115,101,~keyb_lshift
-		.byte  53,114,100, 54, 99,102,116,120
-		.byte  55,121,103, 56, 98,104,117,118
-		.byte  57,105,106, 48,109,107,111,110
-		.byte  43,112,108, 45, 46, 58, 64, 44
-		.byte  30, 42, 59, 12,~keyb_rshift, 61,124, 47
-		.byte  49, 27,~keyb_ctrl, 50, 32, 9, 81, 3
-		
-# ifdef C128
-		;; for C128 - this is obsolete and untested and anything!!!
-		.byte $84, $38, $35, $09, $32, $34, $37, $31
-		.byte $1b, $2b, $2d, $0a, $0d, $36, $39, $33
-		.byte $08, $30, $2e, $91, $11, $9d, $1d, $ff
-# endif
-
-_keytab_shift:
-		.byte 143,144,137,135,129,131,133,139
-		.byte  35, 87, 65, 36, 90, 83, 69,255
-		.byte  37, 82, 68, 38, 67, 70, 84, 88
-		.byte  39, 89, 71, 40, 66, 72, 85, 86
-		.byte  41, 73, 74,123, 77, 75, 79, 78
-		.byte 125, 80, 76, 95, 62, 91,126, 60
-		.byte  92,145, 93,140,255, 96, 20, 63
-		.byte  33, 94,255, 34,  9,142, 81,146
-# ifdef C128
-		;; for C128 - this is obsolete and untested and anything!!!
-		.byte $84, $38, $35, $18, $32, $34, $37, $31
-		.byte $1b, $2b, $2d, $0a, $0d, $36, $39, $33
-		.byte $08, $30, $2e, $91, $11, $9d, $1d, $ff
-# endif
-		
-#else ; PETSCII
 		;; UNIX (ascii) decoding tables (default)
 
 #define dunno $7f
@@ -164,7 +126,7 @@ _keytab_normal:
   .byte esc_c, $2b, $2d, lf_c, cr_c, $36, $39, $33
   .byte alt_c, $30, $2e, csr_up_c, csr_down_c, csr_left_c, csr_right_c, noscrl_c
 # endif ; C128
-		
+
 _keytab_shift:
 # ifdef DIN
   .byte  sdel_c,$0a,csr_left_c,f8_c,f2_c,f4_c,f6_c,csr_up_c
@@ -191,7 +153,6 @@ _keytab_shift:
   .byte esc_c, $2b, $2d, lf_c, cr_c, $36, $39, $33
   .byte alt_c, $30, $2e, csr_up_c, csr_down_c, csr_left_c, csr_right_c, noscrl_c
 # endif ; C128
-#endif ; PETSCII
 
 #ifdef C128
 ;;; ZEROpage: done 11

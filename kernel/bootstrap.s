@@ -363,9 +363,6 @@ welcome_txt:
 		.text "Welcome to LUnix next generation (LNG)",$0a
 		.text "Version 0.20, 27 Dec 2001",$0a,$0a
 		.text "Compile time options:",$0a
-#ifdef PETSCII
-		.text "  - PETSCII character encoding",$0a
-#endif
 #ifdef VERBOSE_ERROR
 		.text "  - verbose error messages",$0a
 #endif

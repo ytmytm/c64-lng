@@ -9,11 +9,9 @@
 
 ;// Keyboard/console settings
 ;// -------------------------
-;//   LUnix uses the UNIX ascii scheme, if you want to use the old petscii
-;//   scheme add the next line (saves 11 bytes)
-;//   NOTE: this will break most of the applications!
+;//   Enable this if you want to have German keyboard layout
 
-;#define PETSCII
+;#define DIN
 
 
 ;// Kernel error messages

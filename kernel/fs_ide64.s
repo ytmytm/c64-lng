@@ -206,10 +206,8 @@ fs_ide64_fopen:
 		sty ide64_fopen_flags			; clear fopen flags
 
 	-	lda (syszp),y
-#ifndef PETSCII
 		jsr unix2cbm
 		cmp #0
-#endif
 		sta filename,y
 		beq +
 		iny
@@ -639,9 +637,7 @@ ide64_readout_errchannel:
 	-	lda  filename,y
 		beq  +
 #ifdef PRINT_IECMSG
-# ifndef PETSCII
 		jsr  cbm2unix
-# endif
 		jsr  printk
 #endif
 		iny
@@ -674,10 +670,8 @@ fs_ide64_fcmd:
 		sta  filename+1
 		ldy  #0
 	-	lda  (syszp),y
-#ifndef PETSCII
 		jsr  unix2cbm
 		cmp  #0
-#endif
 		sta  filename+2,y
 		beq  +
 		iny
@@ -823,9 +817,7 @@ next_entry:
 	-	jsr  ide64_rom_chrin		; read name
 		cmp  #$22			; ending quote?
 		beq  +
-#ifndef PETSCII
 		jsr  cbm2unix
-#endif
 		ldy  $fd
 		sta  ($fe),y
 		inc  $fd

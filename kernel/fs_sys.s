@@ -82,10 +82,8 @@ fs_sys_freaddir:
 		tax
 		ldy  #12			; filename offset
 	-	lda  pprefix,x
-#ifndef PETSCII
 		jsr  cbm2unix
 		cmp  #0
-#endif
 		sta  (syszp+5),y
 		beq  +
 		inx

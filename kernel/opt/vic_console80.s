@@ -435,14 +435,6 @@ jdo_escapes:
 
 special_chars:
 
-#ifdef PETSCII	
-#msg PETSCII Console
-		cmp  #13
-		beq  _crlf
-		cmp  #19
-		beq  _del
-		jmp  _back
-#else
 		;; UNIX ascii (default)
 		cmp  #10
 		beq  _crlf
@@ -457,7 +449,6 @@ special_chars:
 		cmp  #7
 		beq  _beep
 		jmp  _back
-#endif
 
 _crlf:		lda  csry
 		cmp  scrl_y2
