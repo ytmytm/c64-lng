@@ -30,15 +30,26 @@
 #include <cstyle.h>
 #include <ident.h>
 
-		;; every app must export its entry point - function _main.
+		;; every app must export its entry point - function main.
 		;; currently it is ignored and entry point must be the
 		;; first byte of code, but in the future it might be used
 
+		;; what's the purpose of having main and _main?
+		;; main - program entry point, kernel jumps here after loading
+		;; _main - will be removed in future, for internal use of application
+		;;   (in case of C main will be in ctr0 while _main in user code)
+
 		.export _main
+		.export main
+
+		;; dummy segments to keep ld65 happy
+		.segment "STARTUP"
+		.segment "LOWCODE"
 
 		.segment "CODE"			; we're in CODE segment now
 		;; (task is entered here)
 _main:
+main:
 		jsr  parse_commandline
 
 		ldx  userzp+1			; address of commandline (hi byte)
