@@ -1,5 +1,8 @@
-from 0.19 to 0.20
+from 0.19 to 0.20 (Dec 27 2001)
 -------------------------------
+added: httpd default root document (index.html) (Jools Smyth)
+added: autoboot - write C128 boot block (Ilker Ficicilar)+(SH)
+added: touch command (SH)
 fixed: o65_loader is protected from being reentrant (MW)
 fixed: bug in smwrtc that would cause to write on random memory (MW)
 added: IDE64 RTC handler (MW)
