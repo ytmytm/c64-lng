@@ -17,6 +17,7 @@
 #define fcmd_chdir 1
 #define fcmd_mkdir 2
 #define fcmd_rmdir 3
+#define fcmd_fsck  4
 
 #define fsmb_major 0
 #define fsmb_minor 1

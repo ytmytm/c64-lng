@@ -682,10 +682,11 @@ fs_iec_fcmd:
 		bcs  --
 		lda  syszp+2
 		cmp  #fcmd_del
+		beq  +
+		cmp  #fcmd_chdir
 		bne  -
 
-		;; delete file
-
+	+	pha
 		stx  syszp+3
 		jsr  enter_atomic
 		jsr  disable_nmi
@@ -696,25 +697,38 @@ fs_iec_fcmd:
 		stx  ch_device
 		jsr check_64net2_flag
 
-		;; open-name is "s:filename"
+		;; open-name is command
 
-		lda  #83				; "s"
+		pla
+		cmp  #fcmd_chdir
+		beq  _chdir
+
+_del:		lda  #83				; "s"
 		sta  filename
-		lda  #58				; ":"
+		ldx  #1
+		bne  +
+_chdir:		lda  #67				; "c"
+		sta  filename
+		lda  #68				; "d"
 		sta  filename+1
+		ldx  #2
+	+	lda  #58				; ":"
+		sta  filename,x
+		inx
 		ldy  #0
 	-	lda  (syszp),y
 #ifndef PETSCII
 		jsr  unix2cbm
 		cmp  #0
 #endif
-		sta  filename+2,y
+		sta  filename,x
 		beq  +
 		iny
+		inx
 		cpy  #16
 		bne  -
-	+	iny
-		iny
+	+	txa
+		tay
 		jsr  readout_errchannel+2
 		pha
 		jsr  leave_atomic

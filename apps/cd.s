@@ -1,4 +1,4 @@
-; cd [directory]
+; cd directory
 ;
 
 ; v1.0	(c) 2002 Maciej Witkowiak <ytm@elysium.pl>
@@ -45,7 +45,7 @@ HowTo:		ldx  #stderr
 		RELO_END				; End Of Code - marker !
 
 howto_txt:
-		.text "Usage: cd [directory]"
+		.text "Usage: cd directory"
 		.byte $0a,$00
 
 end_of_code:
