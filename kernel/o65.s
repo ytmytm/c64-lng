@@ -60,32 +60,44 @@ err_hdr:	lda #lerr_illcode
 		;; < A/Y - execute address (0,firstpage)
 
 o65_loader:
+
+		stx p1			; save fd
 		sec
 		ldx #lsem_o65		; raise semaphore for o65 relocation
 		jsr lock
+
 		;; get mode
+		ldx p1			; get  fd
 		jsr fgetc
-		bcs err_hdr
+  		bcs err_hdr
 		sta amode
+
+;;ldx p1			; get  fd
 		jsr fgetc
 		bcs err_hdr
+
 		;; check mode
 		and #%10110000		; not quite correct (cpu 65816 not allowed here)
 		bne err_hdr
+
 		lda amode
 		and #%00000011
 		sta amode		; store align mode
 
+
 		;; load rest of header data
 		ldy #0
+;;		ldx p1			; get  fd
 	-	jsr fgetc
-		bcs err_hdr
+  		bcs err_hdr
 		sta o65_header, y
 		iny
 		cpy #18
 		bne -
 
+;;inc $d020
 		;; load and ignore header options
+;;		ldx p1			; get  fd
 	-	jsr fgetc
 		bcs err_hdr
 		beq _cont		; no more options
@@ -99,6 +111,8 @@ o65_loader:
 		dey
 		bne -
 		beq --
+
+		jmp _cont
 
 	+	jsr fgetc
 		dey
@@ -115,7 +129,8 @@ _cont:
 		;; system.h header is used to reference zero page locations, so
 		;; no relocation is needed
 
-		stx p1			; save fd
+;;		stx p1			; save fd
+
 		;; align header lengths (as in original loader)
 		lda tlen
 		ldy tlen+1
