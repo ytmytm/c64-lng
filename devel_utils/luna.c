@@ -1,4 +1,4 @@
-/* LUnix-assembler Version 1.30
+/* LUnix-assembler Version 1.31
 
    Written by Daniel Dallmann (aka Poldi) on a weekend in June 1996 :-)
    This piece of software is freeware ! So DO NOT sell it !!
@@ -9,6 +9,8 @@
    My (internet) email-address is dallmann@heilbronn.netsurf.de
 
 luna-extension-history:
+
+ Sep 30 2001 *poldi* fixed: open output files in binary mode
 
  Nov 15 2000 *mouse* added: .aasc ("apple ascii") for raw printing of chars
 		     and getaascii() function to do so
@@ -191,7 +193,7 @@ luna-extension-history:
 #define DUP_LABEL (-2)  /*                 ''                  */
 
 #ifdef _AMIGA
-const char *VERsion="$VER: luna 1.30 "__AMIGADATE__" $";
+const char *VERsion="$VER: luna 1.31 "__AMIGADATE__" $";
 #endif
 
 /* Fnuction prototypes */
@@ -382,7 +384,7 @@ static unsigned char hashtab[323]={
 
 void Howto()
 {
-  printf("Luna 6502/10-cross-assembler version 1.30\n");
+  printf("Luna 6502/10-cross-assembler version 1.31\n");
   printf("Usage:\n");
   printf("  luna [-jlLoOpdqRW] sourcefile\n");
   printf("    -j = no automatic bra->jmp conversion\n");
@@ -1620,11 +1622,11 @@ void main(int argc, char **argv)
       if (!quiet_mode) printf("Final pass\n");
       if (use_linker) {
         if (tmpobj_file==NULL) tmpobj_file=my_tmpnam("luna");
-        if ((binfile=fopen(tmpobj_file,"w"))==NULL) {
+        if ((binfile=fopen(tmpobj_file,"wb"))==NULL) {
           printf("%s: can't create temporary objectfile\n",argv[0]);
           exit(1); }}
       else {
-        if ((binfile=fopen(file_output,"w"))==NULL) {
+        if ((binfile=fopen(file_output,"wb"))==NULL) {
           printf("%s: can't create \"%s\"\n",argv[0],file_output); 
           exit(1); }}
     } 
