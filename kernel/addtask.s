@@ -206,7 +206,8 @@ nostruc:
 		pha				;; (4) A
 		pha				;; (5) X
 		pha				;; (6) Y
-		lda #MEMCONF_USER
+		;lda #MEMCONF_USER
+		GETMEMCONF			; use current memory configuration (caller knows better)
 		pha				;; (7) memconfig
 
 						;; restore kernel-stack (in fact parent process stack)

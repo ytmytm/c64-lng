@@ -92,10 +92,6 @@
 ;// this is also memory bank dependent
 #define lk_memmap    $ff85  ; 32 bytes - 1 bit of each internal page
 
-;// this is not implemented, hence nonused
-#define lk_timedive  $c2c0  ; exponent of time dic
-#define lk_timedivm  $c2e0  ; mantisse of timediv
-
 ;// per task system data (not in tsp for faster access)
 #define lk_tstatus   $ff05
 #  define tstatus_szu    $80  ; if task uses the syszp zeropage
@@ -132,5 +128,9 @@
 #  define larchf_pal  %00100000
 #  define larchf_reu  %01000000
 #  define larchf_scpu %10000000
+
+;// this is not implemented, hence nonused
+#define lk_timedive  $c2c0  ; exponent of time dic
+#define lk_timedivm  $c2e0  ; mantisse of timediv
 
 #endif

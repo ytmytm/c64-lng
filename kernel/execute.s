@@ -4,7 +4,7 @@
 #include <system.h>
 #include <kerrors.h>
 #include <fs.h>
-		
+
 		.global forkto
 
 _alloc1_error:
@@ -17,7 +17,7 @@ _load_error:
 		tay
 		pla
 		pla
-		
+
 _fopen_error:
 		pla
 		pla
@@ -31,7 +31,7 @@ _fopen_error:
 		;; <		optional: .asc "<parameter>\0"
 		;; <              ...
 		;; <    .byte 0
-		
+
 		;; > c=1:  error (error number in A)
 		;; > c=0:  X/Y = childs PID
 		;; changes: syszp(0,1,2,3,4,5,6,7)
@@ -73,7 +73,7 @@ forkto:
 		ldx  syszp+7			; fd
 
 	-	jsr  fgetc				; (szu won't help, syszp gets lost during fgetc!)
-		
+
 		sei
 		sta  syszp+2
 		pla						; start address (hi)
@@ -89,10 +89,10 @@ forkto:
 		bne  -
 		beq  +
 
-_ioerr:	lda  syszp+2			; error code
+_ioerr:		lda  syszp+2			; error code
 		cmp  #lerr_eof
 		bne  _load_error
-	+	
+	+
 #ifndef ALWAYS_SZU
 		ldx  lk_ipid
 		lda  lk_tstatus,x
@@ -100,16 +100,16 @@ _ioerr:	lda  syszp+2			; error code
 		sta  lk_tstatus,x
 #endif
 		cli
-		
+
 		sty  syszp+6
 		tya
 		beq  +
-		
+
 		lda  #0
 	-	sta  (syszp),y			; zero rest of page
 		iny
 		bne  -
-		
+
 	+	jsr  exe_test			; check binary format
 		bcc  _exe_error			; wrong format, then exit with error
 
@@ -180,17 +180,17 @@ _ioerr:	lda  syszp+2			; error code
 _exe_error:
 		lda  #lerr_illcode
 		jmp  _load_error		; (4x pla)
-		
+
 _ioerrend:		
 		pla
 		lda  syszp+2
 		jmp  _load_error
-		
+
 _alloc2_error:
 		ldx  syszp+1
 		jsr  pfree
 		jmp  _alloc1_error
-		
+
 _end2:
 		cli
 		lda  syszp+2			; error code from last fgetc
@@ -199,7 +199,7 @@ _end2:
 		pla
 		pla
 		sta  syszp+1			; start address (hi)
-		
+
 _loaded:
 		pla						; fd
 		tax
@@ -259,7 +259,7 @@ _outofmem:
 		;; < Y=exe-parameter (base-address hi)
 		;; calls: exe_reloc
 		;; changes: syszp(0,1)
-		
+
 reloc_and_exec:
 		sei
 #ifndef ALWAYS_SZU
@@ -271,7 +271,7 @@ reloc_and_exec:
 		sty  syszp+1
 		lda  #0
 		sta  syszp
-		
+
 		;; hand over the covered portion of internal memory
 	-	lda  lk_ipid
 		sta  lk_memown,y
@@ -287,4 +287,3 @@ reloc_and_exec:
 		pha
 		php
 		rti						; continue with new task
-

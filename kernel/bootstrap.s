@@ -81,27 +81,25 @@ start:
 		sta  lk_timer			; switch to next task on next IRQ
 		lda  #0
 		sta  lk_tsp				; (just empty)
-		
+
 		sta  lk_systic			; reset system's jiffy-counter
 		sta  lk_systic+1
 		sta  lk_systic+2
-		
+
 		sta  lk_sleepcnt
 		sta  lk_sleepcnt+1		; wait a long time before calling _wakeup
-		
-		lda  #0
+
 		sta  lk_locktsw			; taskswitching is enabled (default)
-		
-		lda  #0
+
 		sta  lk_semmap
 		sta  lk_semmap+1
 		sta  lk_semmap+2
 		sta  lk_semmap+3
 		sta  lk_semmap+4		; no ressources used
-		
+
 		sta  lk_taskcnt
 		sta  lk_taskcnt+1		; no tasks yet
-		
+
 		sta  lk_nmidiscnt
 		sta  lk_modroot
 		sta  lk_modroot+1		; no modules available yet
