@@ -1463,7 +1463,7 @@ char *my_tmpnam(char * base)
   char *result;
 
   /* This should be unique */
-  tmp=tmpnam((char*)NULL);
+  tmp=tmpnam((char*)NULL); /* sorry, can't use mkstemp */
   if (tmp==NULL) {
     /* if tmpnam can't generate a filename (?) we'll do it on our own! */
     char str[40];
@@ -1475,7 +1475,8 @@ char *my_tmpnam(char * base)
 #   endif
     result=(char *)malloc((strlen(str)+1)*sizeof(char));
     strcpy(result,str);
-    return result; }
+    return result; 
+  }
 
   result=(char *)malloc((strlen(tmp)+1)*sizeof(char));
   strcpy(result,tmp);
@@ -1492,7 +1493,7 @@ int addopt(char *str1, int pos, char *str2)
   return pos+1;
 }
 
-void main(int argc, char **argv)
+int main(int argc, char **argv)
 {
   static int llen;
   static int i,j,p,q;

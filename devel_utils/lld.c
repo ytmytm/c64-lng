@@ -506,7 +506,7 @@ void Howto()
   exit(1);
 }
 
-void main(int argc, char **argv)
+int main(int argc, char **argv)
 {
   int           i,j,flag,need_flag;
   unsigned int  pc;
@@ -581,10 +581,11 @@ void main(int argc, char **argv)
     i++; }
 
   if (infile_num==0) { printf("%s: No input file\n",argv[0]); exit(1); }
-  if (file_output==NULL) 
+
+  if (file_output==NULL) {
     if (!lib_flag) file_output="c64.out"; 
-    else {
-      file_output="c64.lib"; }
+    else file_output="c64.lib";
+  }
 
   if (lib_flag) {
     if (lib_num!=0) {

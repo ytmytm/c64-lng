@@ -35,7 +35,7 @@ void hex_out(int i)
   printf("%c%c",digits[(i & 0xf0)>>4],digits[(i & 0x0f)]);
 }
 
-void main(int argc, char **argv)
+int main(int argc, char **argv)
 {
   char *fname;
   int  i,j,p,q;
@@ -153,6 +153,7 @@ void main(int argc, char **argv)
   if (q!=0) printf("\n%i bytes!\n",q);
 
   fclose(fin);
+  return 0;
 }  
 
 

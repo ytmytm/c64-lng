@@ -35,7 +35,7 @@ void hex_out(int i)
   printf("%c%c",digits[(i & 0xf0)>>4],digits[(i & 0x0f)]);
 }
 
-void main(int argc, char **argv)
+int main(int argc, char **argv)
 {
   char *fname;
   int  i,j;
@@ -127,4 +127,5 @@ void main(int argc, char **argv)
   if (fgetc(fin)!=EOF) printf("File is too long !\n");
   if (cnt!=length) printf("Code length is %i, but should be %i !\n",cnt,length);
   fclose(fin);
+  return 0;
 }  

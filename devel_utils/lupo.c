@@ -720,7 +720,7 @@ void add_define(char *defname, char *replacement)
     error("too many defines");
 }
 
-void main(int argc, char **argv)
+int main(int argc, char **argv)
 {
   static int  i,j,p,tmp1,tmp2;
   static char lbuf[LINE_LENGTH_MAX];
