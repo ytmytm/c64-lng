@@ -126,8 +126,10 @@
 # define HAVE_VDC
 # ifndef HAVE_SCPU
 ;// C128 without SCPU
-#  define SPEED_MAX    lda #1:sta VIC_CLOCK
-#  define SPEED_1MHZ   lda #0:sta VIC_CLOCK
+;#  define SPEED_MAX    lda #1:sta VIC_CLOCK
+;#  define SPEED_1MHZ   lda #0:sta VIC_CLOCK
+#  define SPEED_MAX
+#  define SPEED_1MHZ
 # else
 #  undef SPEED_MAX
 #  undef SPEED_1MHZ	

@@ -26,6 +26,13 @@
 		lda  VIC_YSCL			; switch off VIC screen
 		and  #%11101111			; (makes computer run slightly faster)
 		sta  VIC_YSCL
+		;; since SPEED_MAX at start of bootstrap.s
+		;; might not be defined we enforce 2MHz here
+		;; only if VDC is present and SCPU not
+# ifndef HAVE_SCPU
+		lda  #1
+		sta  VIC_CLOCK
+# endif
 #endif
 
 		;; stop all timer, and disable all (known) interrupts

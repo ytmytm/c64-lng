@@ -1,5 +1,7 @@
 from 0.18 to 0.19 ...
 -------------------------------
+changed: undefined SPEED_* for C128, it (and iec stuff) works
+         at constant 2MHz flawlessly (MW)
 added: smartwatch RTC handler, library function hextobcd (MW)
 added: date, output in unix or ntp time
 added: new library functions: checkdate dateconvert adc_32_8 mult_32_8 (AB)
