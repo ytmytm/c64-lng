@@ -420,7 +420,8 @@ add_task_simple:
 
 #ifdef VDC_CONSOLE
 # include "opt/vdc_console_init.s"
-#else
+#endif
+#ifdef VIC_CONSOLE
 # include "opt/vic_console_init.s"
 #endif
 

@@ -59,13 +59,14 @@
 
 ;#define VDC_CONSOLE
 
+
 ;// Multiple consoles
 ;// -----------------
 ;// startup with more than just one console, system needs at least 1k for
 ;// each additional console! (should better allocate memory on demand)
 ;// currently the functions keys are used to select and shift+commodore to
-;// switch between consoles (this time just 2 consoles are available F1/F2)
-;// (costs 1024+135=1159 bytes)
+;// switch between consoles (this time just 2 consoles are available F1/F2 with
+;// VIC or 6 consoles - F1/3/5/7/2/4 with VDC)
 
 #define MULTIPLE_CONSOLES
 
@@ -131,6 +132,10 @@
 #  define SPEED_MAX    lda #1:sta VIC_CLOCK:sta SCPU_20MHZ
 #  define SPEED_1MHZ   lda #0:sta VIC_CLOCK:sta SCPU_1MHZ
 # endif
+#endif
+
+#ifndef VDC_CONSOLE
+# define VIC_CONSOLE
 #endif
 
 #ifndef SPEED_1MHZ	

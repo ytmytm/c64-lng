@@ -32,7 +32,7 @@ beep:
 		sta SID_VCREG1
 #endif
 		rts
-		
+
 		;; function: printk
 		;; < A=char
 		;; print (kernel) messages to console directly all registers
@@ -57,7 +57,7 @@ dirty equ *+1
 		tax
 		pla
 		rts
-		
+
 		;; function: cons_out
 		;; < A=char, X=number of console
 		;; print character to console
@@ -68,20 +68,19 @@ dirty equ *+1
 
 #ifdef VDC_CONSOLE
 # include "opt/vdc_console.s"
-#else
+#endif
 		;; default is to use VIC for console output
-		
+#ifdef VIC_CONSOLE
 # ifdef MULTIPLE_CONSOLES
-	
+
 		;; variable reflects which console currently is visible to
 		;; the user (keyboad input will go there!) (in zp.h!)
 ;.global cons_visible
-		
+
 		;; console_single is the old (working) version of the
 		;; console driver (just to have something to fall back)
 #  include "opt/vic_console.s"
 # else
 #  include "opt/vic_console_single.s"
 # endif
-
 #endif
