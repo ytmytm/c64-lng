@@ -1,6 +1,7 @@
 ;; For emacs: -*- MODE: asm; tab-width: 4; -*-
 	
 ;;; low-level driver for FIFO64 (16550 based interface)
+;;; (detection algorithm based on Linux-Sources)
 
 #include <system.h>
 #include <jumptab.h>
@@ -33,9 +34,9 @@ uart_type:			.buf 1
 		
 		;; baudrates for use with a 1.8432MHz oszillator
 baud_tab_lo:
-		.byte <96, <96, <96, <48, <24, <12, <6, <3, <3
+		.byte <384, <192, <96, <48, <24, <12, <6, <3, <3
 baud_tab_hi:
-		.byte >96, >96, >96, >48, >24, >12, >6, >3, >3
+		.byte >384, >192, >96, >48, >24, >12, >6, >3, >3
 
 
 		send_flag equ nmizp
@@ -155,7 +156,7 @@ rs232_unlock:
 		;;  X=4:		trigger start of receive
 
 rs232_ctrl:
-		txa
+		cpx  #0
 		beq  set_baudrate
 		dex
 		beq  set_recvhndl
@@ -212,7 +213,7 @@ trig_startsend:
 		lda  _intmask
 		ora  #%00000010			; (will) enable THRE interrupt
 		sta  _intmask
-		lda  lk_nmidiscnt
+		ldx  lk_nmidiscnt
 		bne  +					; respect diabled NMI state
 		sta  fifo64_ier			; re-enable interrupts
 	+	cli
@@ -275,11 +276,10 @@ rech_ptr:	jsr  SELFMOD
 	+	lda  fifo64_lsr			; check Data Ready (DR), it is set until
 		lsr  a					; receive buffer is emptied
 		bcs  -
-		jmp  ckloop				; check for other pending interrupts
-
+		;; fall through to no_data_ready
 
 no_data_ready:
-		and  #%01100000			; look at "THRE" and "TEMT" bits
+		and  #%00110000			; look at "THRE" and "TEMT" bits (1xLSR)
 		;;  THRE = transmitter holding register empty
 		;;  TEMT = transmitter empty
 		beq  no_job_todo
@@ -288,7 +288,7 @@ no_data_ready:
 		;; (could write up to 16/32 bytes at once !!)
 
 		bit  send_flag
-		bne  no_job_todo
+		bmi  no_job_todo
 
 sndh_ptr: jsr  SELFMOD
 		bcs  wrstop
@@ -407,15 +407,24 @@ is_detected:
 
 is_available:
 		ldx  #stdout
-		bit  txt_trail
+		bit  txt_ok1
 		jsr  lkf_strout
 		nop
 
-		lda  uart_type
-		ora  #"0"
+		ldx  uart_type
+		lda  uarttype_index,x
+		tay
+	-	lda  uarttype_text,y
+		beq  +
 		jsr  out
-		lda  #"/"
-		jsr  out
+		iny
+		bne  -					; (always jump)
+
+	+	ldx  #stdout
+		bit  txt_ok2
+		jsr  lkf_strout
+		nop
+		
 		lda  xmit_fifo64_size
 		jsr  hexout
 		lda  #$0a
@@ -476,20 +485,25 @@ detect:
 		lda  fifo64_iir
 		and  #%11000000
 		beq  port_16450
+
 		cmp  #$40
 		beq  port_unknown
+
 		cmp  #$80
 		beq  port_16550
+
 		;; 16650 or 16550A
 		txa
 		ora  #%10000000
 		sta  fifo64_lcr
 		lda  fifo64_fcr
 		bne  +
+
 		lda  #32
 		sta  xmit_fifo64_size
 		stx  fifo64_lcr
 		jmp  port_16650
+
 	+	lda  #16
 		sta  xmit_fifo64_size
 		stx  fifo64_lcr
@@ -546,14 +560,17 @@ out:
 .endofcode		; end of relocated code
 
 hextab:	.text "0123456789abcdef"
-				
-txt_trail:		
-		.text "UART detected @ "
+
+txt_ok1:
+		.text "UART (",0
+txt_ok2:
+		.text ") @ "
 		.digit fifo64_base>12
 		.digit (fifo64_base>8) & 15
 		.digit (fifo64_base>4) & 15
 		.digit fifo64_base & 15
-		.text "/nmi : "
+		.text "/NMI detected", $0a
+		.text "size of hardware XmitFIFO=0x"
 		.byte 0
 
 txt_errmodins:
@@ -569,5 +586,18 @@ howto_txt:
 		.text "  -f  force loading",$0a
 		.text "      (bypass hardware detection)",$0a,0
 
+uarttype_text:
+subtype0:	.text "unknown type",0
+subtype1:	.text "16450",0
+subtype2:	.text "16550",0
+subtype3:	.text "16550A",0
+subtype4:	.text "16650",0
+
+uarttype_index:
+		.byte subtype0 - uarttype_text
+		.byte subtype1 - uarttype_text
+		.byte subtype2 - uarttype_text
+		.byte subtype3 - uarttype_text
+		.byte subtype4 - uarttype_text
 
 end_of_code:
