@@ -1,0 +1,15 @@
+<html><title>ps</title>
+<body>
+usage: ps<p><p>
+Ps gives a snapshot of the current processes.<p>
+"PID" is the process ID.<p>
+"ST" is the process state. A process that is waiting for
+input or another event, and doesn't consume any CPU time is the
+the "wait" state. "wcons" means the process is waiting for input from the user (console). A busy process is on "cpu" - there can be more than one
+busy processes.<p>
+"Time" is the CPU time consumes by the process so far. The unit is CPU ticks (eg. 1/985000s) printed in hexadecimals.<p>
+"PPID" is the ID of the parent process.<p>
+"ID" is the internal (short-) ID of the process, it is in the range 0..15.<p>
+"FP" flags and priority.<p>
+"MEM" the number of allocated internal memory pages.<p><p>
+<p></body></html>
