@@ -7,7 +7,7 @@
 		;; Maciej 'YTM/Alliance' Witkowiak
 		;; ytm@friko.onet.pl
 		;; 7,9,10,15,20.12.1999
-		;; 7.1.2000
+		;; 7.1.2000, 14.5.2000
 		;; derived from VIC console code by Daniel Dallmann
 
 		;; uses hardware acceleration ;) whenever possible
@@ -44,7 +44,7 @@
 	;; additional globals that are needed
 	;; by the initialisation code
 	;; vdc_console_init.s
-	
+
 	.global cons_regbuf
 	.global cons_home
 	.global cons_clear
@@ -54,7 +54,7 @@
 	.global putvdcreg
 	.global bputvdcreg
 	.global cons_showcsr
-	
+
 	;; switch to next virtual console
 console_toggle:
 
@@ -70,7 +70,7 @@ do_cons1:
 		lda #0				; default is console 1 (at $1000)
 		sta cons_visible
 		jmp vdcsetscraddy
-		
+
 do_cons2:
 		lda #1
 		sta cons_visible
@@ -141,7 +141,7 @@ cons_csrup:
 
 err:		sec
 		rts
-		
+
 cons_csrdown:	
 		ldx  csry
 		cpx  #size_y-1
@@ -192,7 +192,7 @@ cons_scroll_up:
 		tay
 		txa
 		jsr vdcsetdataddy
-		
+
 		ldy scrl_y1
 		iny
 		lda ypos_table_lo,y
@@ -202,27 +202,21 @@ cons_scroll_up:
 		tay
 		txa
 		jsr vdcsetsouaddy
-		
+
 		ldy scrl_y1
-		
 	-	lda #size_x
 		ldx #VDC_COUNT
 		jsr putvdcreg
-		
 		iny
 		cpy scrl_y2
 		bne -
 
-		;; erase the last line
-		
-		jsr vdcmodefill
-		
+		jsr vdcmodefill				; erase the last line
 		lda #32					; space
 		jsr bputvdcreg
 		lda #size_x-1
 		ldx #VDC_COUNT
 		jmp putvdcreg		
-
 
 cons_showcsr:
 		bit  cflag
@@ -237,7 +231,7 @@ cons_showcsr:
 		lda  #$c0
 		sta  cflag
 	+	rts
-	
+
 cons_updatecsr:							; update cursor position
 		ldy maph
 		lda mapl
@@ -245,7 +239,7 @@ cons_updatecsr:							; update cursor position
 
 cons_hidecsr:
 		bit  cflag
-		bvc	 +					; no cursor there
+		bvc  +						; no cursor there
 		ldx #VDC_CSRMODE
 		jsr getvdcreg
 		and #%10011111
@@ -282,10 +276,10 @@ _is_special:
 
 	+	lda  special_code-1,x
 		.byte $2c
-				
-_sub96:	
+
+_sub96:
 		sbc  #95
-_keepit:		
+_keepit:	
 		clc
 	-	rts
 
@@ -298,13 +292,13 @@ special_code:
 
 cons1out:
 		ldx  #0
-		
+
 		;; print char to console, X=number of console
 cons_out:
 		cpx  #2
-		bcs  -					; (silently ignore character, when X>1)
+		bcs  -				; (silently ignore character, when X>1)
 		jsr  locktsw			; (this code isn't reentrant!!)
-		sta  cchar			;^ is the above needed?
+		sta  cchar
 
 		cpx  cons_visible
 		beq  ++
@@ -362,7 +356,7 @@ cons_out:
 		jsr bputvdcreg
 		jsr  cons_csrright
 _back:		jsr  cons_updatecsr				; update cursor position
-		jmp  unlocktsw					;^ is it needed?
+		jmp  unlocktsw
 
 jdo_escapes:	
 		jmp  do_escapes
@@ -414,7 +408,7 @@ _tab:		lda  csrx				; tab-width=4
 		asl  a
 		tax
 		ldy  csry
-		jsr  cons_setpos		; (only done, if position is valid)
+		jsr  cons_setpos			; (only done, if position is valid)
 		jmp  _back
 _del:		ldx  csrx
 		beq  +					; skip if already on left border
@@ -430,7 +424,7 @@ _del:		ldx  csrx
 
 do_escapes:
 		cpx  #2
-		beq  do_esc2			; state2
+		beq  do_esc2				; state2
 		lda  cchar
 		
 		;; waiting for escape command (character)
@@ -472,7 +466,7 @@ do_esc2:
 		lda  cchar
 		cmp  #";"				; equal to "9"+2 !
 		beq  do_esc_nextpar
-		bcs  do_esc_command		; most likely a command
+		bcs  do_esc_command			; most likely a command
 		;; most likely a digit
 		and  #15
 		sta  cchar
@@ -490,7 +484,7 @@ do_esc2:
 		jmp  _back				; state doesn't change
 
 do_esc_nextpar:
-		ldx  esc_parcnt			; increase par-counter (if possible)
+		ldx  esc_parcnt				; increase par-counter (if possible)
 		cmp  #7
 		beq  +
 		inx
@@ -682,10 +676,15 @@ vdcsetcuraddy:	ldx #VDC_CSRLO
 vdcsetdataddy:	ldx #VDC_DATALO
 
 		; A=LSB, Y=MSB, X=MSB_vdc_reg
-		jsr putvdcreg
+		stx VDC_REG
+	-	bit VDC_REG
+		bpl -
+		sta VDC_DATA_REG
 		dex
 		tya
-		jmp putvdcreg
+		stx VDC_REG
+		sta VDC_DATA_REG
+		rts
 
 bputvdcreg:
 		ldx #VDC_DATA
@@ -722,7 +721,7 @@ ypos_table_hi:
 		.byte >1600, >1680, >1760, >1840, >1920
 
 ;----------------------------------------------------------------------------
-						;
+;
 ; console driver status
 
 ;;unused for now...
@@ -741,7 +740,7 @@ ypos_table_hi:
 ;;; ZEROpage: rvs_flag 1
 ;;; ZEROpage: scrl_y1 1
 ;;; ZEROpage: scrl_y2 1
-		
+
 ;sbase:			.byte 0	; base address of screen (hi byte)
 ;cchar:			.byte 0
 ;current_output:	.byte 0
