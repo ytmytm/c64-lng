@@ -1,5 +1,7 @@
 from 0.20 to 0.21
 -----------------
+added: cd application (only for IDE64 now) (MW)
+fixed: many things in IDE64 driver, it is fully supported now (MW)
 added: basic IDE64 support (as /ide64 MAJOR_IDE64) (MW)
 
 from 0.19 to 0.20 (Dec 27 2001)

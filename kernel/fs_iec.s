@@ -24,6 +24,9 @@
 		.global leave_atomic
 		.global unix2cbm
 		.global cbm2unix
+		.global filename
+		.global CBMerr_tab
+		.global CBMerr2lng
 
 bit_count		equ tmpzp
 byte_count		equ syszp+5
@@ -975,7 +978,11 @@ adrmap:		.byte 0,0,0,0, 0,0,0,0	; 8 possible sec-adrs per device (8..15)
 ;buffer:					.buf 1	; last byte sent
 ;buffer_status:			.buf 1	; bne: buffer valid
 
+#ifdef HAVE_IDE64
+filename:		        .buf 40 ; buffer for name of file (16+",p,w")
+#else
 filename:		        .buf 20 ; buffer for name of file (16+",p,w")
+#endif
 ;filename_length:		.but 1	; length of filename
 
 ;fopen_flags:	.buf 1			; mostly used by opendir/readdir
@@ -999,6 +1006,7 @@ CBMerr2lng:
 		.byte 0, lerr_toomanyfiles, lerr_discfull
 
 #ifdef PRINT_IECMSG
+		.global CBMerr_txt
 CBMerr_txt:
 		.text ":gsm-MBC"		; "CBM-msg:"
 #endif

@@ -13,7 +13,10 @@
 #define fmode_rw  2
 #define fmode_a   3
 
-#define fcmd_del  0
+#define fcmd_del   0
+#define fcmd_chdir 1
+#define fcmd_mkdir 2
+#define fcmd_rmdir 3
 
 #define fsmb_major 0
 #define fsmb_minor 1

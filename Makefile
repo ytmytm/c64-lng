@@ -12,7 +12,7 @@ COMPFLAGS=
 # MACHINE=c128 for Commodore128 version (binaries in bin128)
 # MACHINE=atari for Atari 65XE/800/130 version (no binaries right now)
 
-MACHINE=c128
+MACHINE=c64
 
 # Modules to include in package (created with "make package")
 
@@ -25,7 +25,7 @@ APPS=getty lsmod microterm ps sh sleep testapp wc cat tee uuencode \
      uudecode 232echo 232term kill rm ls buf cp uptime time meminfo \
      strminfo uname more beep help env date ciartc dcf77 smwrtc \
      hextype clear true false echo touch \
-     b-co b-cs ide64rtc
+     b-co b-cs ide64rtc cd
 
 # Internet Applications
 # will be put in the same package als APPS now, but may go into a
