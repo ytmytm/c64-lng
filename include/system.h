@@ -21,9 +21,9 @@
 #define lk_sleepcnt    $06  ;// time till next wakeup (16 bit)
 #define lk_locktsw     $08  ;// >0 -> taskswitching disabled
 #define lk_systic      $09  ;// systic counter (1/64s)  (24 bit)
-#define lk_sleepipid   $12  ;// IPID of task to wakeup next
-#define lk_cycletime   $13  ;// sum of tslice of all running tasks
-#define lk_cyclefactor $14  ;// defines how tslice is calculated from priority
+#define lk_sleepipid   $0c  ;// IPID of task to wakeup next
+#define lk_cycletime   $0d  ;// sum of tslice of all running tasks
+#define lk_cyclefactor $0e  ;// defines how tslice is calculated from priority
 
 ;// additional zp allocations start at $15 and
 ;// are defined in zp.h !
@@ -40,8 +40,8 @@
 ;// any other bytes of the zeropage (not even indirect by calling other
 ;// routines)
 
-#define nmizp          $68    ;// 8 bytes for NMI handler
-#define irqzp          $60    ;// 8 bytes for IRQ handler(s)
+#define nmizp          $60    ;// 8 bytes for NMI handler
+#define irqzp          $68    ;// 8 bytes for IRQ handler(s)
 #define tmpzp          $70    ;// 8 bytes for atomic routines
 #define syszp          $78    ;// 8 bytes for reentrant system/library routines
 #define userzp         $80    ;// up to 64 bytes for the user
