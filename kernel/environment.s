@@ -45,9 +45,11 @@ get_env_parameters:
 		;; <A/Y=variable name "NAME",0
 		;; >A/Y=pointer to "value",0
 		;;      or 0/0 if not found (checking X offset is enough)
+		;;	or 0/0 if no environment page (0 in env_page)
 
 getenv:
 		jsr  get_env_parameters
+		beq  _not_found			; environment erased
 
 		ldy  #0
 	-	sty  syszp+4
@@ -97,14 +99,18 @@ _found_var:	iny				; go past '='
 		;; C=0 no error
 		;; C=1 if environment full (variable NAME will be erased if existed before)
 		;;     if bad form (w/o '=')
+		;;     if environment not present (0 as env_page)
 
 _bad_form:	sec
 		rts
 
 setenv:
 		jsr get_env_parameters
+		bne +
+		sec				; no environment page
+		rts
 
-		ldy #0
+	+	ldy #0
 	-	lda (syszp),y			; search for '='
 		beq _bad_form
 		cmp #"="

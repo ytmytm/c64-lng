@@ -1,6 +1,5 @@
 		;; for emacs: -*- MODE: asm; tab-width: 4; -*-
 		;; print environment settings
-		;; there currently are no user definable environment strings
 	
 #include <system.h>
 #include <stdio.h>
@@ -59,10 +58,44 @@
 		lda  (lk_tsp),y
 		jsr  decout
 
-		lda  #$0a
+		ldx  #stdout
+		bit  txt_env
+		jsr  lkf_strout
+
+		lda  #3
+		jsr  lkf_set_zpsize
+		ldy  #tsp_ippid
+		lda  (lk_tsp),y
+		tay
+		lda  lk_ttsp,y
+		sta  userzp+1
+		lda  #0
+		sta  userzp
+		ldy  #tsp_envpage
+		lda  (userzp),y
+		sta  userzp+1		; now userzp points to envpage
+
+		ldy  #0
+		sty  userzp+2
+	-	lda  (userzp),y
+		beq  +
+		jsr  out		; print out contents of environment
+		inc  userzp+2
+		ldy  userzp+2
+		bne  -
+		beq  ++
+
+	+	lda  #$0a
+		jsr  out
+		inc  userzp+2
+		ldy  userzp+2
+		lda  (userzp),y
+		bne  -
+
+	+	lda  #$0a
 		jsr  out
 
-		lda  #0					; (error code, 0 for "no error")
+env_end:	lda  #0					; (error code, 0 for "no error")
 		rts						; return with no error
 		
 		;; print decimal number (8bit)
@@ -108,6 +141,9 @@ txt_cwd:
 txt_term:
 		.text $0a,"terminal width: ",0
 
-dectab:	.byte 1,10,100
+txt_env:
+		.text $0a,"environment variables:",$0a,0
+
+dectab:		.byte 1,10,100
 
 end_of_code:

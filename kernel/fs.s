@@ -14,13 +14,13 @@
 		;;  byte 3 - reference counter (write)
 		;;  byte 4 - flags
 		;;  5..31  - undefined, device specific
-		
+
 		.global ref_increment
 		.global io_return_error
 		.global io_return
 		.global alloc_pfd
 		.global fdup
-		
+
 		.global fopen
 		.global fputc
 		.global fgetc
@@ -54,25 +54,70 @@ resolve_dev:
 		sty  syszp+1
 		stx  syszp+2		
 #endif
-		ldy  #0
+
+resolve_path:	ldy  #0
 		lda  (syszp),y
-		cmp  #"/"
+		cmp  #"/"		; starts with '/' - full path
 		beq  alter_dev
-		ldy  #tsp_pdmajor
+		lda  syszp
+		pha
+		lda  syszp+1
+		pha
+		lda  #<pwd_name
+		ldy  #>pwd_name
+		jsr  getenv
+		beq  .rslv_loc		; no PWD - use the same as current process
+		sta  syszp
+		sty  syszp+1
+		ldy  #0
+	-	lda  (syszp),y		; copy
+		beq  +
+		sta  temp_name,y
+		iny
+		bne  -
+	+	lda  #"/"		; append '/' between path and filename
+		sta  temp_name,y
+		iny
+		pla			; restore filename
+		sta  syszp+1
+		pla
+		sta  syszp
+		tya
+		tax
+		ldy  #0
+	-	lda  (syszp),y
+		sta  temp_name,x
+		beq  +
+		iny
+		inx
+		cpx  #32
+		bne  -
+	+	lda  #<temp_name
+		ldy  #>temp_name
+		sta  syszp
+		sty  syszp+1
+		bne  resolve_path
+
+.rslv_loc:	pla
+		sta  syszp+1
+		pla
+		sta  syszp
+
+resolve_local:	ldy  #tsp_pdmajor
 		lda  (lk_tsp),y
 		beq  alter_dev+2
 		pha
 		iny
 		lda  (lk_tsp),y			; load minor
-		tax						; x=tsp_pdminor
+		tax				; x=tsp_pdminor
 		pla
-		tay						; y=tsp_pdmajor
+		tay				; y=tsp_pdmajor
 		clc
 		rts
 
 alter_dev:
 		ldx  #0
-		iny						; Y=1
+		iny				; Y=1
 		lda  (syszp),y			; single '/' in path?
 		bne  +				; yes - it's MAJOR_SYS
 		inx
@@ -99,9 +144,9 @@ alter_dev:
 	+	inx
 		bne  -
 
-	+	inx						; skip termination
-		inx						; skip major
-		inx						; skip minor
+	+	inx				; skip termination
+		inx				; skip major
+		inx				; skip minor
 		ldy  #1
 		lda  pprefix,x
 		bne  --
@@ -110,13 +155,13 @@ alter_dev:
 		;; which is not implemented
 		lda  #lerr_nosuchfile
 		sec
-		rts						; unknown prefix
+		rts				; unknown prefix
 
 found:		iny
 		tya
 		clc
 		adc  syszp    
-		sta  syszp				; skip path prefix
+		sta  syszp			; skip path prefix
 		lda  pprefix+1,x		; get major
 		tay  
 		lda  pprefix+2,x
@@ -170,7 +215,7 @@ mtab_fopen equ [*]-2
 		.word fs_ide64_fopen-1
 #endif
 		.word err_notimp-1		; fs_sys
-		
+
 mtab_fgetc equ [*]-2
 		.word fs_pipe_fgetc-1
 		.word fs_iec_fgetc-1
@@ -180,7 +225,7 @@ mtab_fgetc equ [*]-2
 		.word fs_ide64_fgetc-1
 #endif
 		.word err_notimp-1		; fs_sys
-		
+
 mtab_fputc equ [*]-2
 		.word fs_pipe_fputc-1
 		.word fs_iec_fputc-1
@@ -190,7 +235,7 @@ mtab_fputc equ [*]-2
 		.word fs_ide64_fputc-1
 #endif
 		.word err_notimp-1		; fs_sys
-		
+
 mtab_fclose equ [*]-2
 		.word fs_pipe_fclose
 		.word fs_iec_fclose
@@ -200,7 +245,7 @@ mtab_fclose equ [*]-2
 		.word fs_ide64_fclose
 #endif
 		.word fs_sys_fclose		; fs_sys
-		
+
 mtab_fcmd equ [*]-2
 		.word err_notimp-1		; fs_pipe
 		.word fs_iec_fcmd-1
@@ -210,7 +255,7 @@ mtab_fcmd equ [*]-2
 		.word fs_ide64_fcmd-1
 #endif
 		.word err_notimp-1		; fs_sys
-		
+
 mtab_fopendir equ [*]-2
 		.word err_notimp-1		; fs_pipe
 		.word fs_iec_fopendir-1
@@ -220,7 +265,7 @@ mtab_fopendir equ [*]-2
 		.word fs_ide64_fopendir-1
 #endif
 		.word fs_sys_fopendir-1		; fs_sys
-		
+
 mtab_freaddir equ [*]-2
 		.word err_notimp-1		; fs_pipe
 		.word fs_iec_freaddir-1
@@ -239,7 +284,7 @@ mtab_freaddir equ [*]-2
 		;;  > c=error (A=errorcode)
 		;; changes: syszp(0,1,2,3)
 		;; changes: tmpzp(0,1,2,3,4,5,6,7)
-		
+
 resolve_fileno:
 #ifndef ALWAYS_SZU
 		sei
@@ -281,7 +326,7 @@ err_illfileno:
 		;; < X = SMB-ID
 		;; > X = fd
 		;; changes: A,X,Y
-		
+
 alloc_pfd:		
 		sei
 		ldy  #tsp_ftab
@@ -293,7 +338,7 @@ alloc_pfd:
 		cli
 		lda  #lerr_toomanyfiles
 		jmp  catcherr
-		
+
 	+	txa
 		sta  (lk_tsp),y
 		cli
@@ -303,9 +348,9 @@ alloc_pfd:
 		tax
 		clc
 		rts
-		
+
 ;;;******************************************************
-		
+
 		;; function: fopendir
 		;; open directory for reading with freaddir
 		;; < A/Y = filename
@@ -313,7 +358,7 @@ alloc_pfd:
 		;; > c=1 : A = errno
 		;; changes: tmpzp(0,1,2,3,4,5,6,7)
 		;; calls: resolve_dev
-		
+
 fopendir:
 		jsr  resolve_dev
 		bcs  +
@@ -335,7 +380,7 @@ fopendir:
 		;; > c=1 : A = errno
 		;; changes: tmpzp(0,1,2,3,4,5,6,7)
 		;; calls: resolve_dev
-		
+
 fopen:
 		cpx  #fmode_a+1
 		bcs  err_notimp
@@ -360,7 +405,7 @@ err_notimp:
 		;; < X = fileno
 		;; > X = new fileno
 		;; calls: ref_increment
-		
+
 fdup:
 		jsr  resolve_fileno
 		bcs  -
@@ -387,11 +432,11 @@ _clend:
 		;; calls: smb_free
 		;; changes: syszp(0,1)
 		;; changes: tmpzp(0,1,2,3,4,5,6,7)
-		
+
 fclose:
 		jsr  resolve_fileno
 		bcs  -
-		sei						; another atomic section (Grrr..)
+		sei				; another atomic section (Grrr..)
 		lda  mtab_fclose,y
 		sta  _cljmp+1
 		lda  mtab_fclose+1,y
@@ -402,7 +447,7 @@ fclose:
 		tay
 		lda  #0
 		sta  (lk_tsp),y			; clear fs in process' fs-table
-		
+
 		ldy  #fsmb_flags		; decrease reference counter
 		lda  (syszp),y
 		and  #fflags_read
@@ -412,9 +457,9 @@ fclose:
 		sec
 		sbc  #1
 		bpl  +
-		lda  #0					; kernel panic ?
+		lda  #0				; kernel panic ?
 	+	sta  (syszp),y
-		
+
 		ldy  #fsmb_flags
 	+	lda  (syszp),y
 		and  #fflags_write
@@ -424,33 +469,33 @@ fclose:
 		sec
 		sbc  #1
 		bpl  +
-		lda  #0					; kernel panic ?
+		lda  #0				; kernel panic ?
 	+	sta  (syszp),y
 
 	+	ldy  #fsmb_rdcnt
 		lda  (syszp),y
 		ldy  #fsmb_wrcnt
 		ora  (syszp),y
-		bne  _clend				; don't close this file yet
-		
+		bne  _clend			; don't close this file yet
+
 		lda  syszp+2
-		pha						; remember SMB-ID (if it must be freed)
-		
-_cljmp:	jsr  $0000
+		pha				; remember SMB-ID (if it must be freed)
+
+_cljmp:		jsr  $0000
 
 		pla
 		beq  _clend
 		tax
 		jsr  smb_free
 		jmp  _clend
-		
+
 		;; function: fputc
 		;; put single byte to stream
 		;; < X = fileno, c=blocking
 		;; > c=0 : A = byte
 		;;   c=1 : A = errno
 		;; calls: resolve_fileno
-		
+
 fputc:
 		sei
 		sta  syszp+5			; data byte
@@ -521,7 +566,7 @@ io_return:
 		;; according to it's flags (readable/writeable)
 		;; < syszp points to fs_smb
 		;; changes: Y,A
-		
+
 ref_increment:	
 		;; increase reference counter
 		ldy  #fsmb_flags
@@ -533,7 +578,7 @@ ref_increment:
 		adc  #1
 		sta  (syszp),y
 		ldy  #fsmb_flags
-		
+
 	+	lda  (syszp),y
 		and  #fflags_write
 		beq  +
@@ -542,10 +587,9 @@ ref_increment:
 		adc  #1
 		sta  (syszp),y
 	+	rts
-		
 
 	-	jmp  catcherr
-		
+
 		;; function: fcmd
 		;; execute device specific command
 		;; < A/Y = filename
@@ -567,7 +611,7 @@ fcmd:
 		lda  mtab_fcmd,y
 		pha
 		rts		
-		
+
 		;; function: freaddir
 		;; read single directory entry
 		;; < X = fileno, A/Y = dir strcut
@@ -613,6 +657,12 @@ fgetdevice:
 		tay
 		clc
 		rts
-		
+
 ;;;******************************************************
+
+pwd_name:	.text "PWD",0
+temp_name:	.buf 32		;; temporary buffer for name resolving
+				;; not protected, potential problem if two
+				;; fopen's would happen in exactly the same
+				;; time
 

@@ -18,8 +18,8 @@ out_of_mem:
 		jmp  suicerrout
 
 #include MACHINE(reboot.s)
-				
-init:							; former called microshell
+
+init:						; former called microshell
 		lda  #3
 		jsr  set_zpsize			; use 3 bytes zeropage starting with userzp
 
@@ -32,16 +32,21 @@ init:							; former called microshell
 	-	sta  (userzp),y
 		iny
 		bne  -
-		
+
 		ldy  #tsp_pdmajor
 		lda  #MAJOR_IEC
 		sta  (lk_tsp),y
-		iny						; ldy  #tsp_pdminor
+		iny				; ldy  #tsp_pdminor
 		lda  #8
 		sta  (lk_tsp),y			; default device (8,0)
 
+.pwd_addr:	bit  pwd_default
+		lda  #<pwd_default
+		ldy  pwd_addr+2
+		jsr  setenv			; PWD variable
+
 		jsr  console_open
-		nop						; (need at least one working console)
+		nop				; (need at least one working console)
 		stx  console_fd
 
 		;; get/set size of console
@@ -50,7 +55,7 @@ init:							; former called microshell
 		lda  #size_x
 		sta  (lk_tsp),y
 		lda  #size_y
-		iny						; ldy  #tsp_termwy
+		iny				; ldy  #tsp_termwy
 		sta  (lk_tsp),y				
 
 		;; print startup message
@@ -69,7 +74,7 @@ init:							; former called microshell
 report_error_2:
 report_error:
 		jsr  print_error
-		
+
 ploop:
 		lda  #"."
 		jsr  cout
@@ -77,7 +82,7 @@ ploop:
 		lda  #$0a
 		jsr  cout
 		lda  userzp
-		beq  ploop				; ignore empty lines
+		beq  ploop			; ignore empty lines
 
 		;; parse commandline
 
@@ -129,13 +134,13 @@ load_and_execute:
 		sta  appstruct+0		; childs stdin
 		sta  appstruct+1		; childs stdout
 		sta  appstruct+2		; childs stderr
-		
+
 		;; fork_to child process
 		lda  #<appstruct
 		ldy  #>appstruct
 		jsr  forkto
 		bcs  report_error_2
-		
+
 		;; close console stream and try to open new one
 
 		ldx  console_fd
@@ -150,15 +155,15 @@ load_and_execute:
 
 	-	ldx  #<wait_struct		; blocking if there is no console left
 		ldy  #>wait_struct
-		jsr  wait				; look for terminated child
-		bcs  jploop				; carry always means lerr_tryagain (A not set)
+		jsr  wait			; look for terminated child
+		bcs  jploop			; carry always means lerr_tryagain (A not set)
 
 	+	lda  console_fd
 		bpl  +
 		jsr  console_open
 		bcs  -
 		stx  console_fd
-		
+
 	+	pha
 		ldy  #0
 	-	lda  child_message_txt,y
@@ -166,7 +171,7 @@ load_and_execute:
 		jsr  cout
 		iny
 		bne  -
-		
+
 	+	pla
 		jsr  hex2cons
 		lda  #" "
@@ -187,7 +192,7 @@ jploop:
 ;;; *******************************************
 
 		;; read line from keyboard (not stdin)
-		
+
 readline:
 		lda  #0
 		sta  userzp
@@ -195,31 +200,31 @@ readline:
 		sta  userzp+1
 
 		;; wait for incomming char
-		
+
 	-	ldx  console_fd
 		sec
 		jsr  fgetc
-		bcs  -					; (ignore EOF)
+		bcs  -				; (ignore EOF)
 
 		;; got a valid char
 
 		cmp  #$0a
 		beq  read_return
 		cmp  #32
-		bcc  -					; illegal char (read again)
+		bcc  -				; illegal char (read again)
 		ldy  #0
 		sta  (userzp),y			; store char and echo to console
 		jsr  cout
 		inc  userzp
 		bne  -
 		dec  userzp
-		jmp  -					; (beware of buffer overflows)
-				
+		jmp  -				; (beware of buffer overflows)
+
 read_return:
 		ldy  #0
 		tya
 		sta  (userzp),y
-		lda  userzp				; return length of string
+		lda  userzp			; return length of string
 		rts		
 
 hex2cons:
@@ -233,27 +238,28 @@ hex2cons:
 		and  #15
 	+	tax
 		lda  hextab,x
-cout:	sec
+cout:		sec
 		ldx  console_fd
 		jmp  fputc
-		
 
-hextab:	.text "0123456789abcdef"
-				
+hextab:		.text "0123456789abcdef"
+
 child_message_txt:
 		.byte $0a
 		.text "Child terminated: \0"
 
-console_fd:		.buf 1
-		
+console_fd:	.buf 1
+
 wait_struct:	.buf 7				; 7 bytes
 
 appstruct:		
-		.byte 0,0,0	
+		.byte 0,0,0
 		.buf  32
 
 ;;; strings
 
-startup_txt:	.text $0a,"Init v0.1",$0a,$00
-error_txt:		.text "? (l)oad command / e(x)it+reboot",$0a,0
-tmp_page:		.buf 1
+pwd_default:	.text "PWD=/disk8",0
+startup_txt:	.text $0a,"Init v0.1",$0a,0
+error_txt:	.text "? (l)oad command / e(x)it+reboot",$0a,0
+tmp_page:	.buf 1
+
