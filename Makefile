@@ -28,7 +28,7 @@ APPS=getty lsmod microterm ps sh sleep testapp wc cat tee uuencode \
 # will be put in the same package als APPS now, but may go into a
 # seperate one, in case the APP-package grows to big
 
-IAPPS=connd ftp tcpipstat tcpip ppp loop slip httpd ftp
+IAPPS=connd ftp tcpipstat tcpip ppp loop slip httpd ftp telnet
 
 #============== end of configurable section ============================
 
