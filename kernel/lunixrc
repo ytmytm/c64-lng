@@ -3,7 +3,7 @@
 #;; lunix loads this at startup,
 #;;
 #;; realtime clock driver
-#echo "loading realtime clock driver..."
+echo "loading realtime clock driver..."
 ciartc &
 #smwrtc &
 #ide64rtc &
