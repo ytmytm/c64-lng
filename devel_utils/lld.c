@@ -1,4 +1,4 @@
-/* 6502/10 linker (lld) Version 0.07
+/* 6502/10 linker (lld) Version 0.08
 
    Written by Daniel Dallmann (aka Poldi) in Sep 1996.
    This piece of software is freeware ! So DO NOT sell it !!
@@ -7,6 +7,8 @@
 
    If you've noticed a bug or created an additional feature, let me know.
    My (internet) email-address is dallmann@heilbronn.netsurf.de
+
+   Sep 30 2001 *poldi*  fixed: open files in binary mode
 
    Nov 15 2000 *mouse*  added: appleii_mode, -a flag to toggle
 			(don't write out two-byte header of start address)
@@ -40,7 +42,7 @@
 #define USE_GETENV              /* use LLD_LIBRARIES to find libraries */
 
 #ifdef _AMIGA
-const char *VERsion="$VER: lld 0.07 "__AMIGADATE__" $";
+const char *VERsion="$VER: lld 0.08 "__AMIGADATE__" $";
 #define PATH_SEPARATOR ','      /* character used as path separator  */
 #else
 #define PATH_SEPARATOR ':'      /* character used as path separator */
@@ -281,7 +283,7 @@ FILE *open_ext(char *file, unsigned int *size)
 {
   FILE *inf;
 
-  inf=fopen(file,"r");
+  inf=fopen(file,"rb");
   if (inf==NULL) {
     sprintf(str,"can't open inputfile \"%s\"",file);
     error(str);
@@ -313,7 +315,7 @@ void make_lib()
   int  tmp;
   unsigned int  size;
 
-  outf=fopen(file_output,"w");
+  outf=fopen(file_output,"wb");
   if (outf==NULL) {
     error("can't write to output-file");
     exit(1); }
@@ -326,7 +328,7 @@ void make_lib()
   while (f_num<infile_num) {
     fname=infile[f_num];
 
-    inf=fopen(fname,"r");
+    inf=fopen(fname,"rb");
     if (inf==NULL) {
       sprintf(str,"can't open inputfile \"%s\"",infile[f_num]);
       error(str);
@@ -486,7 +488,7 @@ void Howto()
 {
   printf("lld [-dlLNaoqs] input-files...\n");
   printf("  linker for objectcode created by 'luna' 6502/10 assembler\n");
-  printf("  this is version 0.07\n");
+  printf("  this is version 0.08\n");
   printf("  -d file = dump list of all global addresses in file\n");
   printf("  -l library-file\n");
   printf("  -L = create library instead of executable\n");
@@ -610,7 +612,7 @@ void main(int argc, char **argv)
     printf("# processing file \"%s\", pc=%i\n",fname,pc);
 #   endif
 
-    inf=fopen(fname,"r");
+    inf=fopen(fname,"rb");
     if (inf==NULL) {
       sprintf(str,"can't open inputfile \"%s\"",infile[f_num]);
       error(str);
@@ -729,7 +731,7 @@ void main(int argc, char **argv)
       printf("\n# next pass... i=%i\n",i);
 #     endif
 
-      inf=fopen(fname,"r");
+      inf=fopen(fname,"rb");
       if (inf==NULL) {
         sprintf(str,"can't open library \"%s\"",fname);
         error(str);
@@ -825,7 +827,7 @@ void main(int argc, char **argv)
   printf("# second pass...\n\n");
 # endif
 
-  outf=fopen(file_output,"w");
+  outf=fopen(file_output,"wb");
   if (outf==NULL) {
     sprintf(str,"can't open outputfile \"%s\"",file_output);
     error(str); }
@@ -914,7 +916,7 @@ void main(int argc, char **argv)
     printf("# processing library \"%s\", pc=%i\n",fname,pc);
 #   endif
 
-    inf=fopen(fname,"r");
+    inf=fopen(fname,"rb");
     if (inf==NULL) {
       sprintf(str,"can't open library \"%s\"",infile[f_num]);
       error(str);
@@ -989,7 +991,7 @@ void main(int argc, char **argv)
   if (!quiet_mode) printf("done, %i bytes of code\n",pc-pc_start);
 
   if (dump_file_name) {
-	outf=fopen(dump_file_name,"wb");
+	outf=fopen(dump_file_name,"w");
 	if (!outf) {
 	  sprintf(str,"can't open \"%s\" for writing",dump_file_name);
       derror(str);
