@@ -1,20 +1,16 @@
 		;; for emacs: -*- MODE: asm; tab-width: 4; -*-
-		
+
+		;; by Daniel Dallmann, Anton Treuenfels
+
 		;; print_hex8
 		;; prints 8bit-value hexadecimal to stdout
 
 		;; < A=value
 		;; > (A,X,Y=XX)
 
-#define _date (Jun 15 1997)
 #include <stdio.h>
 
 .global print_hex8
-
-		.byte $0c
-		.word print_hex8
-hex_tab:
-		.text "0123456789abcdef"
 
 print_hex8:
 		pha
@@ -23,20 +19,21 @@ print_hex8:
 		lsr  a
 		lsr  a
 		jsr  +
+		bcs  error1
 		pla
-		bcs  ++
 		and  #$0f
 
-	+	tay
-		lda  hex_tab,y
+	+	cmp  #10
+		bcc  +
+		adc  #"a" - 10 - "0" - 1
+	+	adc  #"0"
 		sec
 		ldx  #stdout
-		jsr  fputc
-		bcs  +
-		rts
+		jmp  fputc
 
-		pla
-	+	jmp  lkf_catcherr
-
-
+		;; problem:	A holds error code, stack is dirty
+error1:	tax						; remember error code
+		pla						; clean up stack
+		txa						; restore error code
+		jmp  lkf_catcherr		; return / exit with error message
 
