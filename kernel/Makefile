@@ -28,6 +28,7 @@ OBJ=init.o delay.o hook.o keyboard.o lock.o panic.o \
 BOOTOBJ=bootstrap.o calib.o
 
 all : $(KERNEL) $(BOOT) modules
+	relate *.s > lng_kfunc.txt
 
 # Rules
 %.o : %.s ; luna -Oq $< -o $@ $(COMPFLAGS)
@@ -86,5 +87,5 @@ clean   :
 
 distclean : clean
 	-rm ../include/zp.h ../include/jumptab.h lunix.c* boot.c* lunix.atari boot.atari \
-            globals.txt ../include/ksym.h
+            globals.txt ../include/ksym.h lng_kfunc.txt
 
