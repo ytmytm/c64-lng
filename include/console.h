@@ -28,5 +28,16 @@
 # define size_y  25
 # define MAX_CONSOLES		6
 #endif
+#ifdef ANTIC_CONSOLE
+;// defines for ANTIC/GTIA console
+#  define FONT_ROM	$e000
+#  define ATARI_FONT	$0800
+#  define DISPLAY_LIST	$0400
+#  define SCREEN_BASE	$0420
+#  define cursor	$3f
+#  define size_x	40
+#  define size_y	24
+#  define MAX_CONSOLES		1
+#endif
 
 #endif

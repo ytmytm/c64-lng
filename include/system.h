@@ -1,3 +1,5 @@
+;// added larch_atari
+
 #ifndef _SYSTEM_H
 #define _SYSTEM_H
 
@@ -123,8 +125,9 @@
 #define lk_consmax   $ffef  ; absolute number of consoles
 #define lk_archtype  $fff0  ; machine architecture
 #  define larchf_type %00000011
-#   define larch_c64  0
-#   define larch_c128 1
+#   define larch_c64	0
+#   define larch_c128	1
+#   define larch_atari	2
 #  define larchf_8500 %00010000
 #  define larchf_pal  %00100000
 #  define larchf_reu  %01000000
