@@ -16,7 +16,8 @@ _alloc1_error:
 _load_error:
 		tay
 		pla
-_o65_error:	pla
+_o65_error:
+		pla
 
 _fopen_error:
 		pla
@@ -51,6 +52,7 @@ forkto:
 		jsr  fopen
 		tay
 		bcs  _fopen_error
+
 #ifndef ALWAYS_SZU
 		ldy  lk_ipid
 		sei
@@ -73,24 +75,26 @@ forkto:
 		ldx  syszp+7			; fd
 
 #ifdef HAVE_O65
+
 		jsr  fgetc
-		pha
+		pha                       ; byte 1
 		jsr  fgetc
 		sei
 		stx syszp+7
 		tax
-		pla
-		cmp #>LNG_MAGIC
+		pla                       ; byte 1
+		cmp #>LNG_MAGIC           ; $fffe
 		bne _o65_load
 		cpx #<LNG_MAGIC
 		beq _lng_load
 
 _o65_load:
-		cmp #<O65_MAGIC
-		bne _not_o65
+
+		cmp #<O65_MAGIC           ; $0001
+		bne __not_o65
 		cpx #>O65_MAGIC
-		bne _not_o65
-		pla
+		bne __not_o65
+		pla             ;start adr hi
 		tax
 		jsr pfree		; free temporary page (not needed for .o65)
 		ldx syszp+7
@@ -105,13 +109,219 @@ _o65_load:
 		bne _not_o65
 	    	jsr fgetc		; version (ignored)
 		cli
+
 		jsr o65_loader
 		bcc +
 		tay
+
 		jmp _o65_error
-_not_o65:	jmp _exe_error
+
+		;;
+		;;---- start script runner
+		;;
+
+TMPCHR  equ syszp
+LOOPC	equ syszp+1
+SPTR	equ syszp+2  ;+3
+SPTR_L	equ SPTR
+SPTR_H	equ SPTR+1
+DPTR	equ syszp+4  ;+5
+DPTR_L	equ DPTR
+DPTR_H	equ DPTR+1
+TMPFD	equ syszp+7
+
+__fget:
+		; get FD into X
+		tsx
+  		inx ; return adr.
+  		inx ;   "     "
+
+		inx ; lcnt
+		inx ; start
+		inx ; fd
+		lda	$0100,x
+		tax
+  		jsr fgetc
+        nop
+		rts
+
+		; read variables from stack into
+		; syszp
+__sfget:
+
+		tsx
+  		inx ; return adr.
+  		inx ;   "     "
+
+		inx ; loopc
+		lda	$0100,x
+		sta LOOPC
+		tay
+
+		inx ;start
+		lda	$0100,x
+		sta DPTR_H
+
+		inx ;fd
+		lda	$0100,x
+		sta TMPFD
+
+		inx ;sptr_h
+		lda	$0100,x
+		sta SPTR_H
+
+		inx ;sptr_l
+		lda	$0100,x
+		sta SPTR_L
+
+		rts
+
+__not_o65:
+
+   		cmp #"#"
+		bne _not_script
+		cpx #"!"
+		bne _not_script
+
+		;; init stackframe
+
+		lda #0       ; loop counter
+		pha
+
+		;; read and check 3rd character
+		;; aswell (must be space)
+
+		jsr __fget
+		cmp #" "
+		bne __not_script
+
+		;; copy interpreter name + eventual switches
+		;; from scriptfile
+
+ilp1:
+
+		jsr __fget
+ 		bcs ilp2    ; error
+
+ 		cmp #$0a    ; end of line
+ 		beq ilp2
+
+ 		cmp #" "	; replace spaces by zeros
+		bne ilp3
+		lda #0
+ilp3:
+		sta TMPCHR   ; temp: char read
+
+		jsr __sfget
+		lda #3
+		sta DPTR_L
+
+		lda TMPCHR   ; temp: char read
+		sta (DPTR),y
+
+		; restore stack, inc loopc
+
+;;		ldy LOOPC
+		iny
+		beq ilp2		; for safety
+		tya
+
+		; store loopc
+		tsx
+		inx ;loopc
+		sta	$0100,x
+
+		jmp ilp1
+
+ilp2:
+		;; interpreter/switches read ok
+
+		jsr __sfget
+		lda #3
+		sta DPTR_L
+
+		;; put 0 after interpreter/switches
+		lda #0
+		sta (DPTR),y
+        iny
+        sty LOOPC
+		sty DPTR_L
+
+		;; copy name of script to argument list
+		ldy #3
+ilp5:
+		lda (SPTR),y
+  		sta (DPTR),y
+		beq ilp6
+		iny
+		bne ilp5
+ilp6:
+  		;; 2 more zeros at end of argument list
+		iny
+		sta (DPTR),y
+  		iny
+		sta (DPTR),y
+
+		;; close input file, it will get
+		;; re-opened by the interpreter
+		ldx TMPFD           ; temp: cmdfile fd
+		jsr  fclose
+		nop
+
+		;; call interpreter
+        ;;
+
+		jsr __sfget
+		lda #0	; DPTR_L
+		sta DPTR_L
+
+		;; copy new fork struct to old fork struct
+		;; we use stdin/stdout/stderr from old struct!
+		ldy #3
+ilp0:
+		lda (DPTR),y
+		sta (SPTR),y
+		iny
+		cpy #32
+		bne ilp0
+
+		;; free temp page
+		ldx DPTR_H
+		jsr  pfree
+
+		;; remove stackframe
+		pla ; cnt
+		pla ; fd
+		pla ; start
+		pla ; struchi
+		pla ; struclo
+
+		;tsx
+        ;txa
+		;clc
+		;adc #5
+		;tax
+		;txs
+
+		;; fork to interpreter
+		lda	SPTR_L
+		ldy	SPTR_H
+		jmp forkto
+
+__not_script:
+		pla
+_not_script:
+
+		;;
+		;;---- end script runner
+		;;
+
+_not_o65:
+		jmp _exe_error
+
 	+	;; A/Y is address of start, 3 bytes on stack
 		;; is (main) is not == (load) this needs to be changed!!!
+
 ;;		sta _o65_exe_l+1	; store execution address
 ;;		sty _o65_exe_h+1
 		pla			; fd (not needed after o65_loader)
@@ -135,7 +345,8 @@ _not_o65:	jmp _exe_error
 		jsr  addtask
 		jmp  _after_addtask
 
-_lng_load:	cli
+_lng_load:
+		cli
 		ldy #2			; as if 2 magic bytes were already there
 		ldx syszp+7
 #endif
@@ -248,7 +459,7 @@ _exe_error:
 		lda  #lerr_illcode
 		jmp  _load_error		; (4x pla)
 
-_ioerrend:		
+_ioerrend:
 		pla
 		lda  syszp+2
 		jmp  _load_error
@@ -372,7 +583,7 @@ o65_exec_task:
 		sta  lk_memown,y
 		lda  lk_memnxt,y
 		tay
-		bne  -		
+		bne  -
 		cli
 		;; X/Y - start address of code to execute (change!!! if main not at start of code)
 		ldx #0
