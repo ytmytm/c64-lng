@@ -97,30 +97,25 @@ do_open:
 		lda  (userzp),y			; too many arguments ?
 		bne  HowTo				; if so, print howto
 
-		lda  userzp				; Try to open it as a file.
+		;; open directory
+dir:		lda  userzp			; Try to open it as a directory.
+		ldy  userzp+1
+		jsr  fopendir
+		bcc  ++
+
+		lda  userzp			; Try to open it as a file.
 		ldy  userzp+1
 		ldx  #fmode_ro			; (open read-only)
 		jsr  fopen
-		bcc  file
-		cmp	 #lerr_nosuchfile	; If that's the reason for failure...
-		beq  +
-		jmp  lkf_suicerrout
-		
-		;; open directory
-dir:							; Try to open it as a directory.
-	+	lda  userzp
-		ldy  userzp+1
-		jsr  fopendir
-		bcc	 +
-		cmp	 #lerr_nosuchdir
+		bcc  +
+		cmp  #lerr_nosuchfile		; If that's the reason for failure...
 		beq  no_such
 		jmp  lkf_suicerrout
 
-file:	
-		jsr  print_file
+	+	jsr  print_file
 		lda  #0
 		rts
-		
+
 		;; read directory entries
 	+	bit  dir_struct
 loop:
