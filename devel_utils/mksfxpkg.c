@@ -94,6 +94,23 @@ main(int argc, char **argv)
     fputc(c64_archive_head[i++], outfile);
   total=c64_header_length+0x0801;
     
+  /* check for dupplicate filenames */
+  i=4; p=0;
+  while (i<argc) {
+    j=3;
+    while (j<i) {
+      if (!strcmp(argv[i],argv[j])) {
+	printf("%s:error: dupplicate filename \"%s\"\n",argv[0],argv[i]);
+	p++;
+      }
+      j++;
+    }
+    i++;
+  }
+  if (p>0)
+    exit(1);
+
+
   i=3;  
   while (i<argc) {
     sum=0;
@@ -139,3 +156,5 @@ main(int argc, char **argv)
     exit(1); } 
   exit(0);
 }
+
+
