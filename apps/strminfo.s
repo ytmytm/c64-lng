@@ -88,6 +88,8 @@ print_explanation:
 		beq  p_console
 		cmp  #MAJOR_USER
 		beq  p_user
+		cmp  #MAJOR_IDE64
+		beq  p_ide64
 		cmp  #MAJOR_SYS
 		beq  p_sys
 		rts						; (unknown)
@@ -103,6 +105,9 @@ p_console:
 		SKIP_WORD
 p_user:	
 		ldy  #o_user
+		SKIP_WORD
+p_ide64:
+		ldy  #o_ide64
 		SKIP_WORD
 p_sys:
 		ldy  #o_sys
@@ -162,6 +167,8 @@ txt_misc:
 		.text " (console)",0
 		o_user equ *-txt_misc
 		.text " (user)",0
+		o_ide64 equ *-txt_misc
+		.text " (ide64)",0
 		o_sys equ *-txt_misc
 		.text " (sys)",0
 

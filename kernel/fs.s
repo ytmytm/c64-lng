@@ -30,6 +30,8 @@
 		.global freaddir
 		.global fgetdevice
 
+		.global pprefix
+
 		;; function: resolve_dev
 		;; resolve device from path prefix
 		;; changes: syszp(0,1,2)
@@ -71,7 +73,12 @@ resolve_dev:
 alter_dev:
 		ldx  #0
 		iny						; Y=1
+		lda  (syszp),y			; single '/' in path?
+		bne  +				; yes - it's MAJOR_SYS
+		inx
+		bne  found
 
+	+
 	-	lda  pprefix,x
 		beq  +
 		cmp  (syszp),y
@@ -101,16 +108,11 @@ alter_dev:
 
 		;; unknown prefix, may be a root-file handled by fs_sys
 		;; which is not implemented
-		;; (ldy  #MAJOR_SYS
-		;; (ldx  #0
-		;; (clc
-		;; (rts
-		
 		lda  #lerr_nosuchfile
 		sec
 		rts						; unknown prefix
 
-found:	iny
+found:		iny
 		tya
 		clc
 		adc  syszp    
@@ -124,6 +126,8 @@ found:	iny
 
 		;; list of prefixes is hardcoded into the kernel for now
 pprefix:
+		.text "/"
+		.byte 0, MAJOR_SYS,0
 		.text "disk8"
 		.byte 0, MAJOR_IEC,8
 		.text "disk9"
@@ -165,7 +169,7 @@ mtab_fopen equ [*]-2
 #ifdef HAVE_IDE64
 		.word fs_ide64_fopen-1
 #endif
-		;; .word err_notimp-1		; fs_sys
+		.word err_notimp-1		; fs_sys
 		
 mtab_fgetc equ [*]-2
 		.word fs_pipe_fgetc-1
@@ -175,7 +179,7 @@ mtab_fgetc equ [*]-2
 #ifdef HAVE_IDE64
 		.word fs_ide64_fgetc-1
 #endif
-		;; .word err_notimp-1		; fs_sys
+		.word err_notimp-1		; fs_sys
 		
 mtab_fputc equ [*]-2
 		.word fs_pipe_fputc-1
@@ -185,7 +189,7 @@ mtab_fputc equ [*]-2
 #ifdef HAVE_IDE64
 		.word fs_ide64_fputc-1
 #endif
-		;; .word err_notimp-1		; fs_sys
+		.word err_notimp-1		; fs_sys
 		
 mtab_fclose equ [*]-2
 		.word fs_pipe_fclose
@@ -195,7 +199,7 @@ mtab_fclose equ [*]-2
 #ifdef HAVE_IDE64
 		.word fs_ide64_fclose
 #endif
-		;; .word err_notimp		; fs_sys
+		.word fs_sys_fclose		; fs_sys
 		
 mtab_fcmd equ [*]-2
 		.word err_notimp-1		; fs_pipe
@@ -205,7 +209,7 @@ mtab_fcmd equ [*]-2
 #ifdef HAVE_IDE64
 		.word fs_ide64_fcmd-1
 #endif
-		;; .word err_notimp-1		; fs_sys
+		.word err_notimp-1		; fs_sys
 		
 mtab_fopendir equ [*]-2
 		.word err_notimp-1		; fs_pipe
@@ -215,7 +219,7 @@ mtab_fopendir equ [*]-2
 #ifdef HAVE_IDE64
 		.word fs_ide64_fopendir-1
 #endif
-		;; .word err_notimp-1		; fs_sys
+		.word fs_sys_fopendir-1		; fs_sys
 		
 mtab_freaddir equ [*]-2
 		.word err_notimp-1		; fs_pipe
@@ -225,7 +229,7 @@ mtab_freaddir equ [*]-2
 #ifdef HAVE_IDE64
 		.word fs_ide64_freaddir-1
 #endif
-		;; .word err_notimp-1		; fs_sys
+		.word fs_sys_freaddir-1		; fs_sys
 
 		;; function: resolve_fileno
 		;; get SMB that corresponds to a given fileno
