@@ -70,6 +70,17 @@
 #define MULTIPLE_CONSOLES
 
 
+;// PC AT-compatible keyboard support
+;// ---------------------------------
+;// this allows you to use PC-compatible keyboard as the only input device
+;// read docs for info about interface (it's very easy to build)
+;// WARNING: currently the driver isn't 100% reliable on VIC console, so try 
+;// to not use this option if you're about to type much, you'll avoid 
+;// stress ;)
+
+;#define PCAT_KEYB
+
+
 ;// SuperCPU support
 ;// ----------------
 ;// if you have a CMD SuperCPU you might want to uncomment the following
@@ -111,14 +122,14 @@
 # define HAVE_VDC
 # ifndef HAVE_SCPU
 ;// C128 without SCPU
-#  define SPEED_MAX    lda #1:sta VIC_SPEED
-#  define SPEED_1MHZ   lda #0:sta VIC_SPEED
+#  define SPEED_MAX    lda #1:sta VIC_CLOCK
+#  define SPEED_1MHZ   lda #0:sta VIC_CLOCK
 # else
 #  undef SPEED_MAX
 #  undef SPEED_1MHZ	
 ;// C128 with SCPU (don't know, if this really works)
-#  define SPEED_MAX    lda #1:sta VIC_SPEED:sta SCPU_20MHZ
-#  define SPEED_1MHZ   lda #0:sta VIC_SPEED:sta SCPU_1MHZ
+#  define SPEED_MAX    lda #1:sta VIC_CLOCK:sta SCPU_20MHZ
+#  define SPEED_1MHZ   lda #0:sta VIC_CLOCK:sta SCPU_1MHZ
 # endif
 #endif
 

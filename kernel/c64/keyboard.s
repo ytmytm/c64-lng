@@ -14,8 +14,11 @@
 ; 31.12.1999
 ; for now there's no difference between keypad and numkeys although IIRG
 ; there's special keypad mode, so these should probably emit some ESC-sequences
-; CAPS should be treated as shift but only for letters
-; ($0001,bit 6=1 == CAPS not pressed)
+; 14.05.2000
+; added more flags to 'altflags', CAPS is special (checked before table lookup), but
+; other can be placed in tables - $e0-$e3 are modyfing higher nibble of altflags
+; these are 'lock' keys - twostate
+; that stuff is unconditional and will be assembled to both C64 and C128 configurations
 
 ; for now PETSCII table is not updated
 
@@ -35,13 +38,16 @@
 		
 		.global keyb_scan
 		
-btab2i:	.byte $fe, $fd, $fb, $f7, $ef, $df, $bf, $7f
+btab2i:		.byte $fe, $fd, $fb, $f7, $ef, $df, $bf, $7f
 		
 #ifdef C128
 btab2i2:
 		.byte $ff, $ff, $ff		;these 3 are common for both tables
 		.byte $ff, $ff, $ff, $ff, $ff, $fe, $fd, $fb
+
 #endif
+locktab:	;; table for $e? keys
+		.byte keyb_alt, keyb_ex1, keyb_ex2, keyb_ex3
 
 #ifdef PETSCII
 
@@ -114,7 +120,7 @@ _keytab_shift:
 #define sarrow_up_c     $1c     ; shift + arrow_up = pi
 #define sarrow_left_c   $60     ; shift + arrow_left = ` (reverse quote)
 #define sspc_c          $20     ; shift + space = space
-#define scommo_c        $f0		;  internal code! -> toggle consoles
+#define scommo_c        $f0	;  internal code! -> toggle consoles
 #define srs_c		dunno
 
 # ifdef C128
@@ -124,10 +130,10 @@ _keytab_shift:
 #define esc_c		$1b	; esc is truly ESC
 #define lf_c		$0a	; linefeed is LF and life is life
 #define cr_c		$0a	; enter is also LF
-#define help_c		dunno	; help
-#define alt_c		dunno	; alt~=meta?
-#define noscrl_c	dunno	; no-scroll - this should start/stop line 
-							; scrolling on screen, probably blocking console
+#define alt_c		$e0	; alt~=meta?
+#define help_c		$e1	; help
+#define noscrl_c	$e2	; no-scroll - this should start/stop line 
+				; scrolling on screen, probably blocking console
 # endif ; C128
 
 _keytab_normal:
@@ -210,17 +216,26 @@ lst:			.byte $ff		; must be $ff at startup
           
 keyb_scan:
 		ldx  #0
-		stx  altflags
+		lda altflags
+		and #%11110000			; higher 4 keys are toggled
+		sta altflags
 #ifndef C128
 		ldy  #$40
 #else
-		ldy  #(64+24)			;WAS 64
+		ldy  #(64+24)
 #endif
 		sty  keycode
 		lda  #$ff
 		sta  port_row			; make sure all lines are high  
 #ifdef C128
 		sta port_row2
+		lda $01				; do CAPS check here
+		and #%01000000
+		bne +				; =1 - not pressed
+		lda #keyb_caps
+		ora altflags
+		sta altflags
+	+
 #endif
 		lda  port_row
 		and  port_col
@@ -240,7 +255,7 @@ keyb_scan:
 #ifdef C128
 		sty port_row2
 #endif
-	-	lda  port_col			; pressed keys ?
+	-	lda  port_col				; pressed keys ?
 		cmp  port_col
 		bne  -
 		tax
@@ -257,7 +272,7 @@ keyb_scan:
 #ifndef C128
 		ldy  #7
 #else
-		ldy  #10				;WAS 7
+		ldy  #10
 #endif
 		stx  flag				; else flag=null;
 
@@ -346,29 +361,25 @@ contnxtbit:
 contnxtline:	
 		pla						; line is completed
 		sta  last,x				; remember result of scan
-		
-#ifdef C128
-		inx						; next line
-		cpx  #11				;WAS 8
-		beq  +					; all done !
-#endif
 
-		tya						; increase keycounter to next lines base
+		inx
+#ifndef C128
+		cpx  #8					; next line
+#else
+		cpx  #11
+#endif
+		beq  +					; all done !
+
+		tya					; increase keycounter to next lines base
 		and  #$f8
 		clc
 		adc  #8
-		
-#ifndef C128
-		inx						; next line
-		cpx  #8
-		beq  +					; all done !
-#endif
-		
+
 		tay
 		jmp  _keyscan_main
           
 	+	lda  #$ff
-		sta  port_row			; reset port_row
+		sta  port_row				; reset port_row
 #ifdef C128
 		sta port_row2
 #endif
@@ -378,11 +389,11 @@ contnxtline:
 		beq  +					; shit, then throw it all away
 	-	rts
 
-	+	lda  keycode			; look at what we've found
+	+	lda  keycode				; look at what we've found
 #ifndef C128
 		cmp  #$40
 #else
-		cmp  #(64+24)				;WAS 64
+		cmp  #(64+24)
 #endif
 		bcs  -					; nothing ? So lets leave!
 		sta  flag
@@ -401,59 +412,85 @@ contnxtline:
 		; queue key into keybuffer
 		ldx  keycode
 		lda  altflags
+		tay
 		and  #keyb_lshift | keyb_rshift
-		bne  ++
-		lda  altflags
+		bne  +++
+		tya
 		and  #keyb_ctrl
 		bne  +
+		tya
+		and  #keyb_caps
+		bne  ++
 		lda  _keytab_normal,x
 		jmp  _addkey
-		
+
 	+	lda  _keytab_normal,x	; keytab_ctrl ? (not yet)
 		and  #$1f
 		jmp  _addkey
-		
+
+	+	lda  _keytab_normal,x	; CAPS
+		cmp  #$61		; if >='a'
+		bcc  _addkey
+		cmp  #$7b		; and =<'z'+1
+		bcs  _addkey
+		and  #%11011111		; lower->UPPER
+		jmp  _addkey
+
 	+	lda  _keytab_shift,x
 
 		;; adds a keycode to the keyboard buffer
 		;; (has to expand csr-movement to esacape codes)
-		
+
 _addkey:
+		tax
+		and #%11110000
+		cmp #$e0				; keyboard 'lock' keys?
+		bne +					; no - continue
+		txa
+		and #%00001111
+		tay
+		lda altflags
+		eor locktab,y				; update flags information
+		sta altflags
+		rts					; and leave
+	+	txa
+
 		cmp  #$80
 		bcc  +
 		cmp  #$f0
 		bcs  to_toggle_console
+
 		cmp  #$85				; $81/$82/$83/$84 - csr codes
 		bcs  +
 		;; generate 3byte escape sequence
 		pha
 		lda  #$1b
-		jsr  console_passkey	; (console_passkey is define in fs_cons.s)
+		jsr  console_passkey			; (console_passkey is defined in fs_cons.s)
 		lda  #$5b
 		jsr  console_passkey
 		pla
 		eor  #$c0				; $8x becomes $4x
-	+ 	jmp  console_passkey	; pass ascii code to console driver
+	+ 	jmp  console_passkey			; pass ascii code to console driver
 
 to_toggle_console:
 		and  #$07
-		jmp  console_toggle		; call function of console driver
-								; (console_toggle is defined is console.s)
+		jmp  console_toggle			; call function of console driver
+							; (console_toggle is defined is console.s)
 
 
 		;; get state of keyboard
-keyb_stat: 
-		lda  altflags			; bit2..0= CTRL,right_SHIFT,left_SHIFT
+keyb_stat:
+		lda  altflags				; bit2..0= CTRL,right_SHIFT,left_SHIFT
 		rts
 
 		;; get state of joystick 0
-keyb_joy0:  
+keyb_joy0:
 		lda  joy0result
 		eor  #$ff
 		rts
 
 		;; get state of joystick 1
-keyb_joy1:  
+keyb_joy1:
 		lda  joy1result
 		eor  #$ff
 		rts
