@@ -3,36 +3,36 @@
 #;; lunix loads this at startup,
 #;;
 #;; realtime clock driver
-#echo "setting realtime clock..."
+#echo "loading realtime clock driver..."
 ciartc &
 #smwrtc &
 #ide64rtc &
 #;; dcf-77 rtc update daemon
 #dcf77 &
-#echo "done."
+echo "done."
 #;;
 #;; serial interface driver
 #echo "initializing serial interface..."
 #rs232std
-fifo64 -f
 #swiftlink
+#fifo64 -f
 #echo "done."
 #;; packet driver
 #echo "installing packet driver..."
-ppp 57600 login pass &
+#ppp 57600 login pass &
 #slip &
 #loop &
 #echo "done."
 #;; tcp/ip stack
 #echo "starting tcp/ip subsystem..."
-tcpip &
+#tcpip &
 #echo "done."
 #;; servers
 #echo "starting webserver..."
-httpd &
+#httpd &
 #echo "done."
 #echo "starting connect daemon..."
-connd 200 sh &
+#connd 200 sh &
 #echo "done."
 #;;
 echo "have a lot of fun!"
