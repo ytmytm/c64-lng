@@ -16,3 +16,5 @@
 - #!interpreter works only with O65 onabled
   (rewrite kernel/execute.s - there are 3 paths basing on first 2 bytes from file:
    LUNIX MAGIC, O65 MAGIC and "#!")
+
+- check if PWD is changed with cd tool (is it?)

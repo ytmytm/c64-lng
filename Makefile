@@ -128,22 +128,6 @@ cbmdisc: binaries
 		; do c1541 -attach ../lunix64.d64 -write $$i > /dev/null \
 		; done
 
-	cd samples; for i in \
-		luna/skeleton \
-		ca65/skeleton.o65 \
-		cc65/hello.o65 \
- 		scc6502/hello \
-		scc6502/first \
-		scc6502/second \
-		scc6502/third \
-		scc6502/fourth \
-		scc6502/fifth \
-		scc6502/extern \
-		scc6502/case \
-		scc6502/hexdump \
-		; do c1541 -attach ../lunix64.d64 -write $$i > /dev/null \
-		; done
-
 ifeq "$(MACHINE)" "atari"
 disc:	ataridisc
 else
