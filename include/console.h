@@ -19,6 +19,15 @@
 # define size_y  25
 # define MAX_CONSOLES		2
 #endif
+#ifdef VIC_CONSOLE80
+;// defines for 80 character VIC console
+# define screenL_base $400
+# define screenR_base $800	
+# define cursor  100
+# define size_x  80
+# define size_y  25
+# define MAX_CONSOLES		1
+#endif
 #ifdef VDC_CONSOLE
 ;// defines for VDC console
 # include <vdc.h>

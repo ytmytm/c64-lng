@@ -442,6 +442,9 @@ add_task_simple:
 #ifdef VIC_CONSOLE
 # include "opt/vic_console_init.s"
 #endif
+#ifdef VIC_CONSOLE80
+# include "opt/vic_console80_init.s"
+#endif
 #ifdef ANTIC_CONSOLE
 # include "opt/antic_console_init.s"
 #endif

@@ -71,6 +71,15 @@
 #define MULTIPLE_CONSOLES
 
 
+;// VIC 80 column console
+;// ---------------------
+;// startup with one 80x25 console, you can switch 0-39 and 40-79 screens with
+;// the same keys as to switch between consoles
+;// multiple consoles code will be disabled with this option
+
+;#define VIC_CONSOLE80
+
+
 ;// PC AT-compatible keyboard support
 ;// ---------------------------------
 ;// this allows you to use PC-compatible keyboard as the only input device
@@ -134,8 +143,15 @@
 # endif
 #endif
 
+;// fall back to VIC console (40)
 #ifndef VDC_CONSOLE
-# define VIC_CONSOLE
+# ifndef VIC_CONSOLE80
+#  define VIC_CONSOLE
+# endif
+#endif
+
+#ifdef VIC_CONSOLE80
+# undef MULTIPLE_CONSOLES
 #endif
 
 #ifndef SPEED_1MHZ	
