@@ -1,3 +1,6 @@
+from 0.21 to 0.22
+-----------------
+
 from 0.20 to 0.21 (Sep 10 2004)
 -----------------
 fixed: "uname -p" command shows processor name (GK)

@@ -307,17 +307,17 @@ to_no_reu:
 		lda  $de60
 		cmp  $de60
 		bne  noide64
-		cmp  #$49			; "I"
+		cmp  #$49			; "I"
 		bne  noide64
 		lda  $de61
 		cmp  $de61
 		bne  noide64
-		cmp  #$44			; "D"
+		cmp  #$44			; "D"
 		bne  noide64
 		lda  $de62
 		cmp  $de62
 		bne  noide64
-		cmp  #$45			; "E"
+		cmp  #$45			; "E"
 		beq  ++				; found
 noide64:	ldx  #0
 	-	lda  noide64_txt,x
@@ -362,7 +362,7 @@ noide64_txt:	.text "Kernel panic: IDE64 not detected",$0a
 welcome_txt:
 		.byte $0a
 		.text "Welcome to LUnix next generation (LNG)",$0a
-		.text "Version 0.21, 10 Sep 2004",$0a,$0a
+		.text "Version 0.22, ?? ??? 2004",$0a,$0a
 		.text "Compile time options:",$0a
 #ifdef VERBOSE_ERROR
 		.text "  - verbose error messages",$0a
