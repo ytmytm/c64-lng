@@ -1,12 +1,14 @@
-from 0.18 to 0.19 ...
+from 0.18 to 0.19 (Apr 11 2001)
 -------------------------------
+added: -a option for ls (ls now hides files beginning with ".") (DD)
+changed: fs_iec now does character conversion (unix2cbm) (DD)
 changed: more code is common in keyboard.s (MW)
 added: <br> tag for help and XHTML to help files (SH)
-added: some helpfiles, fifo64 (untested)
-fixed: misspelling of the word "libraries" mainly in lld.c and luna.c
+added: some helpfiles, fifo64 (untested) (DD)
+fixed: misspelling of the word "libraries" mainly in lld.c and luna.c (SH)
 changed: system code is ready for dynamic console allocation (MW)
 fixed: console_close bug, that caused microshell to hang, after running
-       the first command in single console mode
+       the first command in single console mode (DD)
 removed: ancient kernel/c64/todo/cons80.s code (MW)
 added: vic 80 column console (MW)
 added: application clear (SH)
@@ -26,7 +28,7 @@ added: minimal hardware flow control support for swiftlink (MW)
 changed: undefined SPEED_* for C128, it (and iec stuff) works
          at constant 2MHz flawlessly (MW)
 added: smartwatch RTC handler, library function hextobcd (MW)
-added: date, output in unix or ntp time
+added: date, output in unix or ntp time (AB)
 added: new library functions: checkdate dateconvert adc_32_8 mult_32_8 (AB)
 changed: ciartc now uses sleep(17s) instead of TOD interrupt (AB)
 changed: dcf77, support for insertion of leap second  (AB)
