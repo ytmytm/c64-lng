@@ -1,5 +1,5 @@
 ;; For emacs: -*- MODE: asm; tab-width: 4; -*-
-	
+
 ;;; low-level driver for FIFO64 (16550 based interface)
 ;;; (detection algorithm based on Linux-Sources)
 
@@ -7,8 +7,11 @@
 #include <jumptab.h>
 #include <stdio.h>
 
+#include <config.h>
+#include MACHINE_H
+
 		;; base address of fifo64link
-		fifo64_base equ $de00
+		fifo64_base equ UART_BASE
 
 		start_of_code equ $1000
 
@@ -31,16 +34,46 @@ rcv_errcnt:			.buf 1		; receiver error count
 xmit_fifo64_size:	.buf 1
 uart_type:			.buf 1
 		
-		;; baudrates for use with a 1.8432MHz oszillator
+;;  0:  300
+;;  1:  600
+;;  2:  1200
+;;  3:  2400
+;;  4:  4800
+;;  5:  9600
+;;  6:  19200
+;;  7:  38400
+;;  8:  57600
+
+#ifdef UART_OSC_1843
+
+;; baudrates for use with a 1.8432MHz oszillator
 baud_tab_lo:
-		.byte <384, <192, <96, <48, <24, <12, <6, <3, <3
+		.byte <96, <96, <96, <48, <24, <12, <6, <3, <3
 baud_tab_hi:
-		.byte >384, >192, >96, >48, >24, >12, >6, >3, >3
+		.byte >96, >96, >96, >48, >24, >12, >6, >3, >3
+
+#else
+
+#ifdef UART_OSC_7373
+
+;; baudrates for use with a 7,3728MHz oszillator
+baud_tab_lo:
+		.byte <1536,<768,<384,<192,<96,<48,<24,<12,<8
+baud_tab_hi:
+		.byte >1536,>768,>384,>192,>96,>48,>24,>12,>8
+
+#else
+
+#error "unknown UART Oscillator Frequency"
+
+#endif
+
+#endif
 
 
 		send_flag equ nmizp
 		recv_flag equ nmizp+1
-						
+
 
 module_struct:
 		.asc "ser"      ; module identifier
@@ -48,7 +81,7 @@ module_struct:
 		.byte 2         ; module interface version number
 		.byte 1         ; weight (number of available virtual devices)
 		.word 0000      ; (reserved, used by kernel)
-        
+
 		;; functions provided by low-level serial driver
 		;;  rs232_lock   (exclusive open)
 		;;  rs232_unlock
@@ -293,7 +326,7 @@ sndh_ptr: jsr  SELFMOD
 		bcs  wrstop
 		sta  fifo64_data		; write to transmitter holding register (THR)
 		jmp  ckloop				; check for other pending interrupts
-		
+
 wrstop:
 		lda  #$80
 		sta  send_flag
@@ -340,8 +373,16 @@ nmi_enable:
 
 ;;; -----------------------------------------------------------------------
 ;; end_of_permanent_code:
-		
-initialize:		
+
+initialize:   
+
+		#ifdef HAVE_SILVERSURFER
+        ; enable ssurfer-port
+		lda $de01
+		ora #$01
+		sta $de01
+		#endif
+
 		;; parse commandline
 		ldx  userzp
 		cpx  #1
@@ -394,7 +435,7 @@ is_detected:
 		ldy  is_detected-1		; #>module_struct
 		jsr  lkf_add_module
 		bcc  is_available
-		
+
 		; print error message and exit
 
 		ldx  #stderr
@@ -423,7 +464,7 @@ is_available:
 		bit  txt_ok2
 		jsr  lkf_strout
 		nop
-		
+
 		lda  xmit_fifo64_size
 		jsr  hexout
 		lda  #$0a

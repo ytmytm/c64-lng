@@ -1,5 +1,5 @@
 		;; For emacs: -*- MODE: asm; tab-width: 4; -*-
-	
+
 		;;; low-level driver for FIFO64 (16550 based interface)
 
 #include <system.h>
@@ -8,11 +8,11 @@
 #include <config.h>
 #include MACHINE_H
 
-#define WATER_LO	40 
+#define WATER_LO	40
 #define WATER_HI    200
 
 		;; base address of fifo64link
-		fifo64_base equ $de00
+		fifo64_base equ UART_BASE
 
 		start_of_code equ $1000
 		.org start_of_code
@@ -24,30 +24,60 @@
 		jmp  initialize
 
 		SELFMOD equ $fe00		; placeholder
-		
+
 		RELO_JMP(+)				; relocator jump
 
 		;; nmizp+2  - write offset
 		;; nmizp+3  - read offset
 		;; nmizp+6  - status
-		
+
 rcv_errcnt:			.buf 1		; receiver error count
 xmit_fifo64_size:	.buf 1
 uart_type:			.buf 1
-		
-		
+                               
+;;  0:  300
+;;  1:  600
+;;  2:  1200
+;;  3:  2400
+;;  4:  4800
+;;  5:  9600
+;;  6:  19200
+;;  7:  38400
+;;  8:  57600
+
+#ifdef UART_OSC_1843
+
+;; baudrates for use with a 1.8432MHz oszillator
 baud_tab_lo:
 		.byte <96, <96, <96, <48, <24, <12, <6, <3, <3
 baud_tab_hi:
 		.byte >96, >96, >96, >48, >24, >12, >6, >3, >3
-		
+
+#else
+
+#ifdef UART_OSC_7373
+
+;; baudrates for use with a 7,3728MHz oszillator
+baud_tab_lo:
+		.byte <1536,<768,<384,<192,<96,<48,<24,<12,<8
+baud_tab_hi:
+		.byte >1536,>768,>384,>192,>96,>48,>24,>12,>8
+
+#else
+
+#error "unknown UART Oscillator Frequency"
+
+#endif
+
+#endif
+
 module_struct:
 		.asc "ser"      ; module identifier
 		.byte 4         ; module interface size
 		.byte 1         ; module interface version number
 		.byte 1         ; weight (number of available virtual devices)
 		.word 0000      ; (reserved, used by kernel)
-        
+
 		;; functions provided by low-level serial driver
 		;;  rs232_lock   (exclusive open)
 		;;  rs232_unlock
@@ -61,7 +91,7 @@ module_struct:
 		jmp rs232_ctrl
 		jmp rs232_getc
 		jmp rs232_putc
-		
+
 		;; interface speed for rs232_ctrl (passed in X register)
 		;;  0:  300
 		;;  1:  600
@@ -120,7 +150,7 @@ rs232_lock:
 		lda  fifo64_lsr
 		lda  fifo64_msr
 		jmp  lkf_enable_nmi
-		
+
 rs232_unlock:
 		jsr  lkf_disable_nmi
 		ldx  _bufptr1
@@ -237,21 +267,30 @@ rcv_error:
 nmi_disable:	
 		plp		
 		rts
-		
+
 nmi_enable:
 		;; enable NMI
 		lda  #%00000001			; enable receiver-interrupts
 		sta  fifo64_ier
 		lda  #%00011			; Loop=0, Out2=0, Out1=0, RTS=1, DTR=1
 		sta  fifo64_mcr
-		plp		
+		plp
 		rts
 
 ;;; -----------------------------------------------------------------------
 ;; end_of_permanent_code:
-		
-initialize:		
+
+initialize:
+
 		sei
+
+		#ifdef HAVE_SILVERSURFER
+        ; enable ssurfer-port
+		lda $de01
+		ora #$01
+		sta $de01
+		#endif
+
 		jsr  detect
 		cli
 		bcc  is_detected

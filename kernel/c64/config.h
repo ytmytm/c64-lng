@@ -126,6 +126,24 @@
 ;#define HAVE_IDE64
 
 
+;// Silversurfer support
+;// --------------------
+;// Silversurfer is an UART based serial interface connected to the
+;// Retroreplay.
+;// defining this will patch the fifo64 and sfifo64 driver
+;// to enable the Silversurfer
+#define HAVE_SILVERSURFER
+
+;// UART Configuration (fifo64/sfifo64 drivers)
+;// UART base adress
+;#define UART_BASE $de00	;// IDE64
+#define UART_BASE $de08		;// Silversurfer
+
+;// UART Oscillator Frequency in khz (rounded)
+;#define UART_OSC_1843  ;// IDE64
+#define UART_OSC_7373	;// Silversurfer
+
+
 ;// .o65 file format support
 ;// ------------------------
 ;// .o65 is a relocatable file format different than LNG native one.
