@@ -153,7 +153,13 @@ loop:
 		bcs  http_badreq
 		cmp  #" "
 		bne  http_notimpl
+		
 		;; second is URL, should read "URL "
+		jsr  readinupper
+		bcs  http_badreq
+		cmp  #"/"
+		bne  http_nofile
+		
 		ldy  #0
 	-	sec
 		jsr  fgetc
