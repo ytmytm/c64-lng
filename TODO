@@ -19,7 +19,7 @@ ytm todo:
   for IDE64: enter ROM compatible mode, load WHOLE block, leave ROM mode
 - support for external RAM in similar way to cc65 .emd drivers
 
-from greopaz:
+from groepaz:
 - added fasthead util and alternative loader for it. this should
   probably merged into one program that sends the floppy command
   and then loads lunix.
