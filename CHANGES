@@ -1,9 +1,13 @@
-from 0.17 to 0.18 (Sep 25 2000)
+from 0.18 to 0.19 ...
 -------------------------------
-fixed: tcp-bug: not all IP fragments discarded (AB)
+fixed: not all IP fragments discarded (AB)
 added: httpd - an experimental webserver (DD)
 added: support of the (german) DCF-77 receiver (Alexander Bluhm)
 added: RTC emulation using CIA1 (Alexander Bluhm)
+
+
+from 0.17 to 0.18 (Sep 25 2000)
+-------------------------------
 added: experimental 6510/8500 detection code (see bootstrap.s)
 fixed: IRQ hooking/unlocking, 
        add_module might return with set carry without error,
