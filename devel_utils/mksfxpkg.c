@@ -1,6 +1,7 @@
 /* package generator */
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 
 #define c64_header_length 398
@@ -94,13 +95,13 @@ main(int argc, char **argv)
     fputc(c64_archive_head[i++], outfile);
   total=c64_header_length+0x0801;
     
-  /* check for dupplicate filenames */
+  /* check for duplicate filenames */
   i=4; p=0;
   while (i<argc) {
     j=3;
     while (j<i) {
       if (!strcmp(argv[i],argv[j])) {
-	printf("%s:error: dupplicate filename \"%s\"\n",argv[0],argv[i]);
+	printf("%s:error: duplicate filename \"%s\"\n",argv[0],argv[i]);
 	p++;
       }
       j++;

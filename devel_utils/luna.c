@@ -677,7 +677,7 @@ void setlabel(char *labname, unsigned long val, int flags)
   if (insert_label(labname,&i)==DUP_LABEL) {
 
     if (pass==1) {
-      sprintf(msgbuf,"dupplicated label \"%s\"",labname);
+      sprintf(msgbuf,"duplicated label \"%s\"",labname);
       error(msgbuf);
       return; }
 
