@@ -866,7 +866,7 @@ txt_E_NOPORT:		.text "no port",$0a,0
 txt_E_NOROUTE:		.text "no route to host",$0a,0
 txt_E_NOSOCK:		.text "no socket available",$0a,0
 txt_E_NOTIMP:		.text "not implemented",$0a,0
-txt_E_PROT:			.text "protocoll error",$0a,0
+txt_E_PROT:			.text "protocol error",$0a,0
 txt_E_PORTINUSE:	.text "port in use",$0a,0
 		
 txt_unable:		.text "Unable to connect to remote host",$0a,"::",0

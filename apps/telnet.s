@@ -392,7 +392,7 @@ txt_E_NOSOCK:
 txt_E_NOTIMP:
 		.text "not implemented",$0a,0
 txt_E_PROT:
-		.text "protocoll error",$0a,0
+		.text "protocol error",$0a,0
 txt_E_PORTINUSE:
 		.text "port in use",$0a,0
 txt_unable:
