@@ -1,51 +1,153 @@
 
 		;; LNG Shell - first version
 		;; (signal stuff is missing)
-		
+
 		;; derived from lunix shell, which is derived from
 		;; sh0 (minimal lunix shell)
-		
+
 #include <system.h>
 #include <stdio.h>
 #include <kerrors.h>
 
+SHOPT_NOMSG	    equ	 $80  	 ; no startup message
+SHOPT_NOECHO    equ  $40     ; dont echo input
+SHOPT_NOPROMPT  equ  $20     ; dont print a prompt
+SHOPT_NOQUIT    equ  $10     ; dont quit shell after executing script
+SHOPT_DOVERSION equ  $08     ; print shell version _after_ EOF
+
+ARGS	 equ userzp
+ARGC	 equ userzp+2
+fd_stdin equ userzp+3
+
+
 		start_of_code equ $1000
 
 		.org start_of_code
-		
+
 		.byte >LNG_MAGIC,   <LNG_MAGIC
 		.byte >LNG_VERSION, <LNG_VERSION
 		.byte >(end_of_code-start_of_code+255)
 		.byte >start_of_code
 
+		; Get more zero page
+
+		lda #4
+		jsr lkf_set_zpsize
+
+		ldx #stdin
+		stx fd_stdin
+
 		ldx  #0
 		stx  exitflag
 		stx  childcnt			; no child processes jet
 		stx  hist_wr
+		stx  options
+
 		lda  #1
 	-	sta  histbuf,x			; clear historybuffer
-		inx	
+		inx
 		bne  -
 		stx  histbuf
-		
-		lda  userzp
-		cmp  #2
-		bcs  +					; less than 2 arguments submitted (=no args)
-		
-		ldx  #stdout			; interactive shell
+
+; Process cmd line options
+
+		ldx ARGS
+		stx ARGC
+		ldy #0
+		sty ARGS
+
+	-	inc ARGS		; Skip cmd name
+		lda (ARGS),y
+		bne -
+
+; Loop thro arguments
+
+loop:
+		inc ARGS		; Skip null
+		dec ARGC
+		beq finished
+		ldy #0
+		lda (ARGS),y
+		cmp #"-"
+		beq +           ; switch?
+
+		;;from_file:
+		lda ARGS
+		ldy ARGS+1
+		sec
+		ldx #fmode_ro
+		jsr fopen		; open file
+		;;nop			; exit on error
+		bcs nofile
+		stx fd_stdin
+
+		ldy #0
+	-	inc ARGS		; Skip filename
+		lda (ARGS),y
+		bne -
+		beq loop
+
+    +
+
+	 	inc ARGS		; yes
+		lda (ARGS),y
+		beq loop		; no more switches (single "-")
+
+	 	inc ARGS
+
+		cmp #"s"
+		bne +			; -s?
+		           		; yes
+		lda  options
+		ora  #SHOPT_NOMSG
+		ora  #SHOPT_NOPROMPT
+		ora  #SHOPT_NOECHO
+		sta  options
+		bne  loop
+
+    +
+		cmp #"v"
+		bne +			; -v?
+		           		; yes
+		lda  options
+		ora  #SHOPT_DOVERSION
+		sta  options
+
+		bne  loop
+    +
+
+		cmp #"r"
+		bne +			; -s?
+		           		; yes
+		lda  options
+		ora  #SHOPT_NOQUIT
+		sta  options
+		bne  loop
+	+
+		bne show_usage
+
+finished:
+
+		lda  options
+		and  #SHOPT_NOMSG
+		bne  +
+                            
+		; shell version
+		ldx  #stdout
 		bit  txt_welcome
 		jsr  lkf_strout
 		nop
+	+
 
-	+	ldx  userzp+1
-		jsr  lkf_free			; free argument page (argumets are ignored)
+		;;ldx  userzp+1
+		;;jsr  lkf_free			; free argument page (argumets are ignored)
 
-		lda  #3
-		jsr  lkf_set_zpsize		; allocate 3 zp bytes
+		;;lda  #3
+		;;jsr  lkf_set_zpsize		; allocate 3 zp bytes
 
 		;; re-entered after completed commandlines
-		
-start:	lda  #0					; reset status 
+
+start:	lda  #0					; reset status
 		sta  stat
 		sta  stat2
 		sta  bgrflag
@@ -66,27 +168,80 @@ start:	lda  #0					; reset status
 		sta  hist_rd
 
 		;; read a single commandline
-		
+
 in_loop:
-		sec						; forced (blocking) getc
-		ldx  #stdin
+								; forced (blocking) getc
+		;;ldx  #stdin
+		ldx  fd_stdin
+		sec
 		jsr  fgetc
-		bcc  +
+		bcc  proc_inp
 
 		cmp  #lerr_eof
-		beq  exit0
+		beq  file_end
+
+		pha
+		jsr close_file
+		pla
 		jmp  lkf_suicerrout
 
-exit0:	lda  #0
+nofile:
+
+file_end:
+
+		lda  options
+		and  #SHOPT_DOVERSION
+		beq  +
+
+		; shell version
+		ldx  #stdout
+		bit  txt_welcome
+		jsr  lkf_strout
+		nop
+
+	+
+    	lda  options
+		and  #SHOPT_NOQUIT
+		beq  exit0
+
+		jsr close_file
+
+		ldx  #stdin
+		stx  fd_stdin
+		;;ldx  #$00	;; we know stdin==0
+		stx  options
+
+		jmp start
+
+close_file:
+		ldx fd_stdin
+		cpx #stdin
+		beq _close_file
+
+		jsr fclose
+		nop
+
+_close_file:
+		rts
+
+show_usage:
+		ldx  #stdout
+		bit  usage
+		jsr  lkf_strout
+		nop
+exit0:
+		jsr  close_file
+		lda  #0
 		jmp  lkf_suicide			; exit with exitcode 0
 
 got_tab:
 		jsr  ccomplete
 		jmp  in_loop
-		
-	+	bit  escape_flag
+
+proc_inp:
+		bit  escape_flag
 		bmi  do_escape
-		
+
 		cmp  #$20
 		bcs  forw_to_screen
 		cmp  #10
@@ -97,7 +252,7 @@ got_tab:
 		beq  got_tab
 		cmp  #8
 		bne  in_loop			; unknown, ignore
-		
+
 
 		;; backspace
 		ldx  cmdlen
@@ -120,25 +275,25 @@ do_escape:
 		cmp  #"["
 		bne  exit_escape
 		jmp  in_loop
-		
+
 	+	ldx  #0
 		stx  escape_flag
 		cmp  #$41				; A
 		bne  +
 		;; csr up
 		jmp  up_hist
-		
-		
+
+
 	+	cmp  #$42				; B
 		bne  exit_escape
 		jmp  down_hist
-		
+
 exit_escape:
 		lda  #0
 		sta  escape_flag
 		jmp  in_loop
-		
-forw_to_screen:	
+
+forw_to_screen:
 		pha						; remember char
 		jsr  putc				; print character to screen (stdout)
 		pla						; (cleanup stack)
@@ -167,7 +322,7 @@ forw_to_screen:
 
 	+	jmp  start				; no command, then skip
 
-		
+
 		;; get next non white space character
 		;; from buffer
 nexnex:
@@ -178,7 +333,7 @@ nexnex:
 		jsr  getnex
 		bcs  -
 	+	rts
-		
+
 getnex:	inc  userzp+2
 getakt:							; get current character from buffer
 		ldx  userzp+2
@@ -188,15 +343,16 @@ getakt:							; get current character from buffer
 		tax
 
 		cmp  #"\""
-		bne  +
+		bne  +             ; not quote
 		lda  quote_flag
 		eor  #$80
 		sta  quote_flag
-		bne  getnex
-		
+		;;bne  getnex
+		jmp  getnex
+
 	+	bit  quote_flag
-		bmi  +
-		
+		bmi  +             ; dont check special/whitespace when quoted
+
 		cmp  #$20
 		beq  got_whitespc		; reached white spaces
 		cmp  #$09
@@ -205,22 +361,22 @@ getakt:							; get current character from buffer
 		beq  got_special
 		cmp  #"&"
 		beq  got_special
-		
+
 	+	clc
 		txa
 		rts
 
-get_eob:		
+get_eob:
 		lda  #0
 		.byte $2c
-got_whitespc:		
+got_whitespc:
 		lda  #32
 got_special:
 		cmp  #0
 		sec						; return with A=0 and c=1 if end of buffer
 		rts
-       
-searched: 
+
+searched:
 		jsr  getnex
 		bcc  searched
 		jmp  oeb
@@ -238,13 +394,15 @@ dothework:						; process commandline
 		sta  bgrflag			; set background-flag (...&)
 		lda  #$ff				; NULL
 		bne  ++					; yes, then command's stdin=NULL
-		
+
 cmd_done:
 		jmp  start
 
-	+	lda  #stdin
+	+
+	    lda  #stdin
+		;;lda fd_stdin
 	+	sta  tmpinfd			; remember channel
-		
+
 next_com:
 		ldy  #0					; reset command length
 		sty  len
@@ -273,7 +431,7 @@ oeb:	lda  #0					; add $00 to filename
 		sta  (userzp),y			; end-marker
 		ldy  #0
 		lda  tmpinfd
-		sta  (userzp),y
+		sta  (userzp),y         ; child stdin
 		cpx  #"!"
 		bne  +
 		;; need more pipes
@@ -284,13 +442,15 @@ oeb:	lda  #0					; add $00 to filename
 		jmp  ++
 	+	lda  #stdout
 	+	ldy  #1
-		sta  (userzp),y
+		sta  (userzp),y         ; child stdout
 		lda  #stderr			; changed! always use stderr
 		iny
-		sta  (userzp),y
+		sta  (userzp),y         ; child stderr
+
 		lda  userzp
 		ldy  userzp+1
-		jsr  lkf_forkto
+		jsr  lkf_forkto         ; fork to child
+
 		ror  lasterr
 		bpl  +
 		jsr  lkf_print_error
@@ -303,7 +463,7 @@ oeb:	lda  #0					; add $00 to filename
 		bcc  +
 		tax
 		jsr  fclose
-		
+
 	+	ldy  #1
 		lda  (userzp),y
 		cmp  #3
@@ -317,7 +477,7 @@ oeb:	lda  #0					; add $00 to filename
 		bit  lasterr
 		bpl  +
 		jmp  start				; skip, print prompt
-		
+
 	+	inc  childcnt
 		bit  bgrflag           ; if not "&", then skip message
 		bpl  +
@@ -340,7 +500,7 @@ oeb:	lda  #0					; add $00 to filename
 		;; sta  childpidtab_lo,y
 		;; lda  cmdbuf-1,x
 		;; sta  hlp+1
-		;; sta  childpidtab_hi,y 
+		;; sta  childpidtab_hi,y
 		lda  lastPID
 		sta  hlp
 		lda  lastPID+1
@@ -373,7 +533,7 @@ waitfortermempf:
 		jsr  scan_childs+1		; blocking
 		lda  lastPID
 		ora  lastPID+1
-		bne  waitfortermempf		
+		bne  waitfortermempf
 
 		;; endwait
 		lda  #0
@@ -381,7 +541,7 @@ waitfortermempf:
 		jmp  cmd_done
 
 skipwait: jmp  start
-          
+
 toerrrout:
           pha
           sei
@@ -407,8 +567,8 @@ killedrdy:
 		lda  #$0a
 		jsr  putc
 		jmp  cmd_done  ; and return to prompt
-          
-hexout:	
+
+hexout:
 		pha
 		lsr  a
 		lsr  a
@@ -420,28 +580,43 @@ hexout:
 	+	tax
 		lda  hextab,x
 		jmp  putc
-		
-		;; shell internal command ?
-		
-intbef:   ldy  #0
-          sty  userzp+2
-          jsr  nexnex
 
-        - bcs  trenn
+		;; shell internal command ?
+
+intbef:
+          ; reset pointer
+		  ldy  #0
+          sty  userzp+2
+
+		  ; get first non-space character
+          jsr  nexnex
+          bcs  noint		; end of buffer, space or special char
+		  cmp  #"#"			; "#" starts EOL-Comment => ignore
+		  beq  isint
+		-
           cmp  beftab,y
           bne  noint
           iny
           jsr  getnex
+          bcs  trenn		; end of buffer, space or special char
           jmp  -
 
+		  ; not an internal command
 noint:    lda  #0
           sta  exitflag
           sta  userzp+2
           sec
         - rts
 
+          ; return from internal command
+isint:
+          clc
+		  rts
+
 trenn:    lda  beftab,y
           bne  noint
+
+		  ; "exit"
 
           sei
           lda  childcnt
@@ -456,23 +631,23 @@ trenn:    lda  beftab,y
           bcc  -
 
         + jmp  exit0
-          
+
 
 makparampage:
 		jsr  nexnex
 		bcs  +
-		
+
 	-	sta  (userzp),y
 		iny
 		jsr  getnex
 		bcc  -
 		cmp  #" "
 		bne  +
-		
+
 		lda  #0
 		sta  (userzp),y
 		iny
-		bne  makparampage		
+		bne  makparampage
 
 	+	lda  #0
 		sta  (userzp),y
@@ -511,7 +686,7 @@ decout:
 		;; look for terminated childs and print appropriate messages
 
 	-	bit wait_struct
-		
+
 scan_childs:
 		clc						; non-blocking
 		ldx  #<wait_struct
@@ -521,13 +696,13 @@ scan_childs:
 		dec  childcnt
 		cmp  #0
 		beq  +
-		
+
 		pha
 		lda  wait_struct+5		; PID lo
 		sta  hlp
 		lda  wait_struct+6		; PID hi
 		sta  hlp+1
-		jsr  decout		
+		jsr  decout
 		ldx  #stdout
 		bit  child_message_txt
 		jsr  lkf_strout
@@ -536,7 +711,7 @@ scan_childs:
 		jsr  hexout
 		lda  #$0a
 		jsr  putc
-		
+
 	+	lda  wait_struct+5
 		cmp  lastPID
 		bne  +
@@ -545,7 +720,7 @@ scan_childs:
 		bne  +
 		lda  #0					; last process has finished
 		sta  lastPID
-		sta  lastPID+1		
+		sta  lastPID+1
 	+	jmp  scan_childs
 
 scan_done:
@@ -598,8 +773,8 @@ hist_update:
 		ldx  userzp
 		iny
 		bne  -
-		
-	+	sty  cmdlen     
+
+	+	sty  cmdlen
 	-	jmp  in_loop
 
 down_hist:
@@ -755,19 +930,32 @@ endcsearch:
 		;; added functions
 
 print_prompt:	
+		
+		lda  options
+		and  #SHOPT_NOPROMPT
+		bne  +
+
 		lda  #"#"
 		jsr  putc
 		lda  #" "
 
-putc:	sec						; forced (blocking) putc
+putc:
+        tax
+		lda  options
+		and  #SHOPT_NOECHO
+		bne  +
+
+        txa
+		sec						; forced (blocking) putc
 		ldx  #stdout
 		jsr  fputc
 		nop
+	+
 		rts
 
  ;; stopanormal:
  ;; 		jmp  sendstop
- ;; 
+ ;;
  ;; _sig.userbreak:					; catch break-signal and pass it to
  ;; 		pha						; running processes
  ;; 		bit  stat2
@@ -776,14 +964,14 @@ putc:	sec						; forced (blocking) putc
  ;; 		sta  stopflg			; (set stop-flag)
  ;; 		pla
  ;; 		rti
- ;; 		
+ ;;
  ;; sendstop: txa
  ;;           pha
  ;;           tya
  ;;           pha
  ;;           lda  #0
  ;;          sta  stat2
- ;; 
+ ;;
  ;;         - ldx  stat2           ; sent signal 6 to all started processes
  ;;           cpx  stat            ; (6 = userbreak)
  ;;           beq  +
@@ -798,7 +986,7 @@ putc:	sec						; forced (blocking) putc
  ;;           ldx  #6
  ;; 		;; jsr  send_signal     ; send signal...
  ;;           jmp  -
- ;; 
+ ;;
  ;;         + pla
  ;;           tay
  ;;           pla
@@ -815,20 +1003,22 @@ putc:	sec						; forced (blocking) putc
  ;; 		cli						; if it is a new opened channel
  ;; 	+	jmp  toerrrout
 
-		
+
 		RELO_END ; no more code to relocate
 
-kiltext:  
+kiltext:
 		.text  "exec-skiped/error $"
 		.byte $00
 
-hextab:   
+hextab:
 		.text  "0123456789ABCDEF"
 
 d_tab_lo: .byte <1, <10, <100, <1000, <10000
 d_tab_hi: .byte >1, >10, >100, >1000, >10000
-          
-beftab:	.text  "exit"
+
+;; table of internal commands
+beftab:
+		.text  "exit"
 		.byte $00
 
 txt0:	.text  "you have running jobs"
@@ -837,11 +1027,16 @@ txt0:	.text  "you have running jobs"
 txt_welcome:
 		.text  "LUnix Shell Version 2.2beta (15Feb2000)"
 		.byte $0a,$00
-          
+
+usage:
+		.text "Usage: sh [-sr] [file]"
+		.byte $0a,$00
+
 child_message_txt:
 		.text " terminated with error $"
 		.byte $00
 
+options:	.buf 1	; flag for options given on commandline
 lasterr:	.buf 1
 lastPID:	.buf 2	; PID of last started process
 cmdlen:		.buf 1   ; number of chars in commandline-buffer
@@ -862,10 +1057,10 @@ hist_rd:	.buf 1   ;            ''               (read)
 wait_struct:	.buf 7			; 7 bytes
 escape_flag:	.buf 1
 quote_flag:		.buf 1
-				
+
 .newpage
 
 histbuf:  .buf  256
 cmdbuf:   .buf  256
 
-end_of_code:	
+end_of_code:
