@@ -1,5 +1,8 @@
 from 0.18 to 0.19 ...
 -------------------------------
+changed: PC-AT keyboard lock keys are supported in altflags (e.g. CAPS) (MW)
+fixed: PC-AT keyboard tables for shifted letters (BIG ones are available) (MW)
+added: minimal hardware flow control support for swiftlink (MW)
 changed: undefined SPEED_* for C128, it (and iec stuff) works
          at constant 2MHz flawlessly (MW)
 added: smartwatch RTC handler, library function hextobcd (MW)

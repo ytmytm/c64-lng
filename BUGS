@@ -1,2 +1,4 @@
 (to-fix-list)
-Mixed TCP/ICMP traffic sometimes causes the machine to hang
+- Mixed TCP/ICMP traffic sometimes causes the machine to hang
+- on C128 PPP is buggy and SLIP doesn't work at all - are ppp,slip,tcpip
+  free from c64-specific code? does mmu_stack matter?
