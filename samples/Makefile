@@ -8,16 +8,14 @@ export LNG_LIBRARIES=../lib/libstd.a
 VPATH=../include
 
 # list of applications
-APPS=testapp microterm ps lsmod sh wc getty sleep cat tee uuencode uudecode \
-     232echo 232term sliptst telnet kill rm ls connd ftp buf cp tcpipstat \
-     meminfo strminfo uptime time uname more loop slip ppp tcpip help \
-     b-cs b-co env beep httpd clear popclient true false echo touch cd \
-     expand pwd
+APPS=ca65/skeleton.o65 luna/skeleton
 
 # list of applications that must be linked against libstd
-LAPPS=amalloc date ciartc hextype smwrtc dcf77 ide64rtc
+LAPPS=
 
 all : $(APPS) $(LAPPS)
+	$(MAKE) -C cc65 all
+	$(MAKE) -C scc6502 all
 
 # Rules
 
@@ -28,7 +26,8 @@ all : $(APPS) $(LAPPS)
 # These are allowed to fail because cc65 package may not be present
 	-lupo -dUSING_CA65=1 $< -o $@.s
 	-ca65 -t lunix $@.s
-	-ld65 -t lunix -o $@ $@.o
+	-ld65 -C ca65/lunix.cfg -o $@ $@.o
+#	-@ld65 -t lunix -o $@ $@.o
 
 $(LAPPS) : $(LAPPS:%=%.o)
 	lld -qN $@.o -o $@
@@ -38,6 +37,8 @@ $(APPS) : system.h rs232.h jumptab.h stdio.h
 
 $(LAPPS) : system.h rs232.h jumptab.h stdio.h ../lib/libstd.a
 
-clean   : 
-	-rm $(APPS) $(LAPPS) $(LAPPS:%=%.o) *.o65*
+clean   :
+	rm -f $(APPS) $(LAPPS) $(LAPPS:%=%.o) *.o65*
+	$(MAKE) -C cc65 clean
+	$(MAKE) -C scc6502 clean
 

@@ -55,3 +55,4 @@ ide64rtc
 cd
 expand
 skeleton.o65.s
+*.o65

@@ -56,10 +56,13 @@ BINDIR=$(patsubst c%,bin%,$(MACHINE))
     BINDIR="binatari"
   endif
 
-all : kernel libstd apps help
+all : kernel libstd apps help samples
 
 apps : devel libstd
 	$(MAKE) -C apps
+
+samples : devel libstd
+	-$(MAKE) -C samples
 
 kernel : devel
 	$(MAKE) -C kernel
@@ -85,6 +88,10 @@ package : binaries
 	cd apps ; mksfxpkg $(MACHINE) ../pkg/apps.$(MACHINE) $(APPS) $(IAPPS)
 	cd help ; mksfxpkg $(MACHINE) ../pkg/help.$(MACHINE) *.html
 	cd scripts ; mksfxpkg $(MACHINE) ../pkg/scripts.$(MACHINE) $(SAPPS)
+	cd samples ; \
+	  cp --target-directory=. luna/skeleton ca65/skeleton.o65 cc65/hello ; \
+	  mksfxpkg $(MACHINE) ../pkg/samples.$(MACHINE) skeleton skeleton.o65 hello ; \
+	  rm skeleton skeleton.o65 hello
 
 ataridisc: binaries
 	  makeimage $(BINDIR)/boot.$(MACHINE) $(BINDIR)/lunix.$(MACHINE) $(BINDIR)/atari.bin
@@ -121,6 +128,22 @@ cbmdisc: binaries
 		; do c1541 -attach ../lunix64.d64 -write $$i > /dev/null \
 		; done
 
+	cd samples; for i in \
+		luna/skeleton \
+		ca65/skeleton.o65 \
+		cc65/hello.o65 \
+ 		scc6502/hello \
+		scc6502/first \
+		scc6502/second \
+		scc6502/third \
+		scc6502/fourth \
+		scc6502/fifth \
+		scc6502/extern \
+		scc6502/case \
+		scc6502/hexdump \
+		; do c1541 -attach ../lunix64.d64 -write $$i > /dev/null \
+		; done
+
 ifeq "$(MACHINE)" "atari"
 disc:	ataridisc
 else
@@ -132,6 +155,7 @@ clean :
 	$(MAKE) -C apps clean
 	$(MAKE) -C lib clean
 	$(MAKE) -C help clean
+	$(MAKE) -C samples clean
 
 distclean : clean
 	$(MAKE) -C kernel distclean
