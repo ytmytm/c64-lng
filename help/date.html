@@ -6,16 +6,26 @@
 <title>date</title>
 </head>
 <body>
-usage: date [-s hh:mm[:ss](am|pm)]
+usage: date [option]
 
-<p>Date prints the time (date not yet implemented) to standard
-output. The current time is read from the real time clock of CIA1.
-Date can also be used to set the time, in this case the "-s" option
-has to be used.</p>
+<p>Date prints weekday,date,time and timezone to standard output. 
+Date relies on a RTC module to have access to the current time. 
+Available RTC modules are:</p>
 
-<p>example:</p>
+<p>
+ciartc - software RTC using the TOD function of CIA1<br>
+dcf77 - driver for the DCF77 hardware<br>
+smwrtc - driver for a Smart Watch chip hooked to cia1 joystick port 2.
+</p>
 
-<p>date -s 11:00pm</p>
+<p>Options:
+-t hh:mm:ss.tt  set time<br>
+-d ccyy.mm.dd  set date<br>
+-w ww  set weekday<br>
+-z shhmm  set timezone, s is + or -<br>
+-u print time in unix format<br>
+-n print time in ntp format<br>
+</p>
+
 </body>
 </html>
-
