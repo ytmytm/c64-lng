@@ -5,7 +5,7 @@
 	
 #include <system.h>
 #include <stdio.h>
-#include <c64/c64.h>
+#include <c64.h>
 
 		start_of_code equ $1000
 

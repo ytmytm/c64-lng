@@ -414,5 +414,5 @@ add_task_simple:
 #ifdef PCAT_KEYB
 # include "opt/pcat_keyboard_init.s"
 #else
-# include "opt/vic_keyboard_init.s"
+# include MACHINE(keyboard_init.s)
 #endif
