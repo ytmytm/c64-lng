@@ -555,7 +555,7 @@ int main(int argc, char **argv)
 		case 'L': { lib_flag=1; break; }
 		case 'q': { quiet_mode=1; break; }
 		case 'N': { lng_mode=1; break; }
-		case 'l': { 
+		case 'l': {
 		  i++;
 		  if (lib_num>=LIB_NUM_MAX) {
 			error("too many libraries");
@@ -563,8 +563,8 @@ int main(int argc, char **argv)
 		  lib[lib_num]=argv[i];
 		  lib_num++;
 		  j=0; break; }
-		case 's': { 
-		  i++; 
+		case 's': {
+		  i++;
 		  if (sscanf(argv[i],"%i",&pc)==0) Howto();
 		  j=0; break; }
 		default:  Howto();
@@ -583,7 +583,7 @@ int main(int argc, char **argv)
   if (infile_num==0) { printf("%s: No input file\n",argv[0]); exit(1); }
 
   if (file_output==NULL) {
-    if (!lib_flag) file_output="c64.out"; 
+    if (!lib_flag) file_output="c64.out";
     else file_output="c64.lib";
   }
 
@@ -838,6 +838,7 @@ int main(int argc, char **argv)
   if (lunix_mode) {
     write_byte(outf,0xff);
     write_byte(outf,0xff); /* put LUnix-magic $ffff */
+/*    write_byte(outf,0xfe); */ /* put LNG-magic $fffe */
     pc_end++; /* have to add $02=endofcode-marker */ }
   else {
     if (lng_mode) {
@@ -859,7 +860,7 @@ int main(int argc, char **argv)
 #   endif
 
     inf=open_ext(fname,&size);
-     
+
 #   ifdef debug
     printf("# size is %i\n",size);
 #   endif
@@ -872,6 +873,8 @@ int main(int argc, char **argv)
     add_code(inf,fname,pc);
     if (getc(inf)!=EOF) ill_object(fname);
 
+/* this is obsolete ?!? (gpz) */
+#if 1
     if (lunix_mode && f_num==0) {
       /* have to adapt something in the header ! */
       code_buffer[65]=pc_start>>8;
@@ -882,7 +885,7 @@ int main(int argc, char **argv)
 	     code_buffer[2],pc_end-pc_start);
 #     endif
     }
-
+                   
     if (lng_mode && f_num==0) {
       /* have to adapt something in the header ! */
       code_buffer[5]=pc_start>>8;
@@ -894,11 +897,26 @@ int main(int argc, char **argv)
 #     endif
     }
 
+#else
+
+    if (lng_mode && f_num==0) {
+      /* have to adapt something in the header ! */
+      code_buffer[5-2]=pc_start>>8;
+      code_buffer[4-2]=((pc_end-pc_start+255)>>8);
+#     ifdef debug
+      printf("  lng base page = %i\n",code_buffer[5-2]);
+      printf("  lng code length = %i pages (%i bytes)\n",
+	     code_buffer[4-2],pc_end-pc_start);
+#     endif
+    }
+
+#endif
+
     write_buffer(outf);
     free(code_buffer);
 
     fclose(inf);
-    
+
     pc+=size;
 
 # ifdef debug

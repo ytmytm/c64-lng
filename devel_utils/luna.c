@@ -52,7 +52,7 @@ luna-extension-history:
                              unresolved (external) labels
                       fixed: delete temporary file in every case
 
- Jul 4 1997 *icurtis* removed: Removed warning generated for unused labels, 
+ Jul 4 1997 *icurtis* removed: Removed warning generated for unused labels,
                                when in quiet mode.
                       added: \t notation for tab character
 
@@ -184,7 +184,9 @@ luna-extension-history:
 #define EMACS_ERRORS
 
 
-#define LINE_LEN  100   /* max line-length */
+/*#define LINE_LEN  100*/   /* max line-length */
+#define LINE_LEN  0x100   /* max line-length */
+
 #define LABEL_MAX 1500  /* max number of used labels */
 #define AVG_LABEL_LEN 8 /* just an average for calculating max labelspace */
 #define LABEL_LEN 30    /* max length of labels */
@@ -429,7 +431,7 @@ void error(char *text)
   if (!pre_proccess)
     printf("%s:%d: %s\n",file_input,_line,text);
   else
-    { 
+    {
       int i=0;
       while(i<strlen(pre_pedigree))
 	{
@@ -475,7 +477,7 @@ void warning(char *text)
   if (!pre_proccess)
     printf("%s:%d: warning: %s\n",file_input,_line,text);  
   else
-    { 
+    {
       int i=0;
       while(i<strlen(pre_pedigree))
 	{
@@ -532,12 +534,13 @@ int Readline()
       line[i]='\0';
       return (i); }
     line[i]=x;
-    i=i+1; 
+    i=i+1;
     x=fgetc(infile); }
   line[i]='\0';
   if (x=='\n') return (i);
-  printf("error: Line to long\n");
-  exit(1); 
+  /*printf("error: Line to long\n");*/
+  error("Line to long");
+  exit(1);
 }
 
 int nextchar(int i)
@@ -549,7 +552,7 @@ int nextchar(int i)
 int nextsep(int i)
 {
   int quoted=0;
-  while ((line[i]!=' ' && line[i]!='\t' && line[i]!='\0' && line[i]!=';' 
+  while ((line[i]!=' ' && line[i]!='\t' && line[i]!='\0' && line[i]!=';'
                       && line[i]!=',')||quoted)
     {
       if (line[i]=='\"') quoted^=1; /*"*/
@@ -1647,7 +1650,7 @@ int main(int argc, char **argv)
       while (line[i]!='\0') {
         i=nextchar(j);
         if (line[i]=='\0') continue;
-        if (line[i]==':') { 
+        if (line[i]==':') {
           j=nextchar(i+1);
           continue; }                
         j=nextsep(i);
@@ -1659,12 +1662,12 @@ int main(int argc, char **argv)
 	  unsigned long ltmp;
 	  
           /* special assembler commands like .byte .word .asc .head */
-	  
+
           i=i+1;
           if (line[i]=='b' && line[i+1]=='y') {
-	    
+
             /* assume .byte */
-	    
+
             while (1) {
               j=nextchar(j);
               j=getexpr(j,&ltmp,&flags,&lab);
@@ -1678,9 +1681,9 @@ int main(int argc, char **argv)
               if (lunix_mode && data_flag==0) error("data in code-area");
               j=j+1; }
 	    continue; }
-	  
+
           if (line[i]=='d' && line[i+1]=='i') {
-	    
+
             /* assume .digit */
 
             while (1) {
@@ -1698,9 +1701,9 @@ int main(int argc, char **argv)
 		    continue; }
 
           if (line[i]=='w') {
-	    
+
             /* assume .word */
-	    
+
             if (lunix_mode && data_flag==0) error("data in code-area");
             while (1) {
               j=nextchar(j);
@@ -1712,17 +1715,17 @@ int main(int argc, char **argv)
               if (line[j]!=',') break;
               j=j+1; }
             continue; }
-	  
+
           if (line[i]=='a') {
-	    
+
             /* assume .asc or .aasc */
-	    
+
             j=nextchar(j);
             if (line[j++]!='\"') error("\" expected");
             if (lunix_mode && data_flag==0) error("string in code-area");
             while (1) {
               if (line[j]=='\"') {                           /*"*/
-                j=j+1; 
+                j=j+1;
                 break; }
               if (line[j]=='\0') {
                 error("unterminated string");
@@ -1734,8 +1737,13 @@ int main(int argc, char **argv)
               putbyte(par,fl_resolved,0); }
             continue; }
 
+		/*
+		  start .header directive
+		*/
+
           if (line[i]=='h') {
 
+#if 1
             /* LUnix .header creator */
 
             if (org_lock) {
@@ -1787,6 +1795,7 @@ int main(int argc, char **argv)
 		  size=2; } /* ZP-label with . prefix (allocate 2 bytes) */
 	      else
 		size=1;     /* ZP-label without prefix (allocate 1 byte) */
+
 	      setlabel(&line[j],p,fl_resolved);
 	      p+=size;
               line[q]=tmp;
@@ -1809,10 +1818,13 @@ int main(int argc, char **argv)
             setsigjmp("_sig.pload",1);
             setsigjmp("_prockilled",15);
 
-            i=0;
-            while (i<64) {
+            /* write header */
+
+            i=0;while (i<64) {
               putbyte(header[i],fl_resolved,0);
-              i=i+1; }
+              i=i+1;
+		    }
+
             i=getlabel("_init");
             flags=0; lab=0;
             if (i!=NO_LABEL) {
@@ -1830,29 +1842,55 @@ int main(int argc, char **argv)
             putword(i,flags,lab);
             setlabel("_base",pc_begin,fl_resolved|fl_variable);
             setglobal("_base");
+
+#else
+            /* LNG .header creator */
+
+			/* unused (magic) */
+		    header[0]=0xff;
+		    header[1]=0xfe;
+            /* header info (version) */
+		    header[2]=0x00;
+		    header[3]=0x14;
+			/* will be patched by lld */
+		    header[4]=0x00;
+		    header[5]=0x00;
+
+            /* write header */
+
+            i=2;while (i<6) {
+              putbyte(header[i],fl_resolved,0);
+              i=i+1;
+		    }
+
+#endif
             continue; }
 
+		/*
+		  start .buf directive
+		*/
+
           if (line[i]=='b' && line[i+1]=='u') {
- 
+
             /* assume .buf */
-         
+
             if (lunix_mode && data_flag==0) warning(".buf in code-area");
             j=nextchar(j);
             j=getexpr(j,&ltmp,&flags,&lab);
-	    if (flags&(fl_variable|fl_external|fl_extdep)) 
+	    if (flags&(fl_variable|fl_external|fl_extdep))
 	      error("non constant argument");
 	    if (ltmp>0xffff) error("word out of range");
             buf_bytes=buf_bytes+ltmp; /* delayed insertion, because we don't
                                          need buf-bytes at the very end. */
             pc=pc+ltmp;
             continue; }
-	  
+
           if (line[i]=='d') {
- 
+
             /* assume .data */
 _do_data:
             if (data_flag!=0) continue;
-            data_flag=1;   
+            data_flag=1;
             dseg_count=dseg_count+1;
             sprintf(str,"__d%i",dseg_count);
             i=getlabel(str);
@@ -1864,7 +1902,7 @@ _do_data:
             else par=0;
             writebef( 12, 2, par, flags, lab);
             continue; }
- 
+
           if (line[i]=='c') {
             
             /* assume .code */

@@ -1174,6 +1174,7 @@ FILE *fopenSystemInclude(char *foo)
   char *envtmp;
 
   envtmp=getenv("LUPO_INCLUDEPATH");
+/*  printf("envtmp:%s\n\r",envtmp);*/
   if (envtmp!=NULL) {
     int i;
 
@@ -1184,6 +1185,9 @@ FILE *fopenSystemInclude(char *foo)
       strncpy(temp,envtmp,i);
       temp[i]=DIRECTORY_SEPARATOR;
       strcpy(&temp[i+1],foo);
+	  
+/*	  printf("hh %s\n\r",temp);*/
+
       if ((boo=fopen(temp,"r"))!=NULL) {
         pushSourceFile(temp);
         return boo; }
@@ -1198,7 +1202,7 @@ FILE *fopenSystemInclude(char *foo)
 #else
 
   /* no getenv, then check some standard (UNIX) paths */
-  
+
   sprintf(temp,"/usr/include/c64/%s",foo);
   if ((boo=fopen(temp,"r")))
     {
