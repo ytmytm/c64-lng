@@ -37,8 +37,9 @@ $(OBJ) : $(MACHINE).h $(KINCLUDES) Makefile
 $(BOOTOBJ) : $(MACHINE).h $(BINCLUDES) Makefile
 $(patsubst %,modules/%,$(MODULES)) : system.h stdio.h jumptab.h
 reloc.o : kfunc_tab.s
-keyboard.o : $(MACHINE)/keyboard.s
-bootstrap.o : $(MACHINE)/keyboard_init.s
+#console.o : $(MACHINE)/console.s
+#keyboard.o : $(MACHINE)/keyboard.s
+#bootstrap.o : $(MACHINE)/console_init.s $(MACHINE)/keyboard_init.s
 
 # copy configuration file
 ../include/config.h : $(MACHINE)/config.h
