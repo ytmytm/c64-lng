@@ -1,15 +1,17 @@
 ;; For emacs: -*- MODE: asm; tab-width: 4; -*-
+;; for   jed: -*- TAB: 4 -*-
 
 		;; code relocator
-		;; 2000Jan5 - added kernel functions @ virtual addresses
+		;; 2000Jan5 - Added kernel functions @ virtual addresses.
+		;; 2003-7-15, Moved the list of public kernel functions to a separate object-file.
 
+#include <config.h>
 #include <system.h>
 #include <kerrors.h>
-#include <config.h>
+#include <ikernel.h>
 
 		.global exe_test
 		.global exe_reloc
-		.global kfunc_tab
 
 		;; - system loads the first 256 bytes of an application.
 		;; - then calls exe_test to see if it is in a proper format
@@ -20,8 +22,6 @@
 		;; - then calls exe_reloc to relocate the applications code
 		;;   exe_reloc returns the address to jump to in order to
 		;;   run the application.
-
-btab:	.byte 128,64,32,16,8,4,2,1
 
 _relobit0:                     ; tables for relocator
         .byte   0,167,  0,255,144,175,  0
@@ -45,13 +45,12 @@ _relobit1:
 
 		;; function: exe_test
 		;; syszp points to first 256 bytes of code
-exe_test:	
-
 		;; check for ($fffe) LNG-magic-bytes
 		;; (magic header of LUnix0.1 has been $ffff)
 		;; < syszp points to code
 		;; > c=1 if code *is* executable
 
+exe_test:
 		lda  syszp
 		bne  -					; code must be page-aligned
 
@@ -87,19 +86,16 @@ exe_test:
 		rts				; ok it seems to be LUnix (LNG) native code !
 
 		;; function: exe_reloc
-		
 		;; code relocator
 		;;  syszp points to start of a binary in LNG-format
-		;; (exe_reloc runns in the new task's environment!)
-
-		;; < syszp+1 = hi-byte of code to relocated
+		;; (exe_reloc runs in the new task's environment!)
+		;; < syszp+1 = hi-byte of code to be relocated
 		;; < syszp+0 = 0, (syszp) must point to valid exe-header
-
 		;; changes: syszp(0,1,2,3,4,5)
 
 exe_reloc:
 		ldy  #5
-		lda  (syszp),y			; original base address (hi)		
+		lda  (syszp),y			; original base address (hi)
 		sta  syszp+3			; (orig-base)
 		sec
 		lda  syszp+1
@@ -124,18 +120,19 @@ exe_reloc:
 		inx
 		bne  -
 	-	jmp  _err_illcode
+
 	+	lda  lk_memnxt,y
 		bne  -
 		txa
 		sec
-		sbc  syszp+2			; convert to original context
+		sbc  syszp+2			; convert to original origin
 		sta  syszp+4			; hi-byte+1 of end
 
 _reloc_:
 		;;   syszp    points to code to relocate
 		;;   syszp+2  offset
-		;;   syszp+3  (>start)
-		;;   syszp+4  (>end)+1
+		;;   syszp+3  (>original_start)
+		;;   syszp+4  (>original_end)+1
 
 		;; reloc: generates error-messages if there are illegal
 		;; opcodes or code isn't terminated with a $02-instruction
@@ -152,12 +149,12 @@ _reloc_:
 		and  #7
 		tax
 		lda  _relobit0,y
-		and  btab,x
+		and  btab2r,x
 		cmp  #1					; move bit of table into carry
 		lda  _relobit1,y
-		and  btab,x
+		and  btab2r,x
 		beq  +
-		lda  #1
+		lda  #1					; move bit of table into bit0
 	+	rol  a					; add bit0 of intruction-size
 
 		beq  _illegal			; size=0, then ill.instr
@@ -173,11 +170,11 @@ _reloc_:
 
 		dey				; (kernel address remapping)
 		lda  (syszp),y
-		cmp  #lkfunc_max<<1
-		bcs  _illegal			; (must be less than number of functions)
+		cmp  #lkfunc_max
+		bcs  _err_illcode		; (must be less than twice number of functions)
 		tax
 		lsr  a
-		bcs  _illegal			; (must be even)
+		bcs  _err_illcode		; (must be even)
 		lda  kfunc_tab,x		; (lo byte)
 		sta  (syszp),y
 		iny
@@ -204,7 +201,7 @@ _addlen:
 		lda  lk_memown,x
 		cmp  lk_ipid
 		bne  _err_illcode		; end of codesegment without $02 instruction!!
-		stx  syszp+1 
+		stx  syszp+1
 		jmp  _reloc_			; continue relocation
 
 _err_illcode:
@@ -238,10 +235,7 @@ _illegal:
 		bne  _err_illcode		; end of codesegment without $02 instruction!!
 		jmp  _reloc_			; continue relocation
 
-_end:	
+_end:
 		ldx  #6					; return with X/Y = base+6
 		ldy  syszp+5
 		rts
-
-#include "kfunc_tab.s"
-		;; (defines lkfunc_max and kfunc_tab)

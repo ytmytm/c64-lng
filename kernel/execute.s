@@ -1,4 +1,4 @@
-		;; load and start a new process
+		;; LUnix's spawn function
 
 #include <config.h>
 #include <system.h>
@@ -11,7 +11,8 @@ _alloc1_error:
 		pla
 		pla
 		pla
-		jmp  _outofmem
+		lda  #lerr_outofmem
+		jmp  catcherr
 
 _load_error:
 		tay
@@ -26,17 +27,18 @@ _fopen_error:
 		jmp  catcherr
 
 		;; function: forkto
-		;; < A/Y = address of struct
-		;; <		.byte stdin_fd, stdout_fd, stderr_fd
-		;; <     .asc  "<filename>\0"
+		;; load and start a new process
+		;; < A/Y = address of structure:
+		;; <	.byte stdin_fd, stdout_fd, stderr_fd
+		;; <	.asc  "<filename>\0"
 		;; <		optional: .asc "<parameter>\0"
-		;; <              ...
-		;; <    .byte 0
-
-		;; > c=1:  error (error number in A)
-		;; > c=0:  X/Y = childs PID
+		;; <		...
+		;; <	.asc "\0"
+		;; > c=1: error (error number in A)
+		;; > c=0: X/Y = child's PID
 		;; changes: syszp(0,1,2,3,4,5,6,7)
-		;; calls: fopen,spalloc,mpalloc,fgetc,exe_test,pfree,addtask,reloc_and_exec
+		;; calls: fopen,spalloc,mpalloc,pfree,addtask,catcherr
+		;; calls: fgetc,exe_test,reloc_and_exec,loado65
 
 forkto:
 		pha				; address of struct (lo)
@@ -89,32 +91,20 @@ forkto:
 		beq _lng_load
 
 _o65_load:
-
 		cmp #<O65_MAGIC           ; $0001
-		bne __not_o65
+		bne script_run
 		cpx #>O65_MAGIC
-		bne __not_o65
+		bne script_run
 		pla             ;start adr hi
 		tax
 		jsr pfree		; free temporary page (not needed for .o65)
-		ldx syszp+7
-		jsr fgetc
-		cmp #$6f		; o
-		bne _not_o65
-		jsr fgetc
-		cmp #"6"		; 6
-		bne _not_o65
-		jsr fgetc
-		cmp #"5"		; 5
-		bne _not_o65
-	    	jsr fgetc		; version (ignored)
 		cli
 
-		jsr o65_loader
+		ldx syszp+7		; fd
+		jsr loado65
 		bcc +
 		tay
-
-		jmp _o65_error
+		jmp _o65_error		; (pla 3 times)
 
 		;;
 		;;---- start script runner
@@ -133,51 +123,47 @@ TMPFD	equ syszp+7
 __fget:
 		; get FD into X
 		tsx
-  		inx ; return adr.
-  		inx ;   "     "
-
-		inx ; lcnt
-		inx ; start
-		inx ; fd
-		lda	$0100,x
+  		;inx ; return adr.
+  		;inx ;   "     "
+		;inx ; lcnt
+		;inx ; start
+		;inx ; fd
+		lda	$0105,x
 		tax
   		jsr fgetc
-        nop
+		nop
 		rts
 
 		; read variables from stack into
 		; syszp
 __sfget:
-
 		tsx
-  		inx ; return adr.
-  		inx ;   "     "
-
-		inx ; loopc
-		lda	$0100,x
+  		;inx ; return adr.
+  		;inx ;   "     "
+		;inx ; loopc
+		lda	$0103,x
 		sta LOOPC
 		tay
 
-		inx ;start
-		lda	$0100,x
+		;inx ;start
+		lda	$0104,x
 		sta DPTR_H
 
-		inx ;fd
-		lda	$0100,x
+		;inx ;fd
+		lda	$0105,x
 		sta TMPFD
 
-		inx ;sptr_h
-		lda	$0100,x
+		;inx ;sptr_h
+		lda	$0106,x
 		sta SPTR_H
 
-		inx ;sptr_l
-		lda	$0100,x
+		;inx ;sptr_l
+		lda	$0107,x
 		sta SPTR_L
 
 		rts
 
-__not_o65:
-
+script_run:
    		cmp #"#"
 		bne _not_script
 		cpx #"!"
@@ -199,7 +185,6 @@ __not_o65:
 		;; from scriptfile
 
 ilp1:
-
 		jsr __fget
  		bcs ilp2    ; error
 
@@ -228,8 +213,8 @@ ilp3:
 
 		; store loopc
 		tsx
-		inx ;loopc
-		sta	$0100,x
+		;inx ;loopc
+		sta	$0101,x
 
 		jmp ilp1
 
@@ -243,8 +228,8 @@ ilp2:
 		;; put 0 after interpreter/switches
 		lda #0
 		sta (DPTR),y
-        iny
-        sty LOOPC
+		iny
+		sty LOOPC
 		sty DPTR_L
 
 		;; copy name of script to argument list
@@ -297,7 +282,7 @@ ilp0:
 		pla ; struclo
 
 		;tsx
-        ;txa
+		;txa
 		;clc
 		;adc #5
 		;tax
@@ -311,20 +296,18 @@ ilp0:
 __not_script:
 		pla
 _not_script:
+		jmp _exe_error		; (?? pla 4 times)
 
 		;;
 		;;---- end script runner
 		;;
-
-_not_o65:
-		jmp _exe_error
 
 	+	;; A/Y is address of start, 3 bytes on stack
 		;; is (main) is not == (load) this needs to be changed!!!
 
 ;;		sta _o65_exe_l+1	; store execution address
 ;;		sty _o65_exe_h+1
-		pla			; fd (not needed after o65_loader)
+		pla					; fd (not needed after loado65)
 		sty  syszp+3		; exe_parameter is base-address (hi)
 		pla			; address of struct (hi)
 		sta  syszp+5
@@ -341,9 +324,7 @@ _not_o65:
 		sta  syszp+2		; local stderr fd
 		ldx  #<o65_exec_task
 		ldy  #>o65_exec_task
-		lda  #7
-		jsr  addtask
-		jmp  _after_addtask
+		jmp  to_addtask
 
 _lng_load:
 		cli
@@ -366,7 +347,7 @@ _lng_load:
 		bne  -
 		beq  +
 
-_ioerr:		lda  syszp+2		; error code
+_ioerr:	lda  syszp+2		; error code
 		cmp  #lerr_eof
 		beq +
 		jmp _load_error
@@ -487,8 +468,8 @@ _loaded:
 #ifndef ALWAYS_SZU
 		ldy  lk_ipid
 		sei
-		lda  lk_tstatus,y
-		ora  #tstatus_szu
+		lda  lk_tstatus,y			; fclose released syszp buffer
+		ora  #tstatus_szu			; so, reclaim it
 		sta  lk_tstatus,y
 		cli
 #endif
@@ -509,9 +490,10 @@ _loaded:
 		sta  syszp+2			; local stderr fd
 		ldx  #<reloc_and_exec
 		ldy  #>reloc_and_exec
-		lda  #7
+to_addtask:
+		lda  #7					; priority
 		jsr  addtask
-_after_addtask:	bcs  _outofmem+2
+		bcs  to_catcher
 		;; X/Y=PID of child
 #ifndef ALWAYS_SZU
 		sty  syszp
@@ -525,17 +507,16 @@ _after_addtask:	bcs  _outofmem+2
 #endif
 		rts
 
-_outofmem:
-		lda  #lerr_outofmem
+to_catcher:
 		jmp  catcherr
 
 		;; function: reloc_and_exec
-		;; executed in new task's context
-		;; after initializing the environment
-
-		;; < Y=exe-parameter (base-address hi)
-		;; calls: exe_reloc
+		;; claim new task's memory, then relocate and launch it
+		;; (executed in new task's context
+		;;  after initializing the environment)
+		;; < Y = exe-parameter (high-byte of base-address)
 		;; changes: syszp(0,1)
+		;; calls: exe_reloc
 
 reloc_and_exec:
 		sei
@@ -554,10 +535,9 @@ reloc_and_exec:
 		sta  lk_memown,y
 		lda  lk_memnxt,y
 		tay
-		bne  -		
+		bne  -
 		cli
 		jsr  exe_reloc
-		nop						; (suicide on error)
 		tya
 		pha
 		txa
@@ -566,32 +546,27 @@ reloc_and_exec:
 		rti						; continue with new task
 
 #ifdef HAVE_O65
+		;; function: o65_exec_task
+		;; claim new task's memory, then launch it (already relocated)
+		;; (executed in new task's context
+		;;  after initializing the environment)
+		;; < Y = high-byte of first address
+
 o65_exec_task:
-		sei
-#ifndef ALWAYS_SZU
-		ldx  lk_ipid
-		lda  lk_tstatus,x
-		ora  #tstatus_szu
-		sta  lk_tstatus,x
-#endif
-		sty  syszp+1
-		lda  #0
-		sta  syszp
+		;; 0/Y -- start-address of code to execute
+		;; (change!!! if "main" not at start of code)
+		tya
+		pha
+		lda  #<0
+		pha
+		php
 
 		;; hand over the covered portion of internal memory
+		sei
 	-	lda  lk_ipid
 		sta  lk_memown,y
 		lda  lk_memnxt,y
 		tay
 		bne  -
-		cli
-		;; X/Y - start address of code to execute (change!!! if main not at start of code)
-		ldx #0
-		ldy syszp+1
-		tya
-		pha
-		txa
-		pha
-		php
 		rti						; continue with new task
 #endif
