@@ -22,10 +22,10 @@ start:
 		;;  detect 8500 CPU by writing 1 to bit 6,7 of CPU I/O port
 		;;  and see how long the value is kept
 		lda  0
-		ora  %11000000
+		ora  #%11000000
 		sta  0
 		lda  1
-		ora  %11000000
+		ora  #%11000000
 		sta  1
 #endif
 
