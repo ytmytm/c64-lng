@@ -1,3 +1,4 @@
 config.h
 zp.h
 ksym.h
+jumptab.h
