@@ -1,4 +1,4 @@
-from 0.20 to 0.21 (Sep 10 2004)?
+from 0.20 to 0.21 (Sep 10 2004)
 -----------------
 fixed: "uname -p" command shows processor name (GK)
 changed: more keyboard code is common throughout archs (MW)
