@@ -329,6 +329,9 @@ readout_errchannel:
 		bcs  +
 #ifdef PRINT_IECMSG
 		lda  byte
+# ifndef PETSCII
+		jsr  cbm2unix
+# endif
 		jsr  printk
 #endif
 		lda  status
@@ -396,6 +399,10 @@ fs_iec_fopen:
 		sty  fopen_flags		; clear all fopen-flags
 		
 	-	lda  (syszp),y
+#ifndef PETSCII
+		jsr  unix2cbm
+		cmp  #0
+#endif
 		sta  filename,y
 		beq  +
 		iny
@@ -798,6 +805,10 @@ fs_iec_fcmd:
 		sta  filename+1
 		ldy  #0
 	-	lda  (syszp),y
+#ifndef PETSCII
+		jsr  unix2cbm
+		cmp  #0
+#endif
 		sta  filename+2,y
 		beq  +
 		iny
@@ -936,6 +947,9 @@ skip_entry:
 		bne  +
 		lda  #0
 	+	ldy  byte_count
+#ifndef PETSCII
+		jsr  cbm2unix
+#endif
 		sta  (syszp+2),y
 		iny
 		sty  byte_count
@@ -1007,7 +1021,41 @@ readdir_eof:
 		jsr  leave_all
 		pla
 		jmp  catcherr
-				
+
+
+#ifndef PETSCII
+		;; character conversions
+		;; if you want to share files between LNG and other
+		;; programms, you have to translate the chacacter encoding
+		;;  UNIX: a=97, A=65
+		;;  CBM:  a=65, A=193
+
+unix2cbm:
+		cmp  #65
+		bcc  ++					; A < 65, then done
+		cmp  #92
+		bcc	 +					; 65 <= A < 92, then +128
+		cmp  #97
+		bcc  ++					; 92 <= A < 97, then done
+		cmp  #124
+		bcs  ++					; A >= 124, then done
+		eor  #$20+$80			; 97 <= A < 124, then -32
+	+	eor  #$80
+	+	rts
+
+cbm2unix:
+		cmp  #65
+		bcc  ++					; A < 65, then done
+		cmp  #92
+		bcc	 +					; 65 <= A < 92, then +32
+		cmp  #193
+		bcc  ++					; 92 <= A < 193, then done
+		cmp  #220
+		bcs  ++					; A >= 220, then done
+		eor  #$80+$20			; 193 <= A < 220, then -128
+	+	eor  #$20
+	+	rts
+#endif
 
 ;;; ----------------------------- variables -------------------------------
 

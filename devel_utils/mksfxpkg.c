@@ -130,7 +130,7 @@ main(int argc, char **argv)
     do {
       tmp=argv[i][p];
       if (tmp=='*') { conv_flag=1; p++; continue; }
-      if (conv_flag) {
+      if (1  || conv_flag) {
         if (tmp>='a' && tmp<='z') tmp=tmp-'a'+'A';
         else if (tmp>='A' && tmp<='Z') tmp=tmp-'A'+'a';
         }
