@@ -1,5 +1,6 @@
 from 0.19 to 0.20
 -------------------------------
+fixed: o65_loader is protected from being reentrant (MW)
 fixed: bug in smwrtc that would cause to write on random memory (MW)
 added: IDE64 RTC handler (MW)
 added: support for relocatable file format .o65 (MW)

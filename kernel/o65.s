@@ -4,12 +4,8 @@
 ; 24,28,30.11.2001
 
 ; TODO
-; - this is NOT REENTRANT and NOT PROTECTED!!!
-; - free some space
+; - change locking into standard semaphores
 ; - some things seem to be calculated twice
-; - some adresses are used once -> remove them
-; - bases are not used after counting 'd'elta -> tbase=textd
-; - move most used into zpage
 ; - decide what to do with system zpage relocation - nmizp as base? (then usable is @$0020)
 ; - get address of 'main' (entry point) from exported variables (later or never)
 ;   (execute.s will need changes then too)
@@ -50,6 +46,8 @@ err_memory:	lda #lerr_outofmem
 		SKIP_WORD
 err_hdr:	lda #lerr_illcode
 		pha
+		lda #0
+		sta o65_semaphore	; unlock o65_loader
 		jsr fclose
 		pla
 		sec
@@ -62,7 +60,14 @@ err_hdr:	lda #lerr_illcode
 		;; < C=0 - OK
 		;; < A/Y - execute address (0,firstpage)
 
-o65_loader:	;; get mode
+o65_loader:	;; now, this is UGLY!!! I hope that someone who knows how
+		;; semaphores work will fix that
+	-	lda o65_semaphore
+		bne -
+		lda #1			; lock o65_loader
+		sta o65_semaphore
+
+		;; get mode
 		jsr fgetc
 		bcs err_hdr
 		sta amode
@@ -281,8 +286,11 @@ _cont:
 		ldx p3
 		jsr fclose
 		;; ready to fork, A/Y is the execute address
-		lda textm
+		ldx textm
 		ldy textm+1
+		lda #0
+		sta o65_semaphore	; unlock o65_loader
+		txa
 		rts
 
 err_references:	;; too many undefined references
@@ -298,6 +306,8 @@ err_file:	;; file is corrupt, free memory, close file
 		SKIP_WORD
 err_filedata:	lda #lerr_ioerror
 		sec
+		ldx #0
+		stx o65_semaphore	; unlock o65_loader
 		rts
 
 load_block:	;; load #p2 bytes into (p1) with fd==X
@@ -476,6 +486,8 @@ lunix_kernel:	.text "LUNIXKERNEL",0
 ;amode:		.byte 0
 ;textm:		.word 0			; aligned base address of everything
 ;datam:		.word 0
+
+o65_semaphore:	.byte 0			; to lock o65_loader
 
 ; o65_header (26 bytes)
 o65_header:
