@@ -70,7 +70,7 @@ compiling lunix
      Change into the devel_utils subdirectory and type "make".
      You should get the binaries of luna, lupo and lld. Move
      the binaries into a common place (eg. /usr/local/bin) and/or
-     add the path of the binaries to the systems search path
+     add the path of the binaries to the system's search path
 
      PATH=/path/to/the/binaries:$PATH
 
@@ -97,6 +97,8 @@ compiling lunix
        run 
        (will install LNG)
 
+       new
+
        load"loader",8
        run
 
@@ -122,7 +124,7 @@ compiling lunix
      Note: lng.c128 can only be extracted in c64 mode (sorry)
 
    Note2: The applications in the apps subdirectory are architecture 
-          independent and run under the C64 and the C128 version of LNG
+          independent and run on the C64 and C128 version of LNG
           without recompilation.
 
   Case B)
@@ -185,8 +187,8 @@ Example:
 Limitations:
 There is only one keyboard buffer to store pressed keys!
 If the application on console 1 doesn't read from the keyboard, the keyboad
-buffer fills up - switching to console 2 with a application running that
-is waiting for keystrokes will pass all the buffered keystrokes to this
+buffer fills up - switching to console 2 with an application running, that
+is waiting for keystrokes, will pass all the buffered keystrokes to this
 application! (tiggered by the next keystroke)
 
 
@@ -210,8 +212,18 @@ sh - the LUnix standard command shell
                             
   # exit
                                 
-  leave the shell
-                                    
+  leave the shell (you can also press CTRL+d at the beginning of a new line)
+
+
+Shell goodies:
+
+ History:
+  you can reload old commandlines, by using the cursor keys (up/down).
+
+ Line Completion:
+  you can ask the shell to complete the current line (using the history of
+  old command lines) by pressing the commodore-key (tab-key)
+
 
 Applications
 ------------
@@ -223,6 +235,10 @@ Applications
     (232term - for debugging)
       test application for serial-communication-modules
       dump terminal (exit with CTRL+d) on top of the SERv2-API
+
+    beep
+      alert console user by a audible sound. beep prints ASCII code 7
+      to standard error output. (the console must support beep)
 
     buf 
       reads from stdin into internal memory until EOF, then
@@ -420,6 +436,7 @@ Setup of TCP/IP subsystem
   use rs232std - the driver for the standard userport interface
   (up to 2400baud)
 
+
 Micro Terminal
 --------------
 
@@ -483,6 +500,7 @@ Get redir from http://users.qual.net/~sammy/hacks to let people from the
 internet log into your C64 trough the Linux-Box (Linux-Box acting as a kind
 of firewall).
 
+
 PPP based connection
 --------------------
 
@@ -514,6 +532,7 @@ Limitations:
  This means you have to restart LUnix each time you want to do a new
  ppp-connection.
 
+
 Known Bugs
 ----------
 
@@ -525,14 +544,12 @@ Known Bugs
    - both ppp and slip work very unreliable at baud rates higher than
      19200 (at least at 1MHz - i prefer to run it at 9600 baud)
 
+
 Additional documentation
 ------------------------
 
-GUIDE.txt - description of some of the most important kernel functions
-            (outdated)
-
 kernel/README - detailed description of system variables and some other
-                more general thing *new*
+                more general things
 
 There are several other READMEs in the kernel directory.
 

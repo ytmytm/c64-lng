@@ -504,7 +504,7 @@ _del:	ldx  csrx
 		plp
 	+	jmp  _back
 
-_beep:		jsr beep
+_beep:	jsr beep
 		jmp _back
 
 do_escapes:

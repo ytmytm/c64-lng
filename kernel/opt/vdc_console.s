@@ -423,6 +423,7 @@ _del:		ldx  csrx
 		lda #32					; space
 		jsr bputvdcreg
 	+	jmp  _back
+
 _beep:		jsr beep
 		jmp _back
 

@@ -45,31 +45,24 @@ howto:	ldx  #stdout
 parse_commandline:
 		;; check for correct number of arguments
 		lda  userzp				; (number of given arguments)
-		cmp  #2					; need exactly one argument
+		beq  +					; (ok)
+		
+		cmp  #1					; need exactly NONE arguments
 		bne  howto				; (if argc != 2 goto howto)
 
-		;; get pointer to first option (skip command name)
-
-		ldy  #0
-		sty  userzp				; now (userzp) is a 16bit pointer to
-								; the argument string
-	-	iny
-		lda  (userzp),y
-		bne  -
-		iny
-
-		;; now (userzp),y points to first char of first option string
-
-		...
-		rts
+	+	rts
 
 		;; main programm code
 main_code:
-		set_zeropage_size(1)	; tell the system how many zeropage
+		set_zeropage_size(0)	; tell the system how many zeropage
 								; bytes we need
 								; (set_zeropage_size() is a macro defined
 								; in include/cstyle.h) 
-		...
+
+		lda  #7					; ASCII code for "beep"
+		sec						; (blocking)
+		ldx  #stderr
+		jsr  fputc				; print char (ring the bell)
 
 		lda  #0					; (error code, 0 for "no error")
 		rts						; return with no error
@@ -82,7 +75,8 @@ main_code:
 		
 txt_howto:
 		.text "usage:",$0a
-		.text "  more [file]",$0a
-		.text "  print file page wise",$0a,0
+		.text " beep",$0a
+		.text "  used to alert terminal user by a ",$0a
+		.text "  audible sound (prints 0x07 to stderr)",$0a,0
 		
 end_of_code:

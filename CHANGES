@@ -1,5 +1,6 @@
 from 0.17 to pre-0.18
 ------------------------------
+added: beep application (trivial) (DD)
 added: sid support and beep ('\007') character support to all consoles (MW)
 changed: c128 keyboard is fully supported (new flags in altflags) (MW)
 fixed: vdc_console ram addressing, small change - significant speedup (MW)

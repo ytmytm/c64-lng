@@ -2,7 +2,7 @@
 		;; simple console driver
 
 #include <config.h>
-#include <sid.h>
+#include MACHINE_H
 
 #define BEEP_FREQ $3000		; beep frequency
 
@@ -15,6 +15,7 @@
 .global beep
 
 beep:
+#ifdef HAVE_SID
 		lda #%00011001
 		sta SID_VOL		; set volume
 		lda #$09		; attack 2ms, decay 750ms
@@ -29,6 +30,7 @@ beep:
 		sta SID_VCREG1
 		lda #%00100001		; turn on sound
 		sta SID_VCREG1
+#endif
 		rts
 		
 		;; function: printk
