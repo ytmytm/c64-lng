@@ -13,3 +13,5 @@ bload "lunix.c128"
 ...
 sysdec("1300") 
 
+You may also alter the boot block by running autoboot. LUnix
+will then autoboot from floppy.
