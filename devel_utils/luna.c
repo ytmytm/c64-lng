@@ -10,6 +10,9 @@
 
 luna-extension-history:
 
+ Nov 15 2000 *mouse* added: .aasc ("apple ascii") for raw printing of chars
+		     and getaascii() function to do so
+
  Feb 18 2000 *poldi* added: \n \r \t \0 in .text "..." string
                      changed: #"<char>" now plain ascii (no petscii conversion)
 
@@ -206,6 +209,7 @@ void setlabel(char*, unsigned long, int);
 int search_label(char*);
 int insert_label(char*, int*);
 int getascii(int,int*,int);
+int getaascii(int,int*);
 void setglobal(char*);
 int getlabel(char*);
 int getval(int, unsigned long*, int*, int*);
@@ -755,6 +759,29 @@ int getascii(int i,int *par,int flag)
   }
 
   return i+1; 
+}
+
+/* getaascii, apple ascii - slightly different than c64/c128 */
+
+int getaascii(int i,int *par)
+{
+  if (line[i]=='\"') {                            /*"*/
+    error("Illegal character constant");
+    *par=0;
+    return i+1; }
+  if (line[i]=='\\') {
+    i=i+1;
+        switch (line[i]) {
+          case 'n'  : { *par=141; break; }
+          case 't'  : { *par=137; break; }
+          case '0'  : { *par=0; break; }
+          case '\\' : { *par='\\'; break; }
+          case '\"' : { *par=162; break; }
+          default   : { error("unknown char"); *par=line[i]; } }
+        return i+1; }
+
+  *par=line[i]+128;
+  return i+1;
 }
 
 void setglobal(char *str)
@@ -1685,7 +1712,7 @@ void main(int argc, char **argv)
 	  
           if (line[i]=='a') {
 	    
-            /* assume .asc */
+            /* assume .asc or .aasc */
 	    
             j=nextchar(j);
             if (line[j++]!='\"') error("\" expected");
@@ -1697,7 +1724,10 @@ void main(int argc, char **argv)
               if (line[j]=='\0') {
                 error("unterminated string");
                 break; }
-              j=getascii(j,&par,1); /* do ascii-petscii conversion */
+              if (line[i+1]=='a')
+		j=getaascii(j,&par); /* assume .aasc */
+	      else
+		j=getascii(j,&par,1); /* do ascii-petscii conversion */
               putbyte(par,fl_resolved,0); }
             continue; }
 
