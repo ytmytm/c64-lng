@@ -51,3 +51,6 @@ echo
 false
 touch
 ide64rtc
+cd
+expand
+skeleton.o65.s
