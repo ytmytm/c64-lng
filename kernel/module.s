@@ -189,7 +189,7 @@ fix_module:
 		txa
 		beq  +
 		lda  lk_memown-1,x
-		cmp  lk_ipid
+		cmp  lk_ipid			; segfault?
 		bne  ill_param
 		lda  #0
 		sta  lk_memnxt-1,x
@@ -209,6 +209,6 @@ fix_module:
 		jmp  suicide
 		
 ill_param:
-		lda  #lerr_illarg
+		lda  #lerr_segfault
 		jmp  suicerrout
 

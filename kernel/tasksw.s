@@ -16,6 +16,9 @@
 		;;	   has own one at $00100 (remember to always set MMU_P1H!)
 		;; 19.01 - expanded C128 have problems with that $00100, changed it
 		;;	   to $1d000
+		;; 31.01 - REU/C64/C128 swapping code moved to machine-depended files
+		;; 09.02 - introduced MMU_STACK option
+		;; 10.02 - removed HAVE_256K - all C128s need it
 
 #include <config.h>
 		
@@ -131,140 +134,22 @@ do_taskswitch:
 		;;  -----------------------------------------
 		;;  tsp_swap,...		copy of used zeropage
 		;;  ...,$ff				copy of used stack
-	
-#ifndef HAVE_REU
-		;; taskswitching without REU
 
-		
-		lda  lk_tsp+1
-# ifndef C128
-		sta  _stsl+2			; self modifying code for extra performance
-# endif
-		sta  _zpsl+2
-		
-		;; swap out stack
-		
-		tsx						; remember stackpointer
-		txa
-		eor  #$ff
-		ldy #tsp_stsize
-		sta  (lk_tsp),y
-		clc						; exact check for stackoverflow
-		adc  #tsp_swap
-		bcs  _stackoverflow
-		ldy  #tsp_zpsize
-		adc  (lk_tsp),y
-		bcs  _stackoverflow
-# ifndef C128
-		inx
-		
-	-	pla						; stackpointer must be initialized with 0 (!)
-_stsl:	sta  .0,x
-		inx
-		bne  -
-# endif
 
-		
-		;; swap out zeropage
-		
-# ifndef ALWAYS_SZU
-		ldy  #tsp_zpsize
-		lda  (lk_tsp),y			; size of used zeropage
-		beq  +
-		tax
-		dex
-
-	-	lda  userzp,x			; if zpsize is zero 1 byte will be copied
-_zpsl:	sta  .tsp_swap,x		; (doesn't matter, i think)
-		dex
-		bpl  -
-
-	+	ldy  lk_ipid
-		lda  lk_tstatus,y		; task status
-		and  #tstatus_szu		; check if system zeropage is used
-		beq  +					; not used, then skip
-
-		lda  lk_tsp+1			; extra 8 zeropage bytes for
-		sta  _szsl+2			; kernel or (shared-) library routines
-		ldx  #7
-	-	lda  syszp,x
-_szsl:	sta  .tsp_syszp,x
-		dex
-		bpl  -
-	+
-# else
-		;; always add 8 bytes szu to zeropage (syszp = userzp-8)
-		ldy  #tsp_zpsize
-		lda  (lk_tsp),y			; size of used zeropage
-		clc
-		adc  #7
-		tax
-	-	lda  userzp-8,x			; if zpsize is zero 1 byte will be copied
-_zpsl:	sta  .tsp_swap-8,x		; (doesn't matter, i think)
-		dex
-		bpl  -
-		ldy  lk_ipid
-# endif
-		
+#ifdef C128
+#		include MACHINE(stackout.s)
 #else
-		;; taskswitching with REU
-# include <reu.h>
-		
-# ifndef ALWAYS_SZU
-#  msg REU based taskswitcher assumes ALWAYS_SZU set
+# ifdef HAVE_REU
+#		include MACHINE(reustackout.s)
+# else
+#		include MACHINE(stackout.s)
 # endif
+#endif
 
-		tsx						; remember stackpointer
-		txa
-		eor  #$ff
-		sta  REU_translen
-		ldy	 #tsp_stsize
-		sta  (lk_tsp),y
-		clc						; exact check for stackoverflow
-		adc  #tsp_swap
-		bcs  _stackoverflow
-		ldy  #tsp_zpsize
-		adc  (lk_tsp),y
-		bcs  _stackoverflow
-		
-		inx
-		stx  REU_intbase
-		lda  #1
-		sta  REU_intbase+1
-		lda  #0
-		sta  REU_translen+1
-		sta  REU_control
-		sta  REU_reubase
-		sta  REU_reubase+1
-		sta  REU_reubase+2
-		lda  #REUcmd_int2reu|REUcmd_load|REUcmd_noff00|REUcmd_execute
-		sta  REU_command		; copy stack to REU
-
-		lda  lk_tsp+1
-		sta  REU_intbase+1
-		lda  #REUcmd_reu2int|REUcmd_load|REUcmd_noff00|REUcmd_execute
-		sta  REU_command		; copy stack from REU into tsp
-
-		ldy  #tsp_zpsize
-		lda  (lk_tsp),y			; size of used zeropage
-		clc
-		adc  #8
-		sta  REU_translen		; (translen+1 is still 0)
-		lda  #userzp-8			; (equal to #syszp)
-		sta  REU_intbase
-		lda  #0
-		sta  REU_intbase+1
-		lda  #REUcmd_int2reu|REUcmd_load|REUcmd_noff00|REUcmd_execute
-		sta  REU_command		; copy zeropage to REU
-
-		lda  #tsp_swap-8
-		sta  REU_intbase
-		lda  lk_tsp+1
-		sta  REU_intbase+1
-		lda  #REUcmd_reu2int|REUcmd_noff00|REUcmd_execute
-		sta  REU_command		; copy zeropage from REU into tsp
-				
-		ldy  lk_ipid
+#ifdef HAVE_REU
+#		include MACHINE(reuzpageout.s)
+#else
+#		include MACHINE(zpageout.s)
 #endif
 		
 		; done, y holds IPID of current task
@@ -289,132 +174,23 @@ _activate_this:
 		sta  lk_tsp+1
 
 		;; reload environment of the task (zeropage and stack)
-		
-#ifndef HAVE_REU
-		;; reload without REU
-		
-		sta  _zpll+2
-# ifndef C128
-		sta  _stll+2			; not needed for C128 swap-in
-# endif
 
-		;; swap in zeropage
-		
-# ifndef ALWAYS_SZU
-		lda  lk_tstatus,y		; task status
-		and  #tstatus_szu		; check if system zeropage is used
-		beq  +					; not used, then skip
-
-		lda  lk_tsp+1			; extra 8 zeropage bytes for
-		sta  _szll+2			; kernel or (shared-) library routines
-		ldx  #7
-_szll:	lda  .tsp_syszp,x
-		sta  syszp,x
-		dex
-		bpl  _szll
-		
-	+	ldy  #tsp_zpsize		; size of zeropage
-		lda  (lk_tsp),y
-		beq  +
-		tax
-		dex
-		
-_zpll:  lda  .tsp_swap,x
-		sta  userzp,x
-		dex
-		bpl  _zpll
-	+
-# else
-		ldy  #tsp_zpsize		; size of zeropage
-		lda  (lk_tsp),y
-		clc
-		adc  #7
-		tax
-_zpll:  lda  .tsp_swap-8,x		; (alwasy_szu makes this loop 96us longer)
-		sta  userzp-8,x
-		dex
-		bpl  _zpll		
-# endif
-
-		;; swap in stack
-		
-# ifdef C128
-		ldy  #tsp_stsize
-		lda  (lk_tsp),y
-		eor #$ff
-		tax
-		txs
-						;; THIS is real stack-swapping (always 7 cycles)
-		lda lk_ipid			;; IPID=(0..31), stacks are in $00-$1f, effective
-		sta MMU_P1L			;; address $10000-$11f00
-
-#  ifndef HAVE_256K
-		;; in 256k C128 all stacks are in the same bank (idle one is at $1d000)
-		lda #1				;; currently this is required, as idle_task
-		sta MMU_P1H			;; have stack in $00100 and I don't want to waste
-						;; 8k block of shadowed memory starting at $12000
-#  endif
-
-# else
-		;; not C128
-		ldx  #$ff
-		txs
-		ldy  #tsp_stsize
-		lda  (lk_tsp),y
-		tax
-		eor  #$ff
-		sta  _stll+1
-		
-_stll:	lda  .0,x
-		pha
-		dex
-		bne  _stll
-# endif
-
+#ifdef HAVE_REU
+#		include MACHINE(reuzpagein.s)
 #else
-		;; reload environment using REU
-
-		sta  REU_intbase+1		; (A is [lk_tsp+1])
-		lda  #tsp_swap-8
-		sta  REU_intbase
-		ldy  #tsp_zpsize		; size of zeropage
-		lda  (lk_tsp),y
-		clc
-		adc  #8
-		sta  REU_translen
-		ldx  #0
-		stx  REU_translen+1
-		stx  REU_reubase
-		stx  REU_reubase+1
-		stx  REU_reubase+2
-		stx  REU_control
-		lda  #REUcmd_int2reu|REUcmd_load|REUcmd_noff00|REUcmd_execute
-		sta  REU_command		; copy TSP-zeropage into REU
-		
-		lda  #userzp-8			; (equal to #syszp)
-		sta  REU_intbase
-		stx  REU_intbase+1
-		lda  #REUcmd_reu2int|REUcmd_load|REUcmd_noff00|REUcmd_execute
-		sta  REU_command		; copy TSP-zp (from REU) into real zeropage
-
-		ldy  #tsp_stsize
-		lda  (lk_tsp),y
-		sta  REU_translen
-		eor  #$ff
-		tax
-		txs
-		inx
-		stx  REU_intbase
-		lda  lk_tsp+1
-		sta  REU_intbase+1
-		lda  #REUcmd_int2reu|REUcmd_load|REUcmd_noff00|REUcmd_execute
-		sta  REU_command		; copy TSP-stack into REU
-
-		lda  #1
-		sta  REU_intbase+1
-		lda  #REUcmd_reu2int|REUcmd_load|REUcmd_noff00|REUcmd_execute
-		sta  REU_command		; copy TSP-stack (from REU) into real stack
+#		include MACHINE(zpagein.s)
 #endif
+
+#ifdef C128
+#		include MACHINE(stackin.s)
+#else
+# ifdef HAVE_REU
+#		include MACHINE(reustackin.s)
+# else
+#		include MACHINE(stackin.s)
+# endif
+#endif
+
  		jmp  _checktimer		; look for timer interrupts
 		
 _swapperidle:
@@ -422,30 +198,25 @@ _swapperidle:
 		;; we have the problem, that we can't return by rti, because there
 		;; is nothing to return to.
 
-#ifdef C128
-		;; we're using end of stack, so we must provide a stack
-
-# ifdef HAVE_256K
-		;; my expanded C128 have problems with switching stack bank
-		;; so here I use address $1d000 (under I/O), but it can be 
-		;; anywhere in bank 1 (or rather: current bank)
+#ifdef MMU_STACK
+		;; we're using end of stack, so we must provide a new stack
+		;; at $1d000  (in 2nd bank, under I/O)
 		ldx #$d0
 		stx MMU_P1L
-		ldx #255
-# else
+
 		;; this works in VICE X128, so it should work in a stock C128
 		;; here I use address $00100 (default), but it can be any page,
 		;; where last 10 (at least) bytes are unused
-		ldx #1
-		stx MMU_P1L
-		dex						;X=0
-		stx MMU_P1H
-		dex						;X=255
-# endif
-#else
-		;; not C128
-		ldx  #255
+		;; suprisingly MMU bug was discovered and this doesn't work!
+		;; (some bytes at stack are lost)
+		;ldx #1
+		;stx MMU_P1L
+		;dex						;X=0
+		;stx MMU_P1H
+		;dex						;X=255
 #endif
+
+		ldx  #255
 		txs
 		lda  #>idle_task
 		pha						; pc lo

@@ -255,7 +255,7 @@ print_error:
 	+	pla
 		pha
 #ifdef VERBOSE_ERROR
-		cmp  #$e7				; <======= adapt to number of errors
+		cmp  #$e6				; <======= adapt to number of errors!
 		bcs  textual_errormessage
 #endif
 		jsr  hexout
@@ -363,13 +363,14 @@ error_messages:
 		.text "no such module", 0
 		.text "illegal module", 0
 		.text "too many tasks", 0
-		.text "disc full" :	.byte 0
+		.text "disc full", 0
 		.text "readonly filesystem", 0
 		.text "file locked", 0
 		.text "file exists", 0
 		.text "no such pid", 0
 		.text "killed" ,0
 		.text "no such directory",0
+		.text "segmentation fault",0
 #endif
 		
 		;; function: hexout

@@ -3,7 +3,7 @@
 		;; adding tasks to the system
 
 		;; C128 native by Maciej 'YTM/Alliance' Witkowiak <ytm@friko.onet.pl>
-		;; 12,13.1.2000
+		;; 12,13.1.2000; 09.2.2000 (MMU_STACK)
 
 #include <config.h>
 #include <system.h>
@@ -166,7 +166,7 @@ nostruc:
 		sta  (tmpzp),y			; store number of arguments in userzp+0
 
 
-#ifndef C128
+#ifndef MMU_STACK
 
 		;; set up simple stack
 		ldy  #255
@@ -189,15 +189,12 @@ nostruc:
 		sta  (tmpzp),y			; memconfig=standard  (= total 7 bytes)
 
 #else
-		;; we're acting differently on a C128
-		lda MMU_P1L			;; get current stack ptr (we're still in current task)
-		sta tmpzp+5			;; store it (seems unused here)
+		;; we're acting differently on a C128 with MMU stackswapping
+		ldy MMU_P1L			;; get current stack ptr (we're still in current task)
 		tsx
-		stx tmpzp+6			;; store it (seems unused here)
+		stx tmpzp+5			;; store it (seems unused here)
 		lda tmpzp+2			;; new IPID is here
 		sta MMU_P1L			;; this is new task's stack
-		lda #1
-		sta MMU_P1H			;; THIS might be unnecessary
 		ldx #$ff			;; now let's setup stack
 		txs
 		lda #>task_init
@@ -211,12 +208,11 @@ nostruc:
 		pha				;; (6) Y
 		lda #MEMCONF_USER
 		pha				;; (7) memconfig
-		
+
 						;; restore kernel-stack (in fact parent process stack)
-		ldx tmpzp+6
+		ldx tmpzp+5
 		txs
-		lda tmpzp+5
-		sta MMU_P1L
+		sty MMU_P1L
 
 #endif
 
@@ -271,13 +267,16 @@ nostruc:
 		ldy  #tsp_ftab+2
 		sta  (tmpzp),y			; to ftab entry 2
 
-		ldy  #tsp_pdminor
-		lda  (lk_tsp),y
-		sta  (tmpzp),y			; copy pdminor
+		;; inherited settings...
 		
 		ldy  #tsp_pdmajor
-		lda  (lk_tsp),y
-		sta  (tmpzp),y			; copy pdmajor
+	-	lda  (lk_tsp),y
+		sta  (tmpzp),y			; copy pdminor, pdmajor, termwx and termwy
+		iny
+		cpy  #tsp_termwy+1
+		bne  -
+
+		;; add to scheduler
 		
 		ldx  tmpzp+2			; IPID of new task
 		lda  tmpzp+1

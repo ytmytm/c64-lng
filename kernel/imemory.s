@@ -309,12 +309,12 @@ spa_noio:
 		;; calls:		pfree
 free:
 		lda  lk_ipid
-		cmp  lk_memown,x
+		cmp  lk_memown,x		; (is a sanity check)
 		bne  ill_free
-		cpx  lk_tsp+1
+		cpx  lk_tsp+1			; (another sanity check)
 		bne  pfree
 ill_free:		
-		lda  #lerr_illarg
+		lda  #lerr_segfault
 		jmp  suicerrout			; no way to catch this.
 		
 		       

@@ -58,7 +58,7 @@
 	;+	sta  lk_archtype
 
 
-		;; alternate (shorter) solution from comp.sys.cbm
+		;; alternate (better) solution from comp.sys.cbm
 		;; ---------------------------------------------------------------
 
 		ldx  #larch_c128
@@ -69,6 +69,6 @@
 		bne  -
 		lda  VIC_YSCL			; 24 or 280 ?
 		bpl  +
-		ldx  #larch_c128|larchf_pal
+		ldx  #larch_c128|larchf_pal|larchf_8500
 	+	stx  lk_archtype
 

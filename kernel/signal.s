@@ -8,6 +8,8 @@
 		;; 19.01.2000
 		;; I don't think that idle_task can send/receive signals, so I ignore MMU_P1H
 		;; here, assuming there's always signal from real task to real task
+		;; 09.02.2000
+		;; introducing MMU_STACK option instead of C128
 
 #include <system.h>
 #include <kerrors.h>
@@ -47,12 +49,11 @@ _kill:	cpx  #32				; kill process X=ipid (exitcode $7f)
 		lda  #7
 		ldy  #tsp_stsize
 		sta  (tmpzp),y			; new stacksize is 7 (mem,y,x,a,sr,pcl,pch)
-#ifdef C128
+#ifdef MMU_STACK
 		;; this is called from signal below, so I assume that IRQ is already disabled
 		;; (we'd be in deep shit if it wouldn't :-)
 
-		lda MMU_P1L
-		sta tmpzp+3
+		ldy MMU_P1L
 		stx MMU_P1L			; X=IPID (0..31)
 		tsx
 		stx tmpzp+2
@@ -74,8 +75,7 @@ _kill:	cpx  #32				; kill process X=ipid (exitcode $7f)
 
 		ldx tmpzp+2			; restore stack config
 		txs
-		lda tmpzp+3
-		sta MMU_P1L
+		sty MMU_P1L
 #else
 		ldy  #256-7
 		lda  #MEMCONF_USER		; use default memory configuration
@@ -171,7 +171,7 @@ _raw_sendsignal:
 		beq  self_sig			; send signal to current process
 
 		;; send signal to foreign process
-#ifdef C128
+#ifdef MMU_STACK
 
 		stx MMU_P1L			; X=target IPID (0..31)
 		tsx

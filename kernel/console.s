@@ -39,8 +39,10 @@ dirty equ *+1
 .global cons_out
 
 #ifdef VDC_CONSOLE
-# include "vdc_console.s"
+# include "opt/vdc_console.s"
 #else
+		;; default is to use VIC for console output
+		
 # ifdef MULTIPLE_CONSOLES
 	
 		;; variable reflects which console currently is visible to
@@ -49,8 +51,9 @@ dirty equ *+1
 		
 		;; console_single is the old (working) version of the
 		;; console driver (just to have something to fall back)
-#  include MACHINE(console.s)
+#  include "opt/vic_console.s"
 # else
-#  include MACHINE(console_single.s)
+#  include "opt/vic_console_single.s"
 # endif
+
 #endif

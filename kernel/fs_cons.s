@@ -209,7 +209,9 @@ got_ctrld:
 ;; ZEROpage: susp_flag 1
 ;; ZEROpage: nlflag 1
 ;; ZEROpage: usage_count 1
+#ifdef MULTIPLE_CONSOLES
 ;; ZEROpage: usage_map 1
+#endif
 
 ;wr_pointer:		.byte 0			; index to next written char in buffer
 ;rd_pointer:		.byte 0			; index to next read char in buffer

@@ -251,7 +251,21 @@ to_no_reu:
 		jsr  lkf_printk
 		inx
 		bne  -
-	+	
+	+
+
+#ifdef C64
+		;; read back bit 6,7 of CPU port (try to detect HMOS CPU)
+		;; (C128 in C64 mode ?)
+		lda  1
+		and  #%11000000
+		cmp  #%11000000
+		bne  +
+		lda  lk_archtype
+		ora  #larchf_8500
+		sta  lk_archtype
+	+
+#endif
+
 		;; spawn init task		
 		lda  #0
 		sta  userzp
@@ -268,7 +282,7 @@ to_no_reu:
 welcome_txt:
 		.byte $0a
 		.text "Welcome to LUnix next generation (LNG)",$0a
-		.text "Version 0.16, Jan 27 2000",$0a,$0a
+		.text "Version 0.17, -preliminary-",$0a,$0a
 		.text "Compile time options:",$0a
 #ifdef PETSCII
 		.text "  - PETSCII character encoding",$0a
@@ -294,9 +308,13 @@ welcome_txt:
 #ifdef ALWAYS_SZU
 		.text "  - ignore SZU bit (always set)",$0a
 #endif
-#ifdef HAVE_256K
-		.text "  - 256k RAM C128 compatibility",$0a
+#ifdef MMU_STACK
+		.text "  - hardware stackswapping",$0a
 #endif
+;this will be back...
+;#ifdef HAVE_256K
+;		.text "  - 256k RAM C128 compatibility",$0a
+;#endif
 		.byte 0
 
 txt_c64:
@@ -388,9 +406,13 @@ add_task_simple:
 		;; (this code should also set lk_consmax)
 
 #ifdef VDC_CONSOLE
-# include "vdc_console_init.s"
+# include "opt/vdc_console_init.s"
 #else
-# include MACHINE(console_init.s)
+# include "opt/vic_console_init.s"
 #endif
-		
-#include MACHINE(keyboard_init.s)
+
+#ifdef PCAT_KEYB
+# include "opt/pcat_keyboard_init.s"
+#else
+# include "opt/vic_keyboard_init.s"
+#endif

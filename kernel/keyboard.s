@@ -7,4 +7,8 @@
 .global keyb_joy0
 .global keyb_joy1
 
-#include MACHINE(keyboard.s)
+#ifdef PCAT_KEYB
+# include "opt/pcat_keyboard.s"
+#else
+# include MACHINE(keyboard.s)
+#endif

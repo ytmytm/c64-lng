@@ -8,7 +8,8 @@
 #include <system.h>
 #include <debug.h>
 #include <kerrors.h>
-#include MACHINE_H		
+#include MACHINE_H
+#include <console.h>
 
 		.global init
 
@@ -25,13 +26,22 @@ init:							; former called microshell
 		ldy  #tsp_pdmajor
 		lda  #MAJOR_IEC
 		sta  (lk_tsp),y
-		iny
+		iny						; ldy  #tsp_pdminor
 		lda  #8
 		sta  (lk_tsp),y			; default device (8,0)
 
 		jsr  console_open
 		nop						; (need at least one working console)
 		stx  console_fd
+
+		;; get/set size of console
+
+		ldy  #tsp_termwx
+		lda  #size_x
+		sta  (lk_tsp),y
+		lda  #size_y
+		iny						; ldy  #tsp_termwy
+		sta  (lk_tsp),y				
 
 		;; print startup message
 		
@@ -72,9 +82,9 @@ ploop:
 		beq  c_end
 		iny
 		beq  c_end
-		cmp  #"L"
+		cmp  #"l"
 		beq  load_and_execute
-		cmp  #"X"
+		cmp  #"x"
 		beq  reboot
 
 		;; unknown command
