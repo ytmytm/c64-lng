@@ -1,5 +1,6 @@
 from 0.17 to 0.18
 ------------------------------
+fixed: vic_console_single (zeropage variables an dother things)
 changed: opt-subdirectory for chipset/interface specific kernel code
 removed: misbehaving HAVE_256K option (needed on all C128s) (MW)
 fixed: MMU_STACK option to fix problems with SCPU 128 (MW)

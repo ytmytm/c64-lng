@@ -7,7 +7,7 @@
 #include <console.h>
 
 		;; additional globals needed by
-		;; console_init (called at boottime)
+		;; console_init (called at boot-time)
 		;; (they will get a "lkf_" prefix there!)
 		
 		.global cons_regbuf
@@ -48,8 +48,6 @@ do_toggle:
 #endif
 		rts
 		
-	-	jmp  panic
-
 		;; clear screen
 		;; NOTE:
 		;;		better not clear $7f8..$7ff (TODO)
@@ -68,10 +66,10 @@ cons_clear:
 		ldx  #0
 		
 loc1 equ *+2
-	-	sta  $400,x
-		sta  $500,x
-		sta  $600,x
-		sta  $700,x
+	-	sta  screenA_base,x
+		sta  screenA_base+$100,x
+		sta  screenA_base+$200,x
+		sta  screenA_base+$300,x
 		inx
 		bne  -
 		
@@ -784,6 +782,3 @@ cons_regbuf:	.buf 9
 ;esc_flag:		.byte 0			; escape-statemachine-flag
 ;esc_parcnt:	.byte 0			; number of parameters read
 esc_par:		.buf 8			; room for up to 8 parameters
-
-
-

@@ -5,105 +5,21 @@
 #include <config.h>
 #include <system.h>
 #include MACHINE_H
+#include <zp.h>
+#include <console.h>
 
 #ifdef HAVE_REU
 # include <reu.h>
 #endif
 		
+		.global cons_home
+		.global cons_clear
+
 		cursor equ 100
 		size_x equ 40
 		size_y equ 25
 
-		;; switch to next virtual console
-console_toggle:
-#ifdef MULTIPLE_CONSOLES
-		beq  do_toggle
-
-		cmp  #1
-		beq  do_cons1
-		cmp  #2
-		beq  do_cons2
-
-do_cons1:
-		lda  #$16
-		sta  VIC_VSCB			; default is console 1 (at $0400)
-		rts
 		
-do_cons2:
-		lda  #$26
-		sta  VIC_VSCB			; console 2 (at $0800)
-		rts
-
-do_toggle:
-		lda  VIC_VSCB
-		eor  #$30
-		sta  VIC_VSCB
-#endif
-		rts
-		
-	-	jmp  panic
-
-console_init:
-		;; allocate memory at $0400-$07ff
-		jsr  locktsw
-		lda  lk_memmap+0		; check if memory is unused
-		and  #$0f
-		cmp  #$0f
-		bne  -					; (if not, panic)
-		lda  #4					; number of pages
-		ldx  #$04				; start page
-		ldy  #memown_scr			; usage ID
-		sta  tmpzp
-		stx  tmpzp+3
-		sty  tmpzp+4
-		jsr  _raw_alloc			; (does unlocktsw)
-
-#ifdef MULTIPLE_CONSOLES
-		;; try to allocate second console at $0800-$0cff
-		jsr  locktsw
-		lda  lk_memmap+1		; check if memory is unused
-		and  #$f0
-		cmp  #$f0
-		bne  -					; (if not, panic)
-		lda  #4					; number of pages
-		ldx  #$08				; start page
-		ldy  #memown_scr			; usage ID
-		sta  tmpzp
-		stx  tmpzp+3
-		sty  tmpzp+4
-		jsr  _raw_alloc			; (does unlocktsw)		
-#endif
-				
-		;; initialize VIC
-		lda  CIA2_PRA
-		ora  #3
-		sta  CIA2_PRA			; select bank 0
-		lda  #0
-		sta  VIC_SE				; disable all sprites
-		lda  #$9b
-		sta  VIC_YSCL			
-		lda  #$08
-		sta  VIC_XSCL
-		lda  #$16
-		sta  VIC_VSCB			; default is console 1 (at $0400)
-
-		;; set 'desktop' color
-		lda  #0
-		sta  VIC_BC				; border color
-		lda  #11
-		sta  VIC_GC0			; background color
-
-		lda  #$80
-		sta  cflag				; curor enabled (not jet drawn)
-		lda  #0
-		sta  esc_flag
-		sta  rvs_flag
-		sta  scrl_y1
-		lda  #24
-		sta  scrl_y2
-		jsr  cons_home
-		jmp  cons_clear
-
 		;; clear screen
 		;; NOTE:
 		;;		better not clear $7f8..$7ff (TODO)
@@ -112,10 +28,10 @@ cons_clear:
 #ifndef HAVE_REU
 		lda  #32
 		ldx  #0
-	-	sta  $400,x
-		sta  $500,x
-		sta  $600,x
-		sta  $700,x
+	-	sta  screenA_base,x
+		sta  screenA_base+$100,x
+		sta  screenA_base+$200,x
+		sta  screenA_base+$300,x
 		inx
 		bne  -
 		lda  #5					; text color
@@ -130,9 +46,9 @@ cons_clear:
 		lda  #REUcontr_fixreuadr
 		sei						; (must sei until REU command is issued)
 		sta  REU_control
-		lda  #<$0400
+		lda  #<screenA_base
 		sta  REU_intbase
-		lda  #>$0400
+		lda  #>screenA_base
 		sta  REU_intbase+1
 		lda  #$20				; fill with $000420 which is $20 (space)
 		sta  REU_reubase
@@ -175,7 +91,7 @@ cons_setpos:
 		adc  ypos_table_lo,y
 		sta  mapl
 		lda  ypos_table_hi,y
-		adc  #>$400				; start of screen
+		adc  #>screenA_base		; start of screen
 		sta  maph
 	+	rts
 
@@ -247,7 +163,7 @@ cons_scroll_up:
 		adc  #size_x
 		sta  scrl_loop+1
 		lda  ypos_table_hi,y
-		ora  #>$400
+		ora  #>screenA_base
 		sta  scrl_loop+5
 		adc  #0
 		sta  scrl_loop+2
@@ -265,7 +181,7 @@ scrl_loop:
 		lda  ypos_table_lo,y
 		sta  scrl_loop2+1
 		lda  ypos_table_hi,y
-		ora  #>$400
+		ora  #>screenA_base
 		sta  scrl_loop2+2
 		lda  #32
 		ldx  #size_x-1
@@ -281,7 +197,7 @@ scrl_loop2:
 		sei						; (must sei until REU command is issued)
 		sta  REU_intbase
 		lda  ypos_table_hi+1,y
-		ora  #>$400				; base of screen
+		ora  #>screenA_base		; base of screen
 		sta  REU_intbase+1
 		lda  #0
 		sta  REU_reubase
@@ -303,7 +219,7 @@ scrl_loop2:
 		lda  ypos_table_lo,y
 		sta  REU_intbase
 		lda  ypos_table_hi,y
-		ora  #>$400				; base of screen
+		ora  #>screenA_base		; base of screen
 		sta  REU_intbase+1
 		lda  #REUcmd_reu2int|REUcmd_noff00|REUcmd_execute
 		sta  REU_command		; copy portion back to screen (one line above)
@@ -391,6 +307,8 @@ _sub96:
 		sbc  #95
 _keepit:		
 		clc
+		;; switch to next virtual console
+console_toggle:
 		rts
 
 special_mapping:
@@ -729,18 +647,33 @@ ypos_table_hi:
 		.byte >400, >440, >480, >520, >560
 		.byte >600, >640, >680, >720, >760
 		.byte >800, >840, >880, >920, >960
-		
-mapl:			.byte 0
-maph:			.byte 0
-csrx:			.byte 0
-csry:			.byte 0
-buc:			.byte 0			; byte under cursor
-cflag:			.byte 0			; cursor flag (on/off)
-cchar:			.byte 0
-rvs_flag:		.byte 0			; bit 7 - RVS ON
-scrl_y1:		.byte 0			; scroll region first line
-scrl_y2:		.byte 0			; scroll region last line
 
-esc_flag:		.byte 0			; escape-statemachine-flag
-esc_parcnt:		.byte 0			; number of parameters read
+		;; variables moved to zeropage:	
+		
+;;; ZEROpage: mapl 1
+;;; ZEROpage: maph 1
+;;; ZEROpage: csrx 1
+;;; ZEROpage: csry 1
+;;; ZEROpage: buc 1
+;;; ZEROpage: cflag 1
+;;; ZEROpage: cchar 1
+;;; ZEROpage: rvs_flag 1
+;;; ZEROpage: scrl_y1 1
+;;; ZEROpage: scrl_y2 1
+;;; ZEROpage: esc_flag 1
+;;; ZEROpage: esc_parcnt 1
+		
+;mapl:			.byte 0
+;maph:			.byte 0
+;csrx:			.byte 0
+;csry:			.byte 0
+;buc:			.byte 0			; byte under cursor
+;cflag:			.byte 0			; cursor flag (on/off)
+;cchar:			.byte 0
+;rvs_flag:		.byte 0			; bit 7 - RVS ON
+;scrl_y1:		.byte 0			; scroll region first line
+;scrl_y2:		.byte 0			; scroll region last line
+
+;esc_flag:		.byte 0			; escape-statemachine-flag
+;esc_parcnt:		.byte 0			; number of parameters read
 esc_par:		.buf 8			; room for up to 8 parameters

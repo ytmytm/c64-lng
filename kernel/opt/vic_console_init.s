@@ -54,6 +54,7 @@ console_init:
 		lda  #$08
 		sta  VIC_XSCL
 
+#ifdef MULTIPLE_CONSOLES
 		lda  #>screenA_base
 		sta  sbase
 
@@ -61,6 +62,10 @@ console_init:
 		sta  current_output		; output goes to first console
 		lda  #1					; default is console 1 (at $0400)
 		jsr  lkf_console_toggle		; (replaces "jsr  do_cons1")
+#else
+		lda  #$16
+		sta  VIC_VSCB			; make console visible		
+#endif
 
 		;; set 'desktop' color
 		lda  #0
