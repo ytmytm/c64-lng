@@ -152,7 +152,7 @@ sendpacket:
 #endif
 		txa
 		pha
-		inc  packid+1
+		inc  packid+1			; next packet ID
 		bne  +
 		inc  packid
 	+	lda  buf_mid,x
@@ -169,15 +169,16 @@ sendpacket:
 		pla
 		db("Putpack")
 		sec
-		jsr  slip_putpacket
+		jsr  slip_putpacket		; call lower layer A=MID, X/Y=length, c=1
 		pla
-		tax
+		tax						; recall number of buffer
 		jmp  addtofreelst
 
+		
 ; look for received packets and allocate
 ; memory for new packets
 
-	-	jmp  mema
+	-	jmp  allocate_memory
 
 	-	cli
 		pla
@@ -189,37 +190,43 @@ sendpacket:
 pack_poll:
 		lda  freelst
 		bpl  +
-		;; can't receive packet
+
+		;; can't receive packet because no free slot available 
 		db("free list is empty!")
 		rts
-	+	jsr  slip_getpacket
+
+	+	jsr  slip_getpacket		; call lower layer, get packet
 		bcs  --					; no new packet received
-		dec  availbuf
+
+		dec  availbuf			; (lower level has lost a receive buffer)
+
 		cmp  #0
-		beq  --					; new packet ? not really (address=0x00xx)
-		pha						; (this is a small workaround for the ppp
-		txa						; driver)
+		beq  --				; new packet ? not really (address=0x00XX)
+							; (this is a small workaround for the ppp driver)
+		
+		pha						; put A,X on stack (is MID and length-lo)
+		txa
 		pha
 
 		sei						; get and remove item from
-		ldx  freelst			; free-list
-		bmi  -					; (error)
+		ldx  freelst			; free-list (Atomic!)
+		bmi  -					; (error - should never happen)
 		lda  buf_l2nx,x
 		sta  freelst
 		cli
 
 		db("Getpack")
 		tya
-		sta  buf_lenh,x
+		sta  buf_lenh,x			; slot->length hi-byte
 		pla
-		sta  buf_lenl,x
+		sta  buf_lenl,x			; slot->length lo-byte
 		pla
-		sta  buf_mid,x
+		sta  buf_mid,x			; slot->MID (hi-byte of address)
 		lda  #$ff
-		sta  buf_l2nx,x
+		sta  buf_l2nx,x			; slot->next=NIL
 		stx  userzp+4			; remember buf
 
-		lda  buf_lenl,x			; look for usused pages
+		lda  buf_lenl,x			; look for unused pages
 		beq  +
 		iny
 	+	lda  buf_mid,x
@@ -232,14 +239,16 @@ pack_poll:
 
 	+	lda  lk_memnxt,x
 		beq  +					; no need to free something
+		tay
 		lda  #0
 		sta  lk_memnxt,x
-		inx		
+		tya
+		tax
 		jsr  lkf_pfree			; free unused pages
 
-	+	ldx  userzp+4
+	+	ldx  userzp+4			; recall number of buffer
 
-		sei						; queue new packet in TCP-list
+		sei						; queue new packet in TCP-list (Atomic!)
 		ldy  iplst+1			; (new last item)
 
 		bpl  +
@@ -250,9 +259,9 @@ pack_poll:
 	+	stx  iplst+1
 		cli
 		db(" -> ip")
-		
-mema:     ; allocate new buffer for receiving packets
 
+		;; allocate new buffer for receiving packets (if neccessary)
+allocate_memory:
 		lda  availbuf
 #ifdef debug
 		sta  2023
@@ -266,18 +275,19 @@ mema:     ; allocate new buffer for receiving packets
 		bcs  +					; enough buffers available, then skip
 
 		lda  #BUFSIZEMAX
-		ldx  #BUFMARKER			; ????????
+		ldx  #BUFMARKER
 		ldy  #0
-		jsr  lkf_mpalloc
+		jsr  lkf_mpalloc		; allocate internal memory (BUFSIZEMAX pages)
 		txa
-		bcs  ++
+		bcs  ++					; (out of memory)
 		inc  availbuf
 		ldx  #0
 		ldy  #BUFSIZEMAX
 		db("Premalloc")
 		clc
-		jsr  slip_putpacket
+		jsr  slip_putpacket		; call lower layer - pass empty buffer
 		bcc  +
+		;; on error the lower layer MUST free the allocated memory
 		db("got error from putpack")
 		dec  availbuf
 		;lda  #BUFPREMAL
@@ -287,8 +297,9 @@ mema:     ; allocate new buffer for receiving packets
 	+	db("can't alloc buffer")
 		rts
 
-; free buffer (X=buf) and add item to free-list
 
+		;; free buffer (X=buf) and add item to free-list
+		
 #ifdef DEBUG
 -		db("tried to free illegal buffer")
 		rts
@@ -303,10 +314,13 @@ killbuffer:
 		pha
 		lda  buf_mid,x
 		tax
-		jsr  lkf_pfree
+		jsr  lkf_pfree			; free memory used for the buffer
 		pla
 		tax
 
+		;; add buffer (number in X) to list of free buffers
+		;; (Atomic!)
+		
 addtofreelst:
 		sei
 		lda  freelst
@@ -319,8 +333,8 @@ addtofreelst:
 ; free all memory used by a socket.
 ; (userzp+2=socket)
 
-fresockmem:
-		db("Fresockmem")
+freesocketmemory:
+		db("Freesocketmemory")
 	-	ldy  userzp+2
 		sei
 		ldx  reclstt,y
@@ -2204,7 +2218,7 @@ shutdown: ;   is a *JOB* not a state of TCP
 		jsr  tcpsumsetup
 		jmp  sendpacket
 
-	+	jsr  fresockmem      ; done, then free other used memory
+	+	jsr  freesocketmemory      ; done, then free other used memory
 		ldx  userzp+2
 		lda  #$ff		  ; release slot
 		sta  sockipid,x
@@ -2506,7 +2520,7 @@ timeout_timewait:
 		lda  sockipid,x
 		cmp  #$ff
 		beq  +
-		jsr  fresockmem
+		jsr  freesocketmemory
 		ldx  userzp+2
 	+	lda  #$ff
 		sta  sockipid,x

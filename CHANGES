@@ -1,5 +1,6 @@
 from 0.17 to pre-0.18
 ------------------------------
+added: experimental 6510/8500 detection code (see bootstrap.s)
 fixed: IRQ hooking/unlocking, 
        add_module might return with set carry without error,
        Some Makefile fixes (Alexander Bluhm)

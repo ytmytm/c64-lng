@@ -16,6 +16,19 @@ start:
 		ldx  #255
 		txs						; init stack pointer
 
+#ifndef C128
+		;; Idea from Nicolas Welte who answered a question of
+		;;  Richard Atkinson on cbm-hackers@dot.tcm.hut.fi
+		;;  detect 8500 CPU by writing 1 to bit 6,7 of CPU I/O port
+		;;  and see how long the value is kept
+		lda  0
+		ora  %11000000
+		sta  0
+		lda  1
+		ora  %11000000
+		sta  1
+#endif
+
 #ifdef HAVE_SCPU
 #include <scpu.h>
 		sta  SCPU_MIRROR_SCR1	; SCPU should update $0400-$07ff
@@ -253,7 +266,7 @@ to_no_reu:
 		bne  -
 	+
 
-#ifdef C64
+#ifndef C128
 		;; read back bit 6,7 of CPU port (try to detect HMOS CPU)
 		;; (C128 in C64 mode ?)
 		lda  1
@@ -282,7 +295,7 @@ to_no_reu:
 welcome_txt:
 		.byte $0a
 		.text "Welcome to LUnix next generation (LNG)",$0a
-		.text "Version 0.18, -preliminary-",$0a,$0a
+		.text "Version 0.18, Sep 25 2000",$0a,$0a
 		.text "Compile time options:",$0a
 #ifdef PETSCII
 		.text "  - PETSCII character encoding",$0a

@@ -264,11 +264,11 @@ print_cputype:
 		jsr  putc
 	+	lda  lk_archtype
 		and  #larchf_8500
-		beq  +
+		bne  +
 		bit  txt_cputype6510 ;(c64)
 		jsr  lkf_strout
 		jmp  ++
-	+	bit  txt_cputype8502 ;(c128)
+	+	bit  txt_cputype8500 ;(c128)
 		jsr  lkf_strout
 	+	lda  lk_archtype
 		and  #larchf_reu
@@ -314,8 +314,8 @@ txt_machtypentsc:
 		
 txt_cputype6510:
 		.text "6510",0
-txt_cputype8502:
-		.text "8502",0
+txt_cputype8500:
+		.text "8500",0
 opt_flag:
 		.byte $00
 opt_map:
