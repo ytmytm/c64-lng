@@ -19,12 +19,13 @@
 ; Alexander Bluhm <mam96ehy@studserv.uni-leipzig.de>
 
 ; This module provides a date and time interface. The time is stored in
-; the cia1 time of day register. The alarm register is used to periodically
-; update the date. The alarm handler is called twice a day, and 
-; at 12:00am the date is incremented. The same checks are performed
+; the cia1 time of day register. The process sleeps for a while
+; and then updates the date. This must be done at least once every 12 hours
+; and after 12:00am the date is incremented. The same checks are performed
 ; on any time read operation, to ensure that the date is correct.
 ; The hour format is converted from 01-12am/pm to 00-23. Every access
 ; to this interface has to be in 00-23 format.
+; Before writing any data call checktime or checkdate to verify the syntax.
 ; Using the weekday is independent and optional. It is simply incremented
 ; every day and reset on Monday. Monday is 1 and Sunday 7. 0 is not changed.
 ; The timezone is just stored and never changed. It can be used to convert
@@ -66,73 +67,59 @@ zonemin:	.byte	0	; range from 00 to 59, timezone can be 30 min
 end_of_date:
 
 ampmhour:	.byte	1	; range from 01 to 12, bit 7 am/pm
-
 daymonth:	.byte	$00,$32,$29,$32,$31,$32,$31,$32,$32,$31,$32,$31,$32
 			;   jan feb mar apr may jun jul aug sep oct nov dec
 
+refdate:	.buf	11		; last clock set, needed by ntp
+end_of_refdate:
+
+ntp:					; all values are big endian
+li_vn_mode:	.byte	%11011100	; not synchronized, version 3, server
+stratum:	.byte	1		; primary reference
+poll:		.byte	6		; NTP.MINPOLL
+precision:	.byte	~3+1		; 1/10 seconds
+delay:		.byte	0,0,0,0		; 0 seconds
+dispersion:	.byte	0,0,$05,$35	; 20 ms + 86*4 us
+identifier:	.byte	0,0,0,0
+end_of_ntp:
+
+bits:		.byte	$01,$02,$04,$08,$10,$20,$40,$80
+
+
 module_struct:
 		.asc "rtc"	; module identifier
-		.byte 5		; module interface size
+		.byte 7		; module interface size
 		.byte 1		; module interface version number
 		.byte 1		; weight (number of available virtual devices)
 		.word 0000	; (reserved, used by kernel)
 	
-		;; functions provided by low-level serial driver
-		;;  rtc_lock
-		;;  rtc_time_read
-		;;  rtc_time_write
-		;;  rtc_date_read
-		;;  rtc_date_write
-
 	+	jmp rtc_lock
 		jmp rtc_time_read
 		jmp rtc_time_write
 		jmp rtc_date_read
 		jmp rtc_date_write
-		jmp rtc_raw_write
+		jmp rtc_ntp_read
+		jmp rtc_ntp_write
+		jmp rtc_ntp_reference
 		
 		
-;;; alert handler ----------------------------------------------------------
-
-		bit	alert_handler
-alert_handler:
-		jsr	update_date
-		;; the problem is that the kernel alarm handler disables 
-		;; cia1 alarms after this routine is called.
-		;; we change the return address to avoid this.
-		;; this is a DIRTY HACK specific for lunix 0.18 on c64
-		;; FIXME: the clean way would be to change the kernel and 
-		;; allow to turn off this feature.
-		tsx
-		inx
-		lda	$0100,x
-		clc
-		adc	#$05		; bypass 5 bytes of instructions
-		sta	$0100,x
-		inx
-		lda	$0100,x
-		adc	#$00
-		sta	$0100,x
-		rts
-
 ;;; utilities --------------------------------------------------------------
 
 	;; update_date
-	;; read time from cia 
-	;; write alarm to cia and increment date if neccessary
+	;; read time from cia and increment date if neccessary
 	;; irq must be disabled
 
 update_date:
 		;; copy cia_tod to time
-		lda	CIA1_TODHR
+		lda	CIA1_TODHR		; latch time
 		sta	hour
 		ldx	CIA1_TODMIN
 		stx	minute
 		ldx	CIA1_TODSEC
 		stx	second
-		ldx	CIA1_TOD10
+		ldx	CIA1_TOD10		; free latch
 		stx	sec10
-		;; convert am/pm to 00-23
+		;; convert from 01-12am/pm to 00-23
 		and	#$7f
 		cmp	#$12
 		bne	+
@@ -148,24 +135,6 @@ update_date:
 		eor	ampmhour	; has am/pm flag changed
 		sty	ampmhour
 		bpl	return		; if no, return
-		;; set alarm to next hour==12, at least 1 hour from actual time
-		tya
-		and	#$80
-		ora	#$12
-		eor	#$80
-		tax
-		lda	CIA1_CRB
-		ora	#$80		; alarm write mode
-		sta	CIA1_CRB
-		stx	CIA1_TODHR
-		ldx	minute
-		stx	CIA1_TODMIN
-		ldx	second
-		stx	CIA1_TODSEC
-		ldx	sec10
-		stx	CIA1_TOD10
-		and	#$7f		; time write mode
-		sta	CIA1_CRB
 		tya			; is am/pm flag set
 		bmi	return		; if yes, return
 		;; increment date
@@ -225,11 +194,11 @@ endincdate:	cld			; carry is only set on century overflow
 
 
 	;; write_time
-	;; write time and alarm to cia
+	;; write time to cia
 	;; irq must be disabled
 
 write_time:
-		;; convert 0-23 to 1-12 am/pm
+		;; convert from 00-23 to 01-12am/pm
 		lda	hour
 		tax
 		cmp	#$12
@@ -247,41 +216,26 @@ write_time:
 		ora	#$12
 		tay
 		eor	#$80	; cia inverts am/pm on write when hour==12
-	+	sty	ampmhour	
-		;; write hour to cia
+	+	sty	ampmhour
+		;; write time to cia_tod
 		sta	CIA1_TODHR	; stop clock
-		;; set alarm to next 12:00:00:00
-		tya
-		and	#$80
-		ora	#$12
-		eor	#$80
-		tax
-		lda	CIA1_CRB
-		ora	#$80		; alarm write mode
-		sta	CIA1_CRB
-		stx	CIA1_TODHR
-		ldx	#$00
-		stx	CIA1_TODMIN
-		stx	CIA1_TODSEC
-		stx	CIA1_TOD10
-		and	#$7f		; time write mode
-		sta	CIA1_CRB
-		;; write rest of time to cia
 		ldx	minute
 		stx	CIA1_TODMIN
 		ldx	second
 		stx	CIA1_TODSEC
 		ldx	sec10
 		stx	CIA1_TOD10	; continue clock
+		;; reset ntp
+		lda	li_vn_mode
+		ora	#%11000000	; not synchronized
+		sta	li_vn_mode
 		rts
 
 
 ;;; api --------------------------------------------------------------------
 
 	;; rtc api: rtc_lock
-	;; activate cia alarm
 	;; < A device number
-	;; > c=1 error
 
 rtc_lock:
 		clc
@@ -290,230 +244,80 @@ rtc_lock:
 	;; rtc api: rtc_time_read
 	;; read time from CIA1
 	;; < X/Y address of storage to be filled with time
-	;; > c=1 error
 
 rtc_time_read:
+		php
 		sei
-		stx	syszp
-		sty	syszp+1
+		stx	tmpzp
+		sty	tmpzp+1
 		jsr	update_date
 		ldy	#end_of_time-time-1
 	-	lda	time,y
-		sta	(syszp),y
+		sta	(tmpzp),y
 		dey
 		bpl	-
-		cli
-		clc
+		plp
 		rts
 
 
 	;; rtc api: rtc_time_write
 	;; write time to CIA1
+	;; checkdate should be called before
 	;; < X/Y address of storage filled with time
-	;; > c=1 error
 
 rtc_time_write:
+		php
 		sei
-		stx	syszp
-		ldx	lk_ipid
-		lda	lk_tstatus,x
-		ora	#tstatus_szu
-		sta	lk_tstatus,x
-		cli
-		sty	syszp+1
-		;; check syntax of argument
+		stx	tmpzp
+		sty	tmpzp+1
 		ldy	#end_of_time-time-1
-		lda	(syszp),y	; sec10
-		jsr	checkbcd
-		bcs	jmperr0
-		cmp	#$10
-		bcs	illarg0
-		dey
-	-	lda	(syszp),y	; second + minute
-		jsr	checkbcd
-		bcs	jmperr0
-		cmp	#$60
-		bcs	illarg0
-		dey
-		bne	-
-		lda	(syszp),y	; hour
-		jsr	checkbcd
-		bcs	jmperr0
-		cmp	#$24
-		bcs	illarg0
-		;; copy argument to time
-		sei
-		ldy	#end_of_time-time-1
-	-	lda	(syszp),y
+	-	lda	(tmpzp),y
 		sta	time,y
 		dey
 		bpl	-
 		jsr	write_time
-		ldx	lk_ipid
-		lda	lk_tstatus,x
-		and	#~(tstatus_szu)
-		sta	lk_tstatus,x
-		cli
-		clc
+		ldy	#end_of_date-date-1
+	-	lda	date,y
+		sta	refdate,y
+		dey
+		bpl	-
+		plp
 		rts
-
-illarg0:	lda	#lerr_illarg
-jmperr0:	jmp	lkf_catcherr
 
 
 	;; rtc api: rtc_date_read
 	;; read date and time from CIA1
 	;; < X/Y address of storage to be filled with date
-	;; > c=1 error
 
 rtc_date_read:
+		php
 		sei
-		stx	syszp
-		sty	syszp+1
+		stx	tmpzp
+		sty	tmpzp+1
 		jsr	update_date
 		ldy	#end_of_date-date-1
 	-	lda	date,y
-		sta	(syszp),y
+		sta	(tmpzp),y
 		dey
 		bpl	-
-		cli
-		clc
+		plp
 		rts
 
 
-	;; rtc api: rtc_time_date
+	;; rtc api: rtc_date_write
 	;; write date and time to CIA1
+	;; checkdate should be called before
 	;; < X/Y address of storage filled with date
-	;; > c=1 error
 
 rtc_date_write:
-		sei
-		stx	syszp
-		ldx	lk_ipid
-		lda	lk_tstatus,x
-		ora	#tstatus_szu
-		sta	lk_tstatus,x
-		cli
-		sty	syszp+1
-		;; check syntax of argument
-		ldy	#end_of_date-date-1
-		lda	(syszp),y	; zonemin
-		jsr	checkbcd
-		bcs	jmperr0
-		cmp	#$60
-		bcs	illarg0
-		dey
-		lda	(syszp),y	; zonehour
-		and	#$7f
-		jsr	checkbcd
-		bcs	jmperr0
-		cmp	#$16		; value contains DST and even more
-		bcs	illarg0
-		dey
-		lda	(syszp),y	; sec10
-		jsr	checkbcd
-		bcs	jmperr0
-		cmp	#$10
-		bcs	illarg0
-		dey
-		lda	(syszp),y	; second
-		jsr	checkbcd
-		bcs	jmperr1
-		cmp	#$60
-		bcs	illarg1
-		dey
-		lda	(syszp),y	; minute
-		jsr	checkbcd
-		bcs	jmperr1
-		cmp	#$60
-		bcs	illarg1
-		dey
-		lda	(syszp),y	; hour
-		jsr	checkbcd
-		bcs	jmperr1
-		cmp	#$24
-		bcs	illarg1
-		dey
-		lda	(syszp),y	; day
-		beq	illarg1
-		jsr	checkbcd
-		bcs	jmperr1
-		sta	syszp+2		; daymax depends on month and leap year
-		dey
-		lda	(syszp),y	; month
-		beq	illarg1
-		jsr	checkbcd
-		bcs	jmperr1
-		cmp	#$13
-		bcs	illarg1
-		jsr	bcdtohex
-		sta	syszp+3		; remember month in hex for max of day
-		dey
-		lda	(syszp),y	; year
-		jsr	checkbcd
-		bcs	jmperr1
-		sta	syszp+4
-		dey
-		lda	(syszp),y	; century
-		jsr	checkbcd
-		bcs	jmperr1
-		sta	syszp+5
-		dey
-		lda	(syszp),y	; weekday
-		cmp	#$08
-		bcs	jmperr1
-		;; check maximum of day
-		lda	syszp+2		; day to A
-		ldy	syszp+3		; month in hex to y
-		cmp	daymonth,y	; is day >= days+1 of this month
-		bcc	endcheckdate	; if no, write date
-		cpy	#2		; is february ?
-		bne	illarg1		; if no, leap year is irrelevant
-		cmp	#$30		; is day >= 30
-		bcs	illarg1		; if yes, leap year is irrelevant
-		;; month==2, date==29, so check for leap year
-		lda	syszp+4		; is year equal 0 ?
-		bne	year4leap_	; if not, leap year equiv to year%4==0
-		lda	syszp+5		; century to A
-		jsr	bcdtohex
-		and	#$03		; is century%4 equal 0 ?
-		beq	endcheckdate	; if yes, it's a leap year
-illarg1:	lda	#lerr_illarg
-jmperr1:	jmp	lkf_catcherr
-year4leap_:	jsr	bcdtohex
-		and	#$03		; is year%4 equal 0 ?
-		bne	illarg1		; if no, it's not a leap year
-endcheckdate:	;; copy argument to date
-		sei
-		ldy	#end_of_date-date-1
-	-	lda	(syszp),y
-		sta	date,y
-		dey
-		bpl	-
-		jsr	write_time
-		ldx	lk_ipid
-		lda	lk_tstatus,x
-		and	#~(tstatus_szu)
-		sta	lk_tstatus,x
-		cli
-		clc
-		rts
-
-
-	;; rtc api: rtc_raw_date
-	;; write date and time to CIA1
-	;; < X/Y address of storage filled with date
-	;; no error checking is done
-	;; if it is not sure, that the syntax is correct use rtc_date_write
-
-rtc_raw_write:
 		php
 		sei
-		stx	syszp
-		sty	syszp+1
+		stx	tmpzp
+		sty	tmpzp+1
 		ldy	#end_of_date-date-1
-	-	lda	(syszp),y
+	-	lda	(tmpzp),y
 		sta	date,y
+		sta	refdate,y
 		dey
 		bpl	-
 		jsr	write_time
@@ -521,14 +325,121 @@ rtc_raw_write:
 		rts
 
 
+	;; rtc api: rtc_ntp_read
+	;; get ntp header
+	;; < X/Y address for header
+
+rtc_ntp_read:
+		php
+		sei
+		stx	tmpzp
+		sty	tmpzp+1
+		ldy	#end_of_ntp-ntp-1
+	-	lda	ntp,y
+		sta	(tmpzp),y
+		dey
+		bpl	-
+		plp
+		rts
+
+
+	;; rtc api: rtc_ntp_write
+	;; write ntp information
+	;; should be called immedeatly after rtc_date_write
+	;; < X/Y address of storage filled with ntp information
+
+rtc_ntp_write:
+		php
+		sei
+		stx	tmpzp		; copy all ntp
+		sty	tmpzp+1
+		ldy	#end_of_ntp-ntp-1
+	-	lda	(tmpzp),y
+		sta	ntp,y
+		dey
+		bpl	-
+
+		;; stratum = peer.stratum + 1
+		inc	stratum		; FIXME: must be <= NTP.MAXSTRATUM
+		
+		;; dispersion = peer.dispersion + 
+		;;		(1<<peer.precision) + sys.dispersion
+		lda	precision
+		clc
+		adc	#16
+		bvs	+		; should never jump
+		bmi	+		; too small
+		lsr	a
+		lsr	a
+		lsr	a
+		eor	#$ff		; 3-a = 3+(~a+1) = ~a+4
+		clc
+		adc	#4
+		bmi	+		; should never jump
+		tay
+		lda	precision
+		and	#$07
+		tax
+		lda	bits,x
+		clc
+	-	adc	dispersion,y
+		sta	dispersion,y
+		bcc	+
+		lda	#0
+		dey
+		bpl	-		; should always jump
+	+
+		lda	#$35
+		clc
+		adc	dispersion+3
+		sta	dispersion+3
+		lda	#$05
+		adc	dispersion+2
+		sta	dispersion+2
+		bcc	+
+		inc	dispersion+1
+		bne	+
+		inc	dispersion+0	; should never overflow
+	+
+
+		lda	#~3+1		; precision = sys.precision
+		sta	precision
+		
+		plp
+		rts
+
+
+	;; rtc api: rtc_ntp_reference
+	;; get date when clock was last set
+	;; < X/Y address of storage to be filled with date
+
+rtc_ntp_reference:
+		php
+		sei
+		stx	tmpzp
+		sty	tmpzp+1
+		ldy	#end_of_refdate-refdate-1
+	-	lda	refdate,y
+		sta	(tmpzp),y
+		dey
+		bpl	-
+		plp
+		rts
+
+
 ;;; main -------------------------------------------------------------------
 
 main:
+
+main_loop:
 		ldx	#$ff
 		ldy	#$ff
-		jsr	lkf_sleep
+		jsr	lkf_sleep	; about 17 minutes
 		nop
-		jmp	main
+		sei
+		jsr	update_date
+		cli
+		jmp	main_loop
 
 
 end_of_permanent_code:	
@@ -566,25 +477,12 @@ normal_mode:
 		jsr	lkf_set_zpsize
 		nop
 
-		;; install alarm handler to update date
-		ldx	#<alert_handler
-		ldy	alert_handler-1		; #>alert_handler
-		jsr	lkf_hook_alert
-		nop
-	
-		;; enable cia alarm interrupt
-		lda	#$84
-		sta	CIA1_ICR
-
 		;; register module
 		ldx	#<module_struct
 		ldy	hiaddr_modstr+2		; #>module_struct 
 		jsr	lkf_add_module
 		nop
 	
-		;; can't call lkf_fix_module, 
-		;; as this would unlock the alarm handler
-		;; must stay a process, so just wait
 		jmp	main
 				
 end_of_code:

@@ -23,8 +23,8 @@
 ; If it is on for 100ms it is interpreted as 0 and with 200ms it is a 1.
 ; The 59th bit is missing, so you have a 2 seconds gap, marking the begin 
 ; of a minute. For details see:
-; -  http://www.heret.de/funkuhr/index.htm	  (german)
-; -  http://www.heret.de/radioclock/index.htm	  (english)
+; - http://www.heret.de/funkuhr/index.htm	  (german)
+; - http://www.heret.de/radioclock/index.htm	  (english)
 ; The radio receiver is connected to one cia2 pin at the user port.
 ; To read the information this progamm hooks into the system interrupt,
 ; which occures every 1/64 seconds. It counts the interrupts between
@@ -36,6 +36,9 @@
 ; The interrupt handler waits for the next valid second
 ; and then writes the time to the cia1 time of day register. With 
 ; this procedure a better precision is archieved.
+; Only the insertion of leap seconds is supported. Missing seconds 
+; result in an error. This behaviour is not specified by the
+; DCF signal description and also has never happened.
 
 #include <stdio.h>
 #include <cia.h>
@@ -94,9 +97,10 @@ start_of_code:
 		.word	+
 
 dcfbits:	.byte	$40,0,0,0,0,0,0,0	; 8 bytes == 64 bits
-	; byte 0 bit 7 means waiting for gap, 
-	;        bit 6 means data invalid
-	;        bit 5 means write date to cia next second
+	; byte 0 bit 7 means waiting for gap
+	;	 bit 6 means data invalid
+	;	 bit 5 means write date to cia next second
+	;	 bit 4 means expect leap second insertion
 	; byte 0 bit 2 ... byte 7 raw dcf data bits
 bytecount:	.byte	7
 bitcount:	.byte	$01
@@ -107,7 +111,7 @@ dcfdata:	.buf	8
 
 date:
 weekday:	.byte	0	; range from 01 to 07
-century:	.byte	$20	; FIXME: year 2100 problem :-)
+century:	.byte	$20	; FIXME: year 2100 problem
 year:		.byte	0	; range form 00 to 99
 month:		.byte	1	; range form 01 to 12
 day:		.byte	1	; range form 01 to 31
@@ -121,14 +125,26 @@ zonehour:	.byte	1	; 1 CET/MEZ, 2 CEST/MESZ
 zonemin:	.byte	$00
 end_of_date:
 
+ntp:					; all values are big endian
+li_vn_mode:	.byte	%11011100	; not synchronized, version 3, server
+stratum:	.byte	0		; primary reference
+poll:		.byte	6		; NTP.MINPOLL
+precision:	.byte	~6+1		; 1/64 seconds
+delay:		.byte	0,0,0,0		; 0 seconds
+dispersion:	.byte	0,0,$02,$99	; 10 ms + 38*4 us
+identifier:	.text	"DCF",0		; callsign
+end_of_ntp:
+
 rtc_moddesc:
 		.asc	"rtc"
-		.byte	5
+		.byte	7
 rtc_time_read:	jmp	lkf_suicide
 rtc_time_write: jmp	lkf_suicide
 rtc_date_read:	jmp	lkf_suicide
 rtc_date_write: jmp	lkf_suicide
-rtc_raw_write:	jmp	lkf_suicide
+rtc_ntp_read: 	jmp	lkf_suicide
+rtc_ntp_write:	jmp	lkf_suicide
+rtc_ntp_reference: jmp	lkf_suicide
 
 	+
 
@@ -150,12 +166,13 @@ irq_handler:
 		and	#B_DCF
 		tax
 		eor	sigstate
-		beq	return		; nothing has changed, continue waiting
+		beq	return_		; nothing has changed, continue waiting
 
 		;; the signal has changed
 		txa			; set/clear zero flag
 		sta	sigstate
-		beq	sig_off
+		bne	sig_on
+		jmp	sig_off		; out of range
 
 		; note that state of the led and the cia signal are inverted
 sig_on:		;; the dcf-77 led was on and is now off
@@ -163,7 +180,7 @@ sig_on:		;; the dcf-77 led was on and is now off
 		;; check for valid duration of led on
 		lda	duration
 		cmp	#SET_MAX
-		bcs	mark_invalid
+		bcs	mark_invalid_s	; relative jump out of range
 		cmp	#CLEAR_MIN
 		bcc	mark_invalid
 		bit	dcfbits
@@ -174,7 +191,20 @@ sig_on:		;; the dcf-77 led was on and is now off
 		bcs	mark_gap
 		cmp	#CLEAR_MAX
 		bcc	mark_gap
-		bcs	mark_invalid	; always jump
+mark_invalid_s: bcs	mark_invalid	; always jump
+
+		;; check if this is a leap second
+	+	ldx	second
+		cpx	#$59
+		bcc	+
+		bne	mark_invalid	; it was not the 59th second
+		lda	dcfbits
+		and	#$10		; leap flag
+		beq	mark_invalid	; no leap second expected
+		lda	duration
+		cmp	#CLEAR_MAX
+		bcs	mark_invalid	; leap second bit is not cleared
+return_:	rts
 
 		;; check the length of the signal to determine SET or CLEAR
 	+	cmp	#SET_MIN
@@ -184,7 +214,8 @@ sig_on:		;; the dcf-77 led was on and is now off
 		bcs	mark_invalid	; always jump
 
 		;; write bit to bitfield
-set_bit:	ldy	bytecount
+set_bit:	
+		ldy	bytecount
 		lda	bitcount
 		ora	dcfbits,y
 		bne	sta_dcfbits	; allways jump
@@ -219,6 +250,11 @@ dec_byte:	dey
 		ldx	#$01
 stx_bit:	stx	bitcount
 return:		rts
+
+mark_invalid:	BLINK(1,0)
+		lda	#$40		; invalid flag
+		sta	dcfbits
+		rts
 		
 sig_off:	;; the dcf-77 led was off and is now on
 		BLINK(0,1)
@@ -227,62 +263,66 @@ sig_off:	;; the dcf-77 led was off and is now on
 		ldx	#0
 		stx	duration
 		cmp	#GAP_MAX
-		bcc	+
-
-mark_invalid:	BLINK(1,0)
-		lda	#$40		; invalid flag
-		sta	dcfbits
-		rts
-
-	+	cmp	#GAP_MIN
-		bcs	+
+		bcs	mark_invalid
+		cmp	#GAP_MIN
+		bcs	gap
 		cmp	#SEC_MAX
 		bcs	mark_invalid
 		cmp	#SEC_MIN
 		bcc	mark_invalid
 
 		;; one second found
-		bit	dcfbits
-		bmi	mark_invalid	; gap expected
-		bvs	return
 		lda	second
 		sed
 		clc
 		adc	#$01
 		cld
-		cmp	#$59
-		bcs	return		; should never happen
 		sta	second
-
-write_date:	;; write date and time to system clock
+		bit	dcfbits
+		bvs	return
+		bpl	+		; no gap expected
+		cmp	#$59		; gap expected, but got second
+		bne	mark_invalid	; it was not the 59th second
 		lda	dcfbits
+		and	#$10		; leap flag
+		beq	mark_invalid	; no leap second expected
+		rts
+	+	cmp	#$59
+		bcs	return		; should never happen
+
+		lda	dcfbits
+write_date:	;; write date and time to system clock
 		and	#$20		; write flag
 		beq	return
-		lda	dcfbits
-		and	#$df		; write flag
-		sta	dcfbits
-		BLINK(2,1)
 		ldx	#<date
-hiaddr_date:	ldy	#>date		; will be relocated during init
-#ifdef DEBUG
+hiaddr_date0:	ldy	#>date		; will be relocated during init
 		jsr	rtc_date_write
-#else
-		jsr	rtc_raw_write
-#endif
+		ldx	#<ntp
+hiaddr_ntp0:	ldy	#>ntp		; will be relocated during init
+		jsr	rtc_ntp_write
+		lda	li_vn_mode
+		and	#%11000000
+		tax
+		lda	dcfbits
+		and	#$cf		; write + leap flag
+		cpx	#%01000000	; announce 61 seconds
+		bne	+
+		ora	#$10		; leap flag
+	+	sta	dcfbits
+		BLINK(2,1)
 		rts
 
-		;; gap found
-	+	bit	dcfbits
-		bpl	mark_invalid	; no gap expected
-		BLINK(1,1)
+gap:		;; gap found
 		lda	#$00
 		sta	second
+		bit	dcfbits
+		bpl	mark_invalid	; no gap expected
+		BLINK(1,1)
 		lda	#$3f		; valid, no gap
 		and	dcfbits
 		bit	dcfbits
 		sta	dcfbits
-		bvc	write_date+3	; dcfbits allready in A, ignore load
-		BLINK(2,0)
+		bvc	write_date	; dcfbits allready in A, ignore load
 		rts
 
 
@@ -294,7 +334,7 @@ hiaddr_date:	ldy	#>date		; will be relocated during init
 dcf_read:	lda	#$dc		; what values to choose ?
 		ldx	#$77		; perhaps the ipid should be used
 		jmp	lkf_suspend
-		rts
+		;rts
 
 
 		;; dcf_write
@@ -375,10 +415,10 @@ bit_loop:	sta	bit_count
 		nop
 #endif
 
-		;; interprete data 
+		;; check M
 		lda	dcfdata+7
 		and	#$01		; M must be 0
-		bne	_invalid_data
+		bne	invalid_data_
 
 		;; get flags
 		lda	dcfdata+6
@@ -391,7 +431,19 @@ bit_loop:	sta	bit_count
 		txa
 		eor	flags
 		and	#$04		; either Z1 or Z2
-		beq	_invalid_data
+		beq	invalid_data_
+
+		;; set leap announce
+		lda	li_vn_mode
+		and	#%00111111	; no warning
+		tay
+		txa
+		and	#$08		; A2
+		beq	+
+		tya
+		ora	#%01000000	; minute has 61 seconds
+		tay
+	+	sty	li_vn_mode
 
 		;; set timezone
 		ldy	#$01
@@ -401,9 +453,10 @@ bit_loop:	sta	bit_count
 		iny
 	+	sty	zonehour
 
+		;; check S
 		txa
 		and	#$10		; S must be 1
-		beq	_invalid_data
+		beq	invalid_data_
 
 		;; get minute
 		ldx	#$00
@@ -415,7 +468,7 @@ bit_loop:	sta	bit_count
 		jsr	parity_high
 		txa
 		and	#$01
-		bne	_invalid_data	; even parity
+		bne	invalid_data_	; even parity
 		lda	userzp
 		and	#$7f
 		sta	minute
@@ -431,7 +484,7 @@ bit_loop:	sta	bit_count
 		txa
 		and	#$01
 		beq	+		; even parity
-_invalid_data:	jmp	invalid_data	; relative jump out of range
+invalid_data_:	jmp	invalid_data	; relative jump out of range
 	+	lda	userzp
 		and	#$3f
 		sta	hour
@@ -481,7 +534,7 @@ _invalid_data:	jmp	invalid_data	; relative jump out of range
 		;; parity for day, weekday, month, year
 		txa
 		and	#$01
-		bne	_invalid_data	; even parity
+		bne	invalid_data_	; even parity
 
 #ifdef DEBUG
 		;; print date and time to stdout
@@ -531,11 +584,19 @@ _invalid_data:	jmp	invalid_data	; relative jump out of range
 		jsr	print_seperator
 #endif
 
+		;; check syntax of date
+		ldx	#<date
+hiaddr_date1:	ldy	#>date		; will be relocated during init
+		jsr	checkdate
+		bcs	invalid_data
+
 		;; write date to system clock
-valid_data:	jsr	dcf_write
+		jsr	dcf_write
 		jmp	main_loop
 		
-invalid_data:	BLINK(2,0)
+invalid_data:	lda	li_vn_mode
+		ora	#%11000000	; not synchronized
+		sta	li_vn_mode
 		jmp	main_loop
 
 
@@ -623,7 +684,11 @@ normal_mode:
 		;; relocate in irq handler
 	-	bit	date
 		lda	- +2
-		sta	hiaddr_date +1
+		sta	hiaddr_date0 +1
+		sta	hiaddr_date1 +1
+	-	bit	ntp
+		lda	- +2
+		sta	hiaddr_ntp0 +1
 
 		;; get rtc module
 	-	bit	rtc_moddesc

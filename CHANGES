@@ -1,5 +1,9 @@
 from 0.18 to 0.19 ...
 -------------------------------
+added: date, output in unix or ntp time
+added: new library functions: checkdate dateconvert adc_32_8 mult_32_8 (AB)
+changed: ciartc now uses sleep(17s) instead of TOD interrupt (AB)
+changed: dcf77, support for insertion of leap second  (AB)
 fixed: not all IP fragments discarded (AB)
 added: httpd - an experimental webserver (DD)
 added: support of the (german) DCF-77 receiver (Alexander Bluhm)

@@ -47,6 +47,14 @@ start_of_code:
 		bne	+
 		sty	zonearg
 		jmp	-
+	+	cmp	#"u"
+		bne	+
+		inc	unixopt
+		jmp	-
+	+	cmp	#"n"
+		bne	+
+		inc	ntpopt
+		jmp	-
 	+	cmp	#0
 		bne	HowTo		; invalid option
 		cpx	userzp
@@ -66,9 +74,12 @@ start_of_code:
 		ldx	#<date
 		ldy	- +2
 		jsr	rtc_date_read
-		nop
 
 		lda	optind
+		sec
+		sbc	unixopt
+		sec
+		sbc	ntpopt
 		cmp	#1
 		bne	set_time
 		jmp	get_time
@@ -104,20 +115,23 @@ set_time:
 		jsr	read_num_bcd
 	+
 		ldy	zonearg
-		beq	+
-		iny			; sign will be handled later
-		ldx	#zonehour-date
-		lda	#2
-		jsr	read_num_bcd
-		ldy	zonearg
+		beq	+++
 		sty	userzp
 		ldy	#0
 		lda	(userzp),y
-		cmp	#"+"
-		beq	+	
+		ldx	#$00
 		cmp	#"-"
-		bne	illarg
-		lda	#$80
+		bne	+
+		ldx	#$80
+		iny
+	+	cmp	#"+"
+		bne	+
+		iny
+	+	stx	unix		; used as temporary storage
+		ldx	#zonehour-date
+		lda	#2
+		jsr	read_num_bcd+4
+		lda	unix
 		ora	zonehour
 		sta	zonehour
 	+
@@ -125,7 +139,7 @@ set_time:
 	-	bit	date
 		ldx	#<date
 		ldy	- +2
-		jsr	rtc_date_write
+		jsr	checkdate
 		bcc	+
 		ldx	#stderr
 		bit	illdat_txt
@@ -134,6 +148,9 @@ set_time:
 		jsr	get_time
 		jmp	HowTo
 	+
+		ldx	#<date
+		ldy	- +2
+		jsr	rtc_date_write
 
 #ifdef DEBUG
 		jmp	get_time
@@ -236,6 +253,12 @@ get_time:
 		jsr	lkf_set_zpsize
 		nop
 
+		lda	unixopt
+		bne	print_unix
+
+		lda	ntpopt
+		bne	print_ntp
+
 		;; print date and time to stdout
 		ldy	#zonehour-date
 		sty	userzp
@@ -294,25 +317,121 @@ print_seperator:
 		rts
 
 
+haddr_date:	bit	date
+haddr_unix:	bit	unix
+haddr_ntp:	bit	ntp
+
+		;; print time in seconds from 1970.01.01 01.00.00 UTC
+print_unix:
+		lda	#4
+		jsr	lkf_set_zpsize
+		nop
+
+		lda	#<date
+		sta	userzp+0
+		lda	haddr_date+2
+		sta	userzp+1
+		lda	#<unix
+		sta	userzp+2
+		lda	haddr_unix+2
+		sta	userzp+3
+		jsr	datetounix
+		nop
+
+		lda	unix+3
+		jsr	print_hex8
+		nop
+		lda	unix+2
+		jsr	print_hex8
+		nop
+		lda	unix+1
+		jsr	print_hex8
+		nop
+		lda	unix+0
+		jsr	print_hex8
+		nop
+		ldx	#stdout
+		lda	#$0a
+		jsr	lkf_fputc
+		nop
+
+		lda	#0
+		rts
+
+		;; print time in seconds from 1900.01.01 01.00.00 UTC
+print_ntp:
+		lda	#4
+		jsr	lkf_set_zpsize
+		nop
+
+		lda	#<date
+		sta	userzp+0
+		lda	haddr_date+2
+		sta	userzp+1
+		lda	#<ntp
+		sta	userzp+2
+		lda	haddr_ntp+2
+		sta	userzp+3
+		jsr	datetontp
+		nop
+
+		
+		lda	ntp+0
+		jsr	print_hex8
+		nop
+		lda	ntp+1
+		jsr	print_hex8
+		nop
+		lda	ntp+2
+		jsr	print_hex8
+		nop
+		lda	ntp+3
+		jsr	print_hex8
+		nop
+		lda	ntp+4
+		jsr	print_hex8
+		nop
+		lda	ntp+5
+		jsr	print_hex8
+		nop
+		lda	ntp+6
+		jsr	print_hex8
+		nop
+		lda	ntp+7
+		jsr	print_hex8
+		nop
+		ldx	#stdout
+		lda	#$0a
+		jsr	lkf_fputc
+		nop
+
+		lda	#0
+		rts
+
+
 		.byte	$0c
 		.word	+
 
 howto_txt:
 		.text	"usage: date [...]",$0a
-		.text	" -t hh:mm:ss.tt set time",$0a
-		.text	" -d ccyy.mm.dd set date",$0a
-		.text	" -w ww set weekday",$0a
-		.text	" -z shhmm set timezone, s is + or -",$0a
+		.text	" -t hh:mm:ss.tt  set time",$0a
+		.text	" -d ccyy.mm.dd  set date",$0a
+		.text	" -w ww  set weekday",$0a
+		.text	" -z shhmm  set timezone, s is + or -",$0a
+		.text	" -u print time in unix format",$a
+		.text	" -n print time in ntp format",$a
 		.text	" get current weekday,date,time,timezone",$0a,0
 
 illarg_txt:	.text	"illegal argument -- ",0
 illdat_txt:	.text	"illegal data -- ",$0a," ",0
 
-optstring:	.text	"t:d:w:z:h",0
+optstring:	.text	"t:d:w:z:unh",0
 timearg:	.byte	0
 datearg:	.byte	0
 weekarg:	.byte	0
 zonearg:	.byte	0
+unixopt:	.byte	0
+ntpopt:		.byte	0
 optind:		.byte	0
 
 rtc_moddesc:
@@ -341,7 +460,8 @@ end_of_date:
 
 seperator:	.text	" ",0,".. ::. ",0,$0a
 
+unix:		.byte	0,0,0,0
+ntp:		.byte	0,0,0,0,0,0,0,0
 	+
 
 end_of_code:
-
