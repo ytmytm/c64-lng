@@ -23,7 +23,7 @@ MODULES=sswiftlink sfifo64 rs232std swiftlink
 APPS=getty lsmod microterm ps sh sleep testapp wc cat tee uuencode \
      uudecode 232echo 232term telnet kill rm ls connd ftp buf cp tcpipstat \
      uptime time meminfo strminfo uname more slip tcpip ppp loop beep \
-     help env date ciartc dcf77 httpd
+     help env date ciartc dcf77 httpd smwrtc
 
 #============== end of configurable section ============================
 
