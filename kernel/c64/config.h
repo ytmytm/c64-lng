@@ -123,6 +123,12 @@
 
 ;#define HAVE_IDE64
 
+;// IDE64 IDEDOS 0.9xx support
+;// --------------------------
+;// The kernel will be smaller if IDEDOS 0.8xx compatibility is dropped
+;// Enable this option if you are going to use only IDEDOS 0.9 and later.
+
+;#define HAVE_IDEDOS9
 
 ;// Silversurfer support
 ;// --------------------

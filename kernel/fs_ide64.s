@@ -4,14 +4,15 @@
 ;
 ; Maciej Witkowiak <ytm@elysium.pl>
 ;
-; 8,15.12.2001, 2,3.01.2002
+; 8,15.12.2001, 2,3.01.2002, 14.09.2004
 
 ; IDEAS
 ; - common parts of fs_iec and fs_ide64 might be exported as functions
 ;	 (like preparing filename, printing errorcode)
 ; - maybe some temporary zeropage bytes can be shared with fs_iec (dunno)
-; - if I would only know how to get listing similar to 'll' readdir would be way shorter
-;	- can be done with IDEDOS>=0.9 and IDE64_DIRSA!=0
+; NOTES
+; - with HAVE_IDEDOS9: 'H'idden and 'L'ink are ignored
+;			date field is ignored as ls doesn't print it anyway
 
 #include <config.h>
 
@@ -29,7 +30,11 @@
 
 #define IDE64_DEVICE	12		; assumed
 #define IDE64_SECADR	8		; like open x,12,8 for files
+#ifdef HAVE_IDEDOS9
+#define IDE64_DIRSA	8		; like open x,12,8 for raw dir access
+#else
 #define IDE64_DIRSA	0		; like open x,12,0 for formatted dir access
+#endif
 
 #define IDE64_ROM_OPEN		$de60
 #define IDE64_ROM_CLOSE		$de60
@@ -759,7 +764,11 @@ fs_ide64_freaddir:
 		and  #$40
 		bne  next_entry
 
+#ifdef HAVE_IDEDOS9
+		lda  #$21			; drop first entry and one byte
+#else
 		lda  #$20
+#endif
 		sta  ide64_fopen_flags		; ignore first entry (diskname)
 
 	-	jsr  get_byte			; error won't happen here (this is always present)
@@ -781,15 +790,87 @@ next_entry:
 		tax
 		pla
 		tay
-		lda  $ff
+		lda  $ff			; preserve 3 bytes
 		pha
 		lda  $fe
 		pha
 		lda  $fd
 		pha
-		stx  $fe
+		stx  $fe			; restored pointer to dir structure
 		sty  $ff
 
+#ifdef HAVE_IDEDOS9
+_readdirentry:
+		ldy  #12			; ptr to filename
+		sty  $fd			; a counter
+	-	jsr  ide64_rom_chrin		; read name
+		ldx  $90			; the only place where EOF can happen
+		beq  +
+		jmp  dir_error	
+	+	jsr  cbm2unix
+		ldy  $fd
+		sta  ($fe),y
+		iny
+		cpy  #12+16			; got 16 bytes?
+		beq  +
+		sty  $fd
+		jmp  -
+
+	+	ldy  #2				; ptr to filesize
+		sty  $fd
+	-	jsr  ide64_rom_chrin		; read name
+		ldy  $fd
+		sta  ($fe),y
+		iny
+		cpy  #2+4			; got 4 bytes?
+		beq  +
+		sty  $fd
+		jmp  -
+
+	+	jsr  ide64_rom_chrin		; skip 4 bytes more
+		jsr  ide64_rom_chrin
+		jsr  ide64_rom_chrin
+		jsr  ide64_rom_chrin
+		jsr  ide64_rom_chrin		; get Attributes byte
+		tax				; preserve it
+		lsr  a
+		lsr  a
+		lsr  a
+		and  #%00000111
+		ldy  #1				; ptr to permissions
+		sta  ($fe),y			; save it
+		txa
+		and  #%00000111			; mask filetype
+		bne  +				; not deleted!
+
+		;; deleted or empty direntry, skip that
+		lda  #0				; read remaining bytes
+		sta  $fd
+	-	jsr  ide64_rom_chrin		; read
+		inc  $fd
+		lda  $fd
+		cmp  #32-16-4-4-1
+		bne  -
+		jmp  _readdirentry
+
+	+	cmp  #%00000011			; IDEDOS magic constant for DIR
+		bne  +
+		lda  ($fe),y
+		ora  #$80			; this is a dir
+		sta  ($fe),y
+
+	+	lda  #0				; read remaining 7 bytes (3 string type, 4 date)
+		sta  $fd
+	-	jsr  ide64_rom_chrin
+		inc  $fd
+		lda  $fd
+		cmp  #7
+		bne  -
+
+		ldy  #0
+		lda  #%00000011			; valid permissions and length
+		sta  ($fe),y
+#else
 		jsr  ide64_rom_chrin		; skip two bytes
 		ldx  $90
 		beq  +
@@ -871,11 +952,12 @@ next_entry:
 		sta  ($fe),y
 		dey
 		lda  #%00000011			; length and permissions are valid
-		sta  (syszp+2),y
+		sta  ($fe),y
 
 	-	jsr  ide64_rom_chrin		; skip until end of entry
 		tax
 		bne  -
+#endif
 		ldx  #0
 	-	pla
 		sta  $fd
