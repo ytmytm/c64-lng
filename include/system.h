@@ -78,18 +78,7 @@
 #define tsp_syszp   $78
 #define tsp_swap    $80
 
-;// per task system data (not in tsp for faster access)
-#define lk_tstatus   $c200
-#  define tstatus_szu    $80  ; if task uses the syszp zeropage
-#  define tstatus_susp   $40  ; if task is not getting CPU
-#  define tstatus_nonmi  $20  ; if task has disabled NMI
-#  define tstatus_nosig  $10  ; no signals / no kill (birth/death)
-#  define tstatus_pri    $07  ; priority (value in the range of 1..7, not 0!!)
-#define lk_tnextt    $c220
-#define lk_tslice    $c240
-#define lk_ttsp      $c260
-
-;// system data
+;// system memory data - separate for each 64K of memory
 #define lk_memnxt    $c000  ; 256 bytes - 1 byte for each internal page
 #define lk_memown    $c100  ; 256 bytes - 1 byte for each internal page
 #  define memown_smb   $20
@@ -99,20 +88,40 @@
 #  define memown_scr   $24
 #  define memown_netbuf $25
 #  define memown_none  $ff
+;// this is also memory bank dependent
+#define lk_memmap    $ff85  ; 32 bytes - 1 bit of each internal page
 
-#define lk_memmap    $c280  ; 32 bytes - 1 bit of each internal page
-#define lk_semmap    $c2a0  ; 5 bytes (enough for 40 semaphores)
+;// this is not implemented, hence nonused
+#define lk_timedive  $c2c0  ; exponent of time dic
+#define lk_timedivm  $c2e0  ; mantisse of timediv
+
+;// per task system data (not in tsp for faster access)
+#define lk_tstatus   $ff05
+#  define tstatus_szu    $80  ; if task uses the syszp zeropage
+#  define tstatus_susp   $40  ; if task is not getting CPU
+#  define tstatus_nonmi  $20  ; if task has disabled NMI
+#  define tstatus_nosig  $10  ; no signals / no kill (birth/death)
+#  define tstatus_pri    $07  ; priority (value in the range of 1..7, not 0!!)
+#define lk_tnextt    $ff25
+#define lk_tslice    $ff45
+#define lk_ttsp      $ff65
+;//above - lk_memmap $ff85
+#define lk_smbmap    $ffa5  ; 32 bytes, bitmap of unused SMB-IDs
+#define lk_smbpage   $ffc5  ; 32 bytes, base address of SMB-pages (hi byte)
+                            ;// (byte 0 not used)
+
+#define lk_semmap    $ffe5  ; 5 bytes (enough for 40 semaphores)
 #  define lsem_irq1  0        ; byte 0, bit 0
 #  define lsem_irq2  1        ; byte 0, bit 1
 #  define lsem_irq3  2        ; byte 0, bit 2
 #  define lsem_alert 3        ; byte 0, bit 3
 #  define lsem_nmi   4        ; byte 0, bit 4
 #  define lsem_iec   5        ; byte 0, bit 5  (access to IEC serial bus)
-#define lk_nmidiscnt $c2a5  ; counts number of "nonmi" tasks
-#define lk_taskcnt   $c2a6  ; counts number of tasks (16 bit)
-#define lk_modroot   $c2a8  ; root of linked list of available modules (16bit)
-#define lk_consmax   $c2aa  ; absolute number of consoles
-#define lk_archtype  $c2ab  ; machine architecture
+#define lk_nmidiscnt $ffea  ; counts number of "nonmi" tasks
+#define lk_taskcnt   $ffeb  ; counts number of tasks (16 bit)
+#define lk_modroot   $ffed  ; root of linked list of available modules (16bit)
+#define lk_consmax   $ffef  ; absolute number of consoles
+#define lk_archtype  $fff0  ; machine architecture
 #  define larchf_type %00000011
 #   define larch_c64  0
 #   define larch_c128 1
@@ -120,11 +129,5 @@
 #  define larchf_pal  %00100000
 #  define larchf_reu  %01000000
 #  define larchf_scpu %10000000
-#define lk_timedive  $c2c0  ; exponent of time dic
-#define lk_timedivm  $c2e0  ; mantisse of timediv
 
-#define lk_smbmap    $c2c0  ; 32 bytes, bitmap of unused SMB-IDs
-#define lk_smbpage   $c2e0  ; 32 bytes, base address of SMB-pages (hi byte)
-                            ;// (byte 0 not used)
 #endif
-

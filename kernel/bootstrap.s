@@ -1,15 +1,15 @@
 		;; For emacs: -*- MODE: asm; tab-width: 4; -*-
-		
+
 		;; main initialization
 
 #include <config.h>
-		
+
 #include MACHINE_H		
 #include <system.h>
 #include <ksym.h>
 
 ;; bootstrap_system:	
-	
+
 start:
 		sei						; disable interrupts
 		cld						; clear decimal flag
@@ -48,7 +48,7 @@ start:
 	-	sta  $100,x
 		inx
 		bne  -
-		
+
 		;; set pointer to new interrupt routine
 		ldx  #<lkf_irq_handler
 		ldy  #>lkf_irq_handler
@@ -86,7 +86,7 @@ start:
 		sta  lk_systic+2
 		sta  lk_sleepcnt
 		sta  lk_sleepcnt+1		; wait a long time before alling _wakeup
-	    lda  #0
+	        lda  #0
 		sta  lk_locktsw			; taskswitching is enabled (default)
 		lda  #0
 		sta  lk_semmap
@@ -109,7 +109,7 @@ start:
 		sta  lk_memown,x
 		inx
 		bne  -
-		
+
 		ldx  #31
 	-	lda  _initmemmap,x
 		sta  lk_memmap,x
@@ -123,7 +123,7 @@ start:
 		sta  lk_smbpage,x
 		dex
 		bne  -
-		
+
 		;; clean up zeropage
 		ldx  #$0f				; 16 bytes for each segment
 		lda  #0
@@ -151,12 +151,12 @@ start:
 		jsr  lkf_locktsw		; raw_alloc does unlocktsw!
 		lda  #$c0
 		sta  tmpzp+3
-		lda  #4
+		lda  #2
 		sta  tmpzp
 		jsr  lkf__raw_alloc		; allocate kernel data area
-				
-		cli						; taskswitching is still disabled (!)
-		
+
+		cli				; taskswitching is still disabled (!)
+
 #ifdef HAVE_REU
 		;; check for REU
 
@@ -243,7 +243,7 @@ to_no_reu:
 
 		;; machine type
 		jsr  print_machine_type
-		
+
 		;; calibrate delay loop
 		jsr  calibrate_delay
 
@@ -291,7 +291,7 @@ to_no_reu:
 		jsr  lkf_unlocktsw
 		cli
 	-	jmp  -					; fade away (should not be reached)
-		
+
 welcome_txt:
 		.byte $0a
 		.text "Welcome to LUnix next generation (LNG)",$0a
@@ -365,13 +365,13 @@ print_machine_type:
 		and  #%10000000
 		bne  mout
 		ldy  #txt_60hz-txt_c64
-mout:	lda  txt_c64,y
+mout:		lda  txt_c64,y
 		beq  +
 		jsr  lkf_printk
 		iny
 		bne  mout
 	+	rts
-				
+
 		;; initial memory map (every 1-bit is an available page)
 
 #		include MACHINE(initmemmap.s)
