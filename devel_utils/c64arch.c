@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <string.h>
 
 #define head_length 398
 
@@ -66,6 +67,14 @@ main(int argc, char **argv)
   int conv_flag;
   char *ctmp;
   
+  if (argc<3) {
+    /* print howto */
+    printf("usage: c64arch outfile infiles...\n"
+	   "  infile-names prefixed with * will be converted into\n"
+	   "  petscii\n");
+    exit(0);
+  }
+
   outfile=fopen(argv[1],"w");
   if (outfile==NULL) {
     printf("can't open output file \"%s\".\n",argv[1]);
@@ -81,7 +90,7 @@ main(int argc, char **argv)
     sum=0;
     ctmp=argv[i];
     if (*ctmp=='*') ctmp++;
-    printf("adding \"%s\" ",ctmp);
+    /* printf("adding \"%s\" ",ctmp); */
     infile=fopen(ctmp,"r");
     if (infile==NULL) {
       printf("\ncan't open file\n");
@@ -89,7 +98,7 @@ main(int argc, char **argv)
     j=0;
     while (fgetc(infile)!=EOF) j++;
     rewind(infile);
-    printf("(%i bytes)\n",j);
+    /* printf("(%i bytes)\n",j); */
     p=0;
     conv_flag=0;
     do {

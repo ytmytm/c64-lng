@@ -1,4 +1,4 @@
-/* LUnix-assembler Version 1.29
+/* LUnix-assembler Version 1.30
 
    Written by Daniel Dallmann (aka Poldi) on a weekend in June 1996 :-)
    This piece of software is freeware ! So DO NOT sell it !!
@@ -10,9 +10,12 @@
 
 luna-extension-history:
 
- Sep 21 1999 *poldi* added ^ (eor) operator
+ Feb 18 2000 *poldi* added: \n \r \t \0 in .text "..." string
+                     changed: #"<char>" now plain ascii (no petscii conversion)
 
- Jul  6 1999 *poldi* added "-W" switch for warnings (unused labels)
+ Sep 21 1999 *poldi* added: ^ (eor) operator
+
+ Jul  6 1999 *poldi* added: "-W" switch for warnings (unused labels)
 
  Jun  9 1999 *poldi* code cleaning
 
@@ -185,7 +188,7 @@ luna-extension-history:
 #define DUP_LABEL (-2)  /*                 ''                  */
 
 #ifdef _AMIGA
-const char *VERsion="$VER: luna 1.29 "__AMIGADATE__" $";
+const char *VERsion="$VER: luna 1.30 "__AMIGADATE__" $";
 #endif
 
 /* Fnuction prototypes */
@@ -202,7 +205,7 @@ void cleanup_plain_buf(void);
 void setlabel(char*, unsigned long, int);
 int search_label(char*);
 int insert_label(char*, int*);
-int getascii(int,int*);
+int getascii(int,int*,int);
 void setglobal(char*);
 int getlabel(char*);
 int getval(int, unsigned long*, int*, int*);
@@ -375,7 +378,7 @@ static unsigned char hashtab[323]={
 
 void Howto()
 {
-  printf("Luna 6502/10-cross-assembler version 1.29\n");
+  printf("Luna 6502/10-cross-assembler version 1.30\n");
   printf("Usage:\n");
   printf("  luna [-jlLoOpqR] sourcefile\n");
   printf("    -j = no automatic bra->jmp conversion\n");
@@ -723,7 +726,9 @@ void setlabel(char *labname, unsigned long val, int flags)
 # endif
 }
 
-int getascii(int i,int *par)
+/* getascii does ascii-petscii conversion only if flag is set */
+
+int getascii(int i,int *par,int flag)
 {
   if (line[i]=='\"') {                            /*"*/
     error("Illegal character constant");
@@ -732,7 +737,8 @@ int getascii(int i,int *par)
   if (line[i]=='\\') {
     i=i+1;
 	switch (line[i]) {
-	  case 'n'  : { *par=13; break; }
+	  case 'r'  : { *par=13; break; }
+	  case 'n'  : { *par=10; break; }
 	  case 't'  : { *par=9; break; }
 	  case '0'  : { *par=0; break; }
 	  case '\\' : { *par='\\'; break; }
@@ -741,9 +747,12 @@ int getascii(int i,int *par)
 	return i+1; }
 
   *par=line[i];
-  /* convert lower to upper case... */
-  if (*par>='a' && *par<='z') *par=*par-'a'+'A';
-  else if (*par>='A' && *par<='Z') *par=*par-'A'+'a';
+
+  if (flag) {
+    /* convert lower to upper case... */
+    if (*par>='a' && *par<='z') *par=*par-'a'+'A';
+    else if (*par>='A' && *par<='Z') *par=*par-'A'+'a';
+  }
 
   return i+1; 
 }
@@ -884,7 +893,7 @@ int getval(int i, unsigned long *val, int *flags, int *lab)
 
   if (line[i]=='\"') {
     /* get character value */
-    i=getascii(i+1,&tmp); *val=tmp;
+    i=getascii(i+1,&tmp,0); *val=tmp;   /* plain ascii, no conversion */
     if (strwant(&i,"\"")) *flags=fl_resolved;
     else error("unterminated character constant");
     return i; }
@@ -1530,15 +1539,15 @@ void main(int argc, char **argv)
   if (str_cmp(file_input,file_output)) {
     printf("warning: sourcefile=destfile ??\n");
     exit(1); }
-   
-    /* Call lupo to pre-proccess if necessary */
-    if (pre_proccess)
-      {
-
+  
+  /* Call lupo to pre-proccess if necessary */
+  if (pre_proccess)
+    {
+      
       /* Pre-process */
       char temp[1024];
       pre_file=my_tmpnam("lupo");
-
+      
       /* Make lupo command */
       sprintf(temp,"lupo -ql %s -o %s %s",file_input,pre_file,lupo_options);
       /* run command */
@@ -1548,7 +1557,7 @@ void main(int argc, char **argv)
         unlink(pre_file);
         printf("%s: lupo returned with error, no output created\n",argv[0]);
         exit(1); } }
-
+  
   do {
     if ((alter_flag==0 || unknown_flag==0) && !labresolved_flag) final_pass=1;
 #   ifdef debug
@@ -1617,19 +1626,19 @@ void main(int argc, char **argv)
 #       endif
         if (line[i]==';') break;  /* keine Befehle mehr in dieser Zeile */
         if (line[i]=='.') {
-		  unsigned long ltmp;
-
+	  unsigned long ltmp;
+	  
           /* special assembler commands like .byte .word .asc .head */
-
+	  
           i=i+1;
           if (line[i]=='b' && line[i+1]=='y') {
-
+	    
             /* assume .byte */
-
+	    
             while (1) {
               j=nextchar(j);
               j=getexpr(j,&ltmp,&flags,&lab);
-			  if (ltmp>0xffff) error("byte out of range");
+	      if (ltmp>0xffff) error("byte out of range");
               if (object_mode && flags&(fl_variable|fl_extdep)) {
                 if (!(flags&(fl_takelo|fl_takehi))) {
                   error("byte out of range"); } }
@@ -1638,10 +1647,10 @@ void main(int argc, char **argv)
               if (line[j]!=',') break;
               if (lunix_mode && data_flag==0) error("data in code-area");
               j=j+1; }
-		    continue; }
-
+	    continue; }
+	  
           if (line[i]=='d' && line[i+1]=='i') {
-
+	    
             /* assume .digit */
 
             while (1) {
@@ -1659,25 +1668,25 @@ void main(int argc, char **argv)
 		    continue; }
 
           if (line[i]=='w') {
-
+	    
             /* assume .word */
-
+	    
             if (lunix_mode && data_flag==0) error("data in code-area");
             while (1) {
               j=nextchar(j);
               j=getexpr(j,&ltmp,&flags,&lab);
-			  if ( (flags&fl_extdep)?
-				        (ltmp>0x7fff && ltmp<0xffff8000):(ltmp>0xffff) )
-				error("word out of range.");
+	      if ( (flags&fl_extdep)?
+		   (ltmp>0x7fff && ltmp<0xffff8000):(ltmp>0xffff) )
+		error("word out of range.");
               putword(ltmp,flags,lab);
               if (line[j]!=',') break;
               j=j+1; }
             continue; }
-
+	  
           if (line[i]=='a') {
-
+	    
             /* assume .asc */
-
+	    
             j=nextchar(j);
             if (line[j++]!='\"') error("\" expected");
             if (lunix_mode && data_flag==0) error("string in code-area");
@@ -1688,7 +1697,7 @@ void main(int argc, char **argv)
               if (line[j]=='\0') {
                 error("unterminated string");
                 break; }
-              j=getascii(j,&par);
+              j=getascii(j,&par,1); /* do ascii-petscii conversion */
               putbyte(par,fl_resolved,0); }
             continue; }
 
@@ -1717,7 +1726,7 @@ void main(int argc, char **argv)
               if (is_sep(line[j])) {
                 error("unterminated CMD-name");
                 break; }
-              j=getascii(j,&header[56+p]);
+              j=getascii(j,&header[56+p],1); /* do ascii-petscii conversion */
               p++;
               if (p>8) {
                 error("CMD-name too long (8 chars max)");
@@ -1737,16 +1746,16 @@ void main(int argc, char **argv)
               tmp=line[q];
               line[q]='\0';
               if (line[j]=='.') {
-				j++;
-				if (line[j]=='.') {
-				  j++;
-				  size=4; } /* ZP-label with .. prefix (allocate 4 bytes) */
-				else
-				  size=2; } /* ZP-label with . prefix (allocate 2 bytes) */
-			  else
-				size=1;     /* ZP-label without prefix (allocate 1 byte) */
-			  setlabel(&line[j],p,fl_resolved);
-			  p+=size;
+		j++;
+		if (line[j]=='.') {
+		  j++;
+		  size=4; } /* ZP-label with .. prefix (allocate 4 bytes) */
+		else
+		  size=2; } /* ZP-label with . prefix (allocate 2 bytes) */
+	      else
+		size=1;     /* ZP-label without prefix (allocate 1 byte) */
+	      setlabel(&line[j],p,fl_resolved);
+	      p+=size;
               line[q]=tmp;
               j=q; }
             header[1]=1;
@@ -1797,13 +1806,14 @@ void main(int argc, char **argv)
             if (lunix_mode && data_flag==0) warning(".buf in code-area");
             j=nextchar(j);
             j=getexpr(j,&ltmp,&flags,&lab);
-			if (flags&(fl_variable|fl_external|fl_extdep)) error("non constant argument");
-			if (ltmp>0xffff) error("word out of range");
+	    if (flags&(fl_variable|fl_external|fl_extdep)) 
+	      error("non constant argument");
+	    if (ltmp>0xffff) error("word out of range");
             buf_bytes=buf_bytes+ltmp; /* delayed insertion, because we don't
                                          need buf-bytes at the very end. */
             pc=pc+ltmp;
             continue; }
-
+	  
           if (line[i]=='d') {
  
             /* assume .data */
@@ -1838,67 +1848,67 @@ _do_data:
             /* assume .endofcode */
  
             if (object_mode) goto _do_data;
-			/* library calls will be appended to this file, so
-			   .endofcode would be a big mistake */
+	    /* library calls will be appended to this file, so
+	       .endofcode would be a big mistake */
             if (data_flag==1) {
               sprintf(str,"__d%i",dseg_count);
               setlabel( str,pc,fl_resolved|fl_variable); }
             putbyte(2,fl_resolved,0);
             data_flag=2; 
             continue; }
-		  
-		  if (line[i]=='l') {
-			if (line[i+1]=='i') {
-			  
-			  /* assume .line */
-			  
-			  /* Only allowed in pre-processed code */
-			  if (!pre_proccess)
-				{
-				  switch(dot_line_count)
-					{
-					case 0: warning(".line in non-preproccessed code"); 
-					  break;
-					case 1: 
-					  warning("futher .lines found - supressing warning");
-					  break;
-					}
-				  dot_line_count++;
-				}
-			  /* Read line # and source file name */
-			  j=nextchar(j);
-			  pre_line=atoi(&line[j]);       /* source line */
-			  j=nextsep(j);
-			  if (pre_proccess)
-				strcpy(pre_pedigree,&line[j+1]); /* file list */
-			  /* skip rest of line */
-			  while(line[j]==',')
-				j=nextsep(j+1);
-			  continue; }
-			
-			if (line[i+1]=='o') {
-			  
-			  /* assume .longword */
-			  
-			  if (lunix_mode && data_flag==0) error("data in code-area");
-			  while (1) {
-				j=nextchar(j);
-				j=getexpr(j,&ltmp,&flags,&lab);
-				if (object_mode && (flags & (fl_variable|fl_external)))
-				  error("nonconst longwords not supported by object format");
-				putbyte((ltmp>>24) & 0xff,fl_resolved,0);
-				putbyte((ltmp>>16) & 0xff,fl_resolved,0);
-				putbyte((ltmp>>8) & 0xff,fl_resolved,0);
-				putbyte(ltmp & 0xff,fl_resolved,0);
-				if (line[j]!=',') break;
-				j=j+1; }
-			  continue; }
-		  }
-
+	  
+	  if (line[i]=='l') {
+	    if (line[i+1]=='i') {
+	      
+	      /* assume .line */
+	      
+	      /* Only allowed in pre-processed code */
+	      if (!pre_proccess)
+		{
+		  switch(dot_line_count)
+		    {
+		    case 0: warning(".line in non-preproccessed code"); 
+		      break;
+		    case 1: 
+		      warning("futher .lines found - supressing warning");
+		      break;
+		    }
+		  dot_line_count++;
+		}
+	      /* Read line # and source file name */
+	      j=nextchar(j);
+	      pre_line=atoi(&line[j]);       /* source line */
+	      j=nextsep(j);
+	      if (pre_proccess)
+		strcpy(pre_pedigree,&line[j+1]); /* file list */
+	      /* skip rest of line */
+	      while(line[j]==',')
+		j=nextsep(j+1);
+	      continue; }
+	    
+	    if (line[i+1]=='o') {
+	      
+	      /* assume .longword */
+	      
+	      if (lunix_mode && data_flag==0) error("data in code-area");
+	      while (1) {
+		j=nextchar(j);
+		j=getexpr(j,&ltmp,&flags,&lab);
+		if (object_mode && (flags & (fl_variable|fl_external)))
+		  error("nonconst longwords not supported by object format");
+		putbyte((ltmp>>24) & 0xff,fl_resolved,0);
+		putbyte((ltmp>>16) & 0xff,fl_resolved,0);
+		putbyte((ltmp>>8) & 0xff,fl_resolved,0);
+		putbyte(ltmp & 0xff,fl_resolved,0);
+		if (line[j]!=',') break;
+		j=j+1; }
+	      continue; }
+	  }
+	  
           if (line[i]=='n') {
-         
+	    
             /* assume .newpage */
-           
+	    
             if (lunix_mode && data_flag==0) error(".newpage in code-area");
             if (object_mode) warning(".newpage might not work in objectmode");
             i=(pc & 255);
@@ -1908,53 +1918,56 @@ _do_data:
             buf_bytes=buf_bytes+i;
             pc=pc+i;
             continue; }
-		  
+	  
           if ((line[i+0]=='t')&&(line[i+1]=='e')&&
-			  (line[i+2]=='x')&&(line[i+3]=='t')) {
-			/* .text                                        */
-			/* May include combination of bytes and strings */
-			
-			if (lunix_mode && data_flag==0) error("data in code-area");
-			
-			while(1) {
-			  j=nextchar(j);
-			  switch(line[j]) {
-			  case '\"': { /* string" */
-				while (1) {
-				  if (line[++j]=='\"') {            /*"*/
-					j++; 
-					break; }
-				  if (line[j]=='\0') {
-					error("unterminated string");
-					break; }
-				  putbyte(line[j],fl_resolved,0); }
-				break; }
-				
-			  default: /* expression */
-				j=getexpr(j,&ltmp,&flags,&lab);
-				if (ltmp>0xffff) error("byte out of range");
-				if (object_mode && flags&(fl_variable|fl_extdep)) {
-				  if (!(flags&(fl_takelo|fl_takehi))) {
-					error("byte out of range"); } }
-				else if (ltmp>255) error("byte out of range");
-				putbyte(ltmp,flags,lab);
-				break;
-			  }
-			  /* to the next field */
-			  j=nextchar(j);
-			  if (line[j]!=',') break;
-			  j++; }
-
-			continue; }
-		  
+	      (line[i+2]=='x')&&(line[i+3]=='t')) {
+	    /* .text                                        */
+	    /* May include combination of bytes and strings */
+	    
+	    if (lunix_mode && data_flag==0) 
+	      error("data in code-area");
+	    
+	    while(1) {
+	      j=nextchar(j);
+	      switch(line[j]) {
+	      case '\"': { /* string" */
+		j++;
+		while (1) {
+		  if (line[j]=='\"') {            /*"*/
+		    j++;
+		    break; }
+		  if (line[j]=='\0') {
+		    error("unterminated string");
+		    break; }
+		  j=getascii(j,&par,0); /* no ascii-petscii conversion */
+		  putbyte(par,fl_resolved,0); }
+		break; }
+	      
+	      default: /* expression */
+		j=getexpr(j,&ltmp,&flags,&lab);
+		if (ltmp>0xffff) error("byte out of range");
+		if (object_mode && flags&(fl_variable|fl_extdep)) {
+		  if (!(flags&(fl_takelo|fl_takehi))) {
+		    error("byte out of range"); } }
+		else if (ltmp>255) error("byte out of range");
+		putbyte(ltmp,flags,lab);
+		break;
+	      }
+	      /* to the next field */
+	      j=nextchar(j);
+	      if (line[j]!=',') break;
+	      j++; }
+	    
+	    continue; }
+	  
           if (line[i]=='g') {
-			
+	    
             /* assume .global */
             j=nextchar(j);
             if (is_sep(line[j])) {
               error("syntax error");
               continue; }
-
+	    
             while (1) {
               q=nextsep(j);
               tmp=line[q];
@@ -1969,9 +1982,9 @@ _do_data:
                 break; }
               j=nextchar(j+1); }
             continue; }
-         
-		}
-
+	  
+	}
+	
         if (line[j-1]==':') {
           /* label: */
          line[j-1]='\0';
@@ -2026,14 +2039,14 @@ _do_data:
               writebef(befopc[tmp],befatp[tmp],par,flags,lab);
               continue; }
           }
-
+	  
           /* unknown command with 3 letters */
-		  if (line[i]=='o' && line[i+1]=='r' && line[i+2]=='g' ) {
-			/* org-command */
-			unsigned long ltmp;
-			j=nextchar(j);
-			j=getexpr(j,&ltmp,&flags,&lab);
-			if (ltmp>0xffff) error("org out of range");
+	  if (line[i]=='o' && line[i+1]=='r' && line[i+2]=='g' ) {
+	    /* org-command */
+	    unsigned long ltmp;
+	    j=nextchar(j);
+	    j=getexpr(j,&ltmp,&flags,&lab);
+	    if (ltmp>0xffff) error("org out of range");
             if (!object_mode) pc=ltmp; 
             else { 
               pc=0;
@@ -2041,28 +2054,28 @@ _do_data:
             if (org_lock) error("nested org");
             continue; }
         }
-      /* no such command (assume it a label?) */ 
-      tmp=nextchar(j);
-      line[j]='\0';
-      if (line[tmp]=='e' && line[tmp+1]=='q' && line[tmp+2]=='u') {
-        /* label equ expression */
-		unsigned long ltmp;
-        j=nextchar(nextsep(tmp));
-        j=getexpr(j,&ltmp,&flags,&lab);
-        setlabel(&line[i],ltmp,flags);
-        continue; }
-		
-		{
-		  char message[1024];
-		  line[j]=0;
-		  sprintf(message,"unknown command `%s'",&line[i]);
-		  error(message);        
-		}
+	/* no such command (assume it a label?) */ 
+	tmp=nextchar(j);
+	line[j]='\0';
+	if (line[tmp]=='e' && line[tmp+1]=='q' && line[tmp+2]=='u') {
+	  /* label equ expression */
+	  unsigned long ltmp;
+	  j=nextchar(nextsep(tmp));
+	  j=getexpr(j,&ltmp,&flags,&lab);
+	  setlabel(&line[i],ltmp,flags);
+	  continue; }
+	
+	{
+	  char message[1024];
+	  line[j]=0;
+	  sprintf(message,"unknown command `%s'",&line[i]);
+	  error(message);        
+	}
       }
     }
-	
-  /* pass done */
-
+    
+    /* pass done */
+    
   fclose(infile);
    if (lunix_mode && data_flag!=2)
      if (!object_mode) error("missing .endofcode directive");

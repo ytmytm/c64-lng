@@ -1,3 +1,26 @@
+from 0.17 to 0.18
+------------------------------
+changed: opt-subdirectory for chipset/interface specific kernel code
+removed: misbehaving HAVE_256K option (needed on all C128s) (MW)
+fixed: MMU_STACK option to fix problems with SCPU 128 (MW)
+changed: code splitting zpage[in/out] stack[in/out].. (MW)
+fixed: terminal size handling of help, more, ftp, getty, connd
+added: env - print environment settings
+fixed: shell stderr piping bug
+fixed: c64 single console code
+added: context switch benchmark
+added: pipe throughput benchmark
+added: code for PC-AT keyboard on datasette port (MW)
+added: termwx/termwy environment attributes (size of terminal)
+added: lib subdirectory for source of standard library
+added: first implementation of help (html viewer)
+added: help subdirectory for on-line help pages
+changed: c64arch now more quiet (and prints help when called without args)
+changed: luna now supports "\n\r\t\0" in .text ".." and does no longer
+         convert character arguments (eg. #"x") to petscii 
+added: lld -N for generating LNG executables
+
+
 from 0.16 to 0.17 (Sep 7 2000)
 ------------------------------
 adapt source tree to CVS environment

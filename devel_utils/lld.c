@@ -1,4 +1,4 @@
-/* 6502/10 linker (lld) Version 0.06
+/* 6502/10 linker (lld) Version 0.07
 
    Written by Daniel Dallmann (aka Poldi) in Sep 1996.
    This piece of software is freeware ! So DO NOT sell it !!
@@ -7,6 +7,8 @@
 
    If you've noticed a bug or created an additional feature, let me know.
    My (internet) email-address is dallmann@heilbronn.netsurf.de
+
+   Feb 18 2000 *poldi*  -N : LNG mode operation
 
    Jun 9  1999 *poldi*  code cleaning
 
@@ -35,7 +37,7 @@
 #define USE_GETENV              /* use LLD_LIBRARYS to find librarys */
 
 #ifdef _AMIGA
-const char *VERsion="$VER: lld 0.06 "__AMIGADATE__" $";
+const char *VERsion="$VER: lld 0.07 "__AMIGADATE__" $";
 #define PATH_SEPARATOR ','      /* character used as path separator  */
 #else
 #define PATH_SEPARATOR ':'      /* character used as path separator */
@@ -47,6 +49,7 @@ const char *VERsion="$VER: lld 0.06 "__AMIGADATE__" $";
 
   NOTE: LLD_LIBRARYS  used for normal objectfiles
         LUNA_LIBRARYS used for lunix objectfiles
+	LNG_LIBRARYS  used for normal objectfiles in LNG mode
   */
 
 #define FILES_MAX 50        /* max number of files to link */
@@ -480,17 +483,19 @@ void Howto()
 {
   printf("lld [-lLoqs] input-files...\n");
   printf("  linker for objectcode created by 'luna' 6502/10 assembler\n");
-  printf("  this is version 0.06\n");
+  printf("  this is version 0.07\n");
   printf("  -d file = dump list of all global addresses in file\n");
   printf("  -l library-file\n");
   printf("  -L = create library instead of executable\n");
+  printf("  -N generate LNG binary\n");
   printf("  -o output-file (default is c64.out or c64.lib)\n");
   printf("  -q quiet operation\n");
   printf("  -s address (start address in decimals, default 4096)\n");
 #ifdef USE_GETENV
   printf(" environment\n");
   printf("  LLD_LIBRARYS ':' separated list of standard librarys\n");
-  printf("  LUNIX_LIBRARYS same list but used in lunix-mode\n");
+  printf("  LUNIX_LIBRARYS same list but used in LUnix-mode\n");
+  printf("  LNG_LIBRARYS same list but used in LNG-mode\n");
 #endif
   exit(1);
 }
@@ -521,6 +526,7 @@ void main(int argc, char **argv)
   int           *mod__flag;
   int           mod_cnt;
   int           lunix_mode;
+  int           lng_mode;
 
   char          *envtmp;
   char          *dump_file_name;
@@ -529,7 +535,7 @@ void main(int argc, char **argv)
   dump_file_name=0;
   pc=0x1000; /* default value, also for LUnix-executables */
 
-  lunix_mode=quiet_mode=0;
+  lunix_mode=quiet_mode=lng_mode=0;
   i=1; lib_flag=0; j=0;
   while ( i<argc ) {
     if (argv[i][0]=='-') {
@@ -540,6 +546,7 @@ void main(int argc, char **argv)
 		case 'o': { i++; file_output=argv[i]; j=0; break; }
 		case 'L': { lib_flag=1; break; }
 		case 'q': { quiet_mode=1; break; }
+		case 'N': { lng_mode=1; break; }
 		case 'l': { 
 		  i++;
 		  if (lib_num>=LIB_NUM_MAX) {
@@ -582,6 +589,9 @@ void main(int argc, char **argv)
     error("illegal address");
     exit(1); }
 
+  if (lng_mode && pc!=0x1000)
+    error("LNG binaries have start address 0x1000");
+
   pc_start=pc;
 
   /* first built up database */
@@ -607,6 +617,7 @@ void main(int argc, char **argv)
         error("illegal address");
         exit(1); }
       tmp=0;
+      if (lng_mode) error("can't generate LNG binary from LUnix object");
       if (f_num!=0) error("LUnix-object must be first file"); }
      else 
       tmp=(tmp!='o');
@@ -662,8 +673,11 @@ void main(int argc, char **argv)
   if (lunix_mode)
     envtmp=getenv("LUNIX_LIBRARYS");
   else
-    envtmp=getenv("LLD_LIBRARYS");
-
+    if (lng_mode)
+      envtmp=getenv("LNG_LIBRARYS");
+    else
+      envtmp=getenv("LLD_LIBRARYS");
+  
   if (envtmp!=NULL) {
     char *tmp_name;
 
@@ -812,13 +826,17 @@ void main(int argc, char **argv)
 
   pc_end=pc;
   pc=pc_start;
-  if (!lunix_mode) {
-    write_byte(outf,pc & 0xff);
-    write_byte(outf,(pc>>8)&0xff); /* put start address */ }
-  else {
+  if (lunix_mode) {
     write_byte(outf,0xff);
     write_byte(outf,0xff); /* put LUnix-magic $ffff */
     pc_end++; /* have to add $02=endofcode-marker */ }
+  else {
+    if (lng_mode) {
+      pc_end++; /* have to add $02=endofcode-marker */ }
+    else {
+      write_byte(outf,pc & 0xff);
+      write_byte(outf,(pc>>8)&0xff); /* put start address */ }
+  }
 
   f_num=0;
   while (f_num<infile_num) {
@@ -848,9 +866,21 @@ void main(int argc, char **argv)
       code_buffer[2]=1+((pc_end-pc_start-1)>>8);
 #     ifdef debug
       printf("  lunix base page = %i\n",code_buffer[65]);
-      printf("  lunix code length = %i pages (%i bytes)\n",code_buffer[2],pc_end-pc_start);
+      printf("  lunix code length = %i pages (%i bytes)\n",
+	     code_buffer[2],pc_end-pc_start);
 #     endif
-      }
+    }
+
+    if (lng_mode && f_num==0) {
+      /* have to adapt something in the header ! */
+      code_buffer[5]=pc_start>>8;
+      code_buffer[4]=((pc_end-pc_start+255)>>8);
+#     ifdef debug
+      printf("  lng base page = %i\n",code_buffer[5]);
+      printf("  lng code length = %i pages (%i bytes)\n",
+	     code_buffer[4],pc_end-pc_start);
+#     endif
+    }
 
     write_buffer(outf);
     free(code_buffer);
@@ -943,7 +973,8 @@ void main(int argc, char **argv)
     free(lib_clen[f_num]);
     f_num++; }
 
-  write_byte(outf,0x02); /* add endofcode-marker */
+  if (lunix_mode || lng_mode)
+    write_byte(outf,0x02); /* add endofcode-marker */
 
   fclose(outf);
   if (!quiet_mode) printf("done, %i bytes of code\n",pc-pc_start);
