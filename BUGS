@@ -19,5 +19,4 @@
 
 - lunixrc is only on disk image, not in package release
 
-- with IDEDOS>=0.9x secondary address for $ must be = 0 (formatted output), but leave it as 8
-  for file access
+- for some reason cp needs full destination file path after PWD change

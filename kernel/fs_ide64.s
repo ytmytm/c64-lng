@@ -11,6 +11,7 @@
 ;	 (like preparing filename, printing errorcode)
 ; - maybe some temporary zeropage bytes can be shared with fs_iec (dunno)
 ; - if I would only know how to get listing similar to 'll' readdir would be way shorter
+;	- can be done with IDEDOS>=0.9 and IDE64_DIRSA!=0
 
 #include <config.h>
 
@@ -27,7 +28,8 @@
 ; fd = this is by LUnix streams
 
 #define IDE64_DEVICE	12		; assumed
-#define IDE64_SECADR	8		; like open x,12,8 always
+#define IDE64_SECADR	8		; like open x,12,8 for files
+#define IDE64_DIRSA	0		; like open x,12,0 for formatted dir access
 
 #define IDE64_ROM_OPEN		$de60
 #define IDE64_ROM_CLOSE		$de60
@@ -199,6 +201,8 @@ fs_ide64_fopen:
 		cmp #fmode_rw
 		beq -
 		jsr enter_atomic			; atomic section
+		lda #IDE64_SECADR			; secondary address for file access
+		sta ide64sa+1
 
 		ldy #0
 		sty ide64_fopen_flags			; clear fopen flags
@@ -318,7 +322,7 @@ _raw_fopen:	sta ide64_filename_length
 	; ROM setlfs
 		pla					; ch_secadr
 		ldx #IDE64_DEVICE
-		ldy #IDE64_SECADR
+ide64sa:	ldy #IDE64_SECADR		; secondary address
 		sta $b8
 		stx $ba
 		sty $b9
@@ -714,6 +718,8 @@ fs_ide64_fopendir:
 		bne  -					; only current directory now
 
 		jsr  enter_atomic
+		lda  #IDE64_DIRSA			; secondary address for formatted dir access
+		sta  ide64sa+1
 
 		lda  #$80
 		sta  fopen_flags

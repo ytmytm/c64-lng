@@ -1,5 +1,6 @@
 from 0.21 to 0.22
 -----------------
+fixed: dir listing works for IDEDOS 0.9x too (MW)
 fixed: broken 1st file on IDE64 dir list (MW)
 
 from 0.20 to 0.21 (Sep 10 2004)
