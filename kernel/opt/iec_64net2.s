@@ -135,7 +135,7 @@ send_unlisten_64net2:
 		lda #0
 		sta ch_state
 		jsr getbyte_64net
-		sta status
+		;sta status				; ignore status
 		rts
 
 sec_adr_after_talk_64net2:				;tksa

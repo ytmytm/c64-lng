@@ -35,8 +35,8 @@
 #define psmb_wrptr 10
 
 #define iecsmb_status 5
-#  define iecstatus_eof           $80
-#  define iecstatus_devnotpresent $40
+#  define iecstatus_devnotpresent $80
+#  define iecstatus_eof           $40
 #  define iecstatus_timeout       $20
 #define iecsmb_secadr 6
 #define iecsmb_dirstate 7

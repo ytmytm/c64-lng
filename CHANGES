@@ -1,5 +1,6 @@
 from 0.19 to 0.20
 -------------------------------
+fixed: 64net2 EOF handling (MW)
 added: stuff to help in automatic Atari disk image creation (MW)
 added: RELO_JMP(addr) and RELO_END macros (DD) idea by (AT)
 added: SKIP_BYTE, SKIP_WORD macros (replaces .byte $24, .byte $2c) (DD/AT)
