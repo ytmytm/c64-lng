@@ -6,3 +6,10 @@ To compile some applications by hand do...
 
  export LUPO_INCLUDEPATH=../kernel
  luna -R -o lsmod lsmod.s
+
+If you plan to write your own application(s), you might want 
+to use "sceleton.s" as a template to start from. 
+
+Starting with LNG version 0.17 there are also some library functions that
+might help you to finish your application - in that case take a look
+at "amalloc.s" on how to write applications that use library functions.

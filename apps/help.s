@@ -15,6 +15,7 @@
 		.byte >(end_of_code-start_of_code+255)
 		.byte >start_of_code
 
+;;; supported HTML tags
 #define TAG_TITLE  1
 #define TAG_IMG    2
 #define TAG_HR     3

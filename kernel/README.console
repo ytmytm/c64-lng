@@ -22,5 +22,14 @@ Compile option MULTIPLE_CONSOLES:
   virtual consoles left, else it returns an error (too many files)
 
 Compile option VDC_CONSOLE:
-  instead of "c64/console.s" and "c64/console_init.s" the files
-  "c64/vdc_console.s" and "c64/vdc_console_init.s" are choosen.
+  instead of "opt/vic_console.s" and "opt/vic_console_init.s" the files
+  "opt/vdc_console.s" and "opt/vdc_console_init.s" are choosen.
+
+Screen size:
+  The screen size of the console is defined in console.h (size_x, size_y)
+  and used to initialize the environment variables tsp_termx and tsp_termy
+  (in init.s).
+  An application should read the environment variables to obtain information
+  on the screen size. (the size might differ - it is 24x80 for incoming
+  telnet or RS232-terminals)
+

@@ -544,10 +544,11 @@ Where to get it
 
    http://www.heilbronn.netsurf.de/~dallmann/lunix/lng.html
 
-  You might also have success by trying some common ftp-server like:
-  
-   ftp://funet.fi/pub/cbm
+  Starting with version 0.17 LUnix is hosted on sourceforge
+  (www.sourceforge.net). You can download daily snapshots or
+  directly access the source tree through CVS.
    
+
 Conclusion
 ----------
  
