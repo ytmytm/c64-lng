@@ -46,3 +46,8 @@ uptime
 uudecode
 uuencode
 wc
+true
+echo
+false
+touch
+ide64rtc
