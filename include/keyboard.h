@@ -9,8 +9,6 @@
 #define keyb_ex1    %00100000	; eXtended key #1 - C128 help
 #define keyb_ex2    %01000000	; eXtended key #2 - C128 noscroll
 #define keyb_ex3    %10000000	; eXtended key #3 - ?
-#define keyb_keys   %10000000
-;^^ what's that?
 
 #define joy_up      %00000001
 #define joy_down    %00000010
