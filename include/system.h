@@ -81,7 +81,9 @@
 #define tsp_pdminor $2a       ;// current device (minor)
 #define tsp_termwx  $2b       ;// width of attached terminal (X)
 #define tsp_termwy  $2c       ;// width of attached terminal (Y)
+#define tsp_envpage $2d	      ;// hibyte of environment page
 ;// end of inherited items! (see "addtask.s")
+
 #define tsp_syszp   $78       ;// room for 8 syszp zeropage registers
 #define tsp_swap    $80       ;// room for up to 128 bytes stack
 ;// ---------------------------------------------------------------------------
