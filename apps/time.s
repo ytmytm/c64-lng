@@ -1,8 +1,7 @@
 	;; for emacs: -*- MODE: asm; tab-width: 4; -*-
-	
-	;; date - print current time (and date?) by reading
-	;; the real time clock of CIA1
-	
+
+	;; time - print current time by reading the real time clock of CIA1
+
 #include <system.h>
 #include <stdio.h>
 #include <config.h>
@@ -11,7 +10,7 @@
 		start_of_code equ $1000
 
 		.org start_of_code
-		
+
 		.byte >LNG_MAGIC,   <LNG_MAGIC
 		.byte >LNG_VERSION,	<LNG_VERSION
 		.byte >(end_of_code-start_of_code+255)
@@ -21,7 +20,7 @@
 
 		lda  #3
 		jsr  lkf_set_zpsize
-		
+
 		lda  userzp
 		cmp  #1
 		beq  get_time
@@ -29,7 +28,7 @@
 		cmp  #3
 		beq  set_time
 
-HowTo:	ldx  #stdout
+HowTo:		ldx  #stdout
 		bit  howto_txt
 		jsr  lkf_strout
 		lda  #1
@@ -91,7 +90,7 @@ get_time:
 		jsr  lkf_free
 
 		;; FIXME
-		;; shouldn't this be in the kernel ?? (direct access to CIA2)
+		;; shouldn't this be in the kernel ?? (direct access to CIA1)
 		sei
 		lda  CIA1_TODHR			; (reading TODHR makes the CIA latch the
 		sta  bufHR				; current time)
@@ -148,7 +147,7 @@ argck:
 	+	jmp  HowTo
 	+	iny
 		rts
-		
+
 read_bcd:
 		lda  (userzp),y
 		cmp  #"0"
@@ -176,14 +175,14 @@ read_bcd:
 		and  #$0f
 		ora  userzp+2
 		sta  userzp+2
-				
+
 	+	lda  userzp+2
 		clc
 		rts
 
 illchar:
 		jmp  HowTo
-		
+
 print_bcd:
 		pha
 		lsr  a
@@ -207,7 +206,7 @@ begin_txt:
 		.text "time ",0
 
 howto_txt:
-		.text "usage: date [-s hh:mm[:ss](am|pm)]",$0a
+		.text "usage: time [-s hh:mm[:ss](am|pm)]",$0a
 		.text " get/set current time",$0a,0
 
 bufHR:	.buf 1
