@@ -140,14 +140,14 @@ do_taskswitch:
 #		include MACHINE(stackout.s)
 #else
 # ifdef HAVE_REU
-#		include MACHINE(reustackout.s)
+#		include "opt/reu_stackout.s"
 # else
 #		include MACHINE(stackout.s)
 # endif
 #endif
 
 #ifdef HAVE_REU
-#		include MACHINE(reuzpageout.s)
+#		include "opt/reu_zpageout.s"
 #else
 #		include MACHINE(zpageout.s)
 #endif
@@ -176,7 +176,7 @@ _activate_this:
 		;; reload environment of the task (zeropage and stack)
 
 #ifdef HAVE_REU
-#		include MACHINE(reuzpagein.s)
+#		include "opt/reu_zpagein.s"
 #else
 #		include MACHINE(zpagein.s)
 #endif
@@ -185,7 +185,7 @@ _activate_this:
 #		include MACHINE(stackin.s)
 #else
 # ifdef HAVE_REU
-#		include MACHINE(reustackin.s)
+#		include "opt/reu_stackin.s"
 # else
 #		include MACHINE(stackin.s)
 # endif

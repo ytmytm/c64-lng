@@ -12,7 +12,8 @@
 #include <jumptab.h>
 #include <stdio.h>
 #include <kerrors.h>
-#include <c64.h>
+#include <config.h>
+#include MACHINE_H
 
 #begindef debug_putc(char)
 		lda  #char
