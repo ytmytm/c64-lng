@@ -8,34 +8,32 @@
 		;; Maciej 'YTM/Alliance' Witkowiak
 		;; ytm@friko.onet.pl
 		;; 7,9,10,16,18.12.1999
-		;; 17.1.2000
+		;; 17.1.2000, 23.12.2000
 		;; derived from VIC console code by Daniel Dallmann
 
-		;; uses hardware acceleration ;) whenever possible
+		;; uses hardware acceleration whenever possible
 		;; - scrollup of whole screen costs ~16 rasterlines (2000 bytes)
 		;; - cons_clear is a no-time :)
 
 		;; I don't like lines with ';^' comments...
 
-
-;- console parameters within VDC ram - 48 bytes after screendata (as cons_regbuf is now)
+;+ console parameters within VDC ram - at offset $0800-32 
 ;- test for size of VDC ram -> number of consoles
 ;ram: $0000-$0fff - font, rest in 2k chunks for consoles (30/6 possible w/o attribute map)
 
-;this source always compile to MULTIPLE_CONSOLES!!!
-;(because they are at no cost...)
+;MULTIPLE_CONSOLES are always enabled
 
 #include <console.h>
 
 		;; Note:
 		;;  the variables exported by vdc_console.s
 		;; get a "lkf_" prefix in here !
-		
+
 		;; Note2:
 		;;  variables declared ZEROpage in vdc_console.s
 		;; don't get a prefix and *must* be initialised
 		;; here!
-		
+
 console_init:
 		ldx #0
 	-	lda vdcinitab,x
@@ -59,13 +57,17 @@ console_init:
 		jsr lkf_putvdcreg
 
 				;^ check memory size here
-				
+		lda #MAX_CONSOLES		; set number of consoles
+		sta lk_consmax
+		lda #0				; initialize fs_cons stuff
+		sta usage_map
+		sta usage_count
+
 		jsr vdcinitfont
-			
+
 		lda #>CONSOLE_OFFS			;set first console
 		sta sbase
-
-		ldx  #1
+		lda  #1
 		jsr  lkf_console_toggle
 
 		lda  #$80
@@ -76,20 +78,25 @@ console_init:
 		sta  scrl_y1
 		lda  #24
 		sta  scrl_y2
-		jsr  lkf_cons_home
-		
-		ldx  #8					; clone screen status
-	-	lda  mapl,x
-		sta  lkf_cons_regbuf,x
-		dex
-		bpl  -
-		
-		lda #>(CONSOLE_OFFS+$0800)		;^ what to do?
-		sta lkf_cons_regbuf+1				; (maph!)
 
-		jsr lkf_cons_clear				; clear current screen
-		ldy #>(CONSOLE_OFFS+$0800)		;^ what to do?
-		jsr lkf_cons_clearl				; and the second one
+		lda #0					; clone status to all consoles
+		sta tmpzp
+	-	jsr lkf_cons_clear			; clearing them
+		jsr lkf_cons_home			; to update mapl/maph
+		jsr lkf_cons_savestat
+		lda sbase
+		clc
+		adc #8
+		sta sbase
+		inc tmpzp
+		lda tmpzp
+		cmp #MAX_CONSOLES
+		bne -
+
+		lda #>CONSOLE_OFFS			; back to the first one
+		sta sbase
+		jsr lkf_cons_home
+
 		jsr lkf_cons_showcsr
 
 		;; print startup message
@@ -99,7 +106,7 @@ console_init:
 		jsr  lkf_printk
 		inx
 		bne  -
-		
+
 	+	rts
 
 vdcinitfont:			; load ROM font into VDC ram ($0000)
@@ -124,7 +131,7 @@ vdcinitfont:			; load ROM font into VDC ram ($0000)
 	-	ldx #0
 		lda #VDC_DATA
 		sta VDC_REG
-		
+
 	-
 		lda #MEMCONF_FONT
 		SETMEMCONF
@@ -156,9 +163,6 @@ vdcinitfont:			; load ROM font into VDC ram ($0000)
 		pla
 		SETMEMCONF
 		plp
-		lda  #2
-		sta  lk_consmax			; number of consoles
-		
 		rts
 
 vdcinitab:	
@@ -191,6 +195,6 @@ vdcinitab:
 		.byte 0,0		; 32/33 - source address of block copy
 		.byte $7d,$64	; 34/35 - start/end of display
 		.byte $05		; 36 - # of refresh
-		
+
 start_text:
-	.text "VDC console[s] (v0.1) by YTM/Alc",$0a,0
+		.text "VDC console[s] (v0.2) by YTM/Elysium",$0a,0

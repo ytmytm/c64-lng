@@ -3,7 +3,7 @@
 #include <console.h>
 
 	-	jmp  lkf_panic
-		
+
 		;; initialise console driver
 		;; (and set lk_consmax value)
 
@@ -37,12 +37,16 @@ console_init:
 		sty  tmpzp+4
 		jsr  lkf__raw_alloc		; (does unlocktsw)
 
-		lda  #2					; we have 2 consoles
+		lda  #MAX_CONSOLES			; we have 2 consoles
 #else
 		lda  #1					; we have just 1 console		
 #endif
 		sta  lk_consmax
-				
+
+		lda #0				; initialize fs_cons stuff
+		sta usage_map
+		sta usage_count
+
 		;; initialize VIC
 		lda  CIA2_PRA
 		ora  #3
@@ -53,6 +57,8 @@ console_init:
 		sta  VIC_YSCL			
 		lda  #$08
 		sta  VIC_XSCL
+		lda  #0
+		sta  VIC_CLOCK
 
 #ifdef MULTIPLE_CONSOLES
 		lda  #>screenA_base
@@ -96,7 +102,7 @@ console_init:
 		sta  maph
 		sta  lkf_cons_regbuf+1				; (maph!)
 		jsr  lkf_cons_clear		; clear second console
-		
+
 		lda  #>screenA_base
 		sta  sbase
 		sta  maph
@@ -111,7 +117,7 @@ console_init:
 		jsr  lkf_printk
 		inx
 		bne  -
-		
+
 	+	rts
 
 start_text:

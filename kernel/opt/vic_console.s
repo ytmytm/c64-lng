@@ -18,6 +18,7 @@
 console_toggle:
 #ifdef MULTIPLE_CONSOLES
 		beq  do_toggle
+		bmi  do_toggle
 
 		cmp  #1
 		beq  do_cons1

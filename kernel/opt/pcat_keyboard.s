@@ -33,14 +33,15 @@
 ; codes $80-$84, $f0-f2 are internally used by console driver
 ; codes $e0-$ef are reserved for use by keyboard driver for altflags
 ;	(although not used here, C64/128 keyboard driver needs them)
+; code  $df is a partner of $f0 - prev/next console
 
-#define dunno $7f
-#define f1_c            $f1	;  internal code! -> switch to console 1
-#define f2_c            dunno
-#define f3_c            $f2	;  internal code! -> switch to console 2 (..7)
-#define f4_c            dunno
-#define f5_c            dunno
-#define f6_c            dunno
+#define dunno		$7f
+#define f1_c		$f1	;  internal code! -> switch to console 1
+#define f2_c            $f2	;  internal code! -> switch to console 2 (..7)
+#define f3_c            $f3
+#define f4_c            $f4
+#define f5_c            $f5
+#define f6_c            $f6
 #define f7_c            dunno
 #define f8_c            dunno
 #define f9_c		dunno
@@ -71,8 +72,8 @@
 #define delete_c	8
 #define end_c		$03	; CTRL+c, well, end - this way or another
 #define insert_c	dunno
-#define pageup_c	$f0	; internal code! -> toggle consoles
-#define pagedown_c	$f0	; internal code! -> toggle consoles
+#define pageup_c	$f0	; internal code! -> next console
+#define pagedown_c	$df	; internal code! -> previous console
 
 #define stab_c		tab_c	; something opposite to tab...
 #define sspc_c          $20     ; shift + space = space
@@ -268,6 +269,8 @@ _addkey:
 		bcc  +
 		cmp  #$f0
 		bcs  to_toggle_console
+		cmp  #$df
+		beq  ++
 		cmp  #$85				; $81/$82/$83/$84 - csr codes
 		bcs  +
 		;; generate 3byte escape sequence
@@ -280,15 +283,17 @@ _addkey:
 		eor  #$c0			; $8x becomes $4x
 	+ 	jmp  console_passkey		; pass ascii code to console driver
 
+	+	lda  #$88
+		bne  +
 to_toggle_console:
 		and  #$07
-		jmp  console_toggle		; call function of console driver
+	+	jmp  console_toggle		; call function of console driver
 						; (console_toggle is defined is console.s)
 
 		;; PC AT compatible keyboard scanner begins here
 		;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-		;; use this when keyboard have to send something now
+		;; use this when keyboard has to send something now
 keyb_atgetbyte:
 	-	jsr keyb_atscanner
 		beq -

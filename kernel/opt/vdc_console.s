@@ -7,21 +7,19 @@
 		;; Maciej 'YTM/Alliance' Witkowiak
 		;; ytm@friko.onet.pl
 		;; 7,9,10,15,20.12.1999
-		;; 7.1.2000, 14.5.2000
+		;; 7.1.2000, 14.5.2000, 23.12.2000
 		;; derived from VIC console code by Daniel Dallmann
 
-		;; uses hardware acceleration ;) whenever possible
+		;; uses hardware acceleration whenever possible
 		;; - scrollup of whole screen costs ~16 rasterlines (2000 bytes)
 		;; - cons_clear is a no-time :)
-
-		;; I don't like lines with ';^' comments...
 
 ; comparison to VIC console (c64/console.s):
 ; D - completely different
 ; B - a bit different
 ; S - same
 
-; console_toggle etc.		B (direct handling)
+; console_toggle etc.		D (many consoles)
 ; console_init	cons_clear	D/B
 ; cons_home			S
 ; cons_setpos			B (y_pos_table_xx)
@@ -31,13 +29,11 @@
 ; cons_a2p			S
 ; cons_out			B (direct output, also in _del and esc_com3)
 
-;These will be done when kernel will support >2 consoles
-;- console parameters within VDC ram - 48 bytes after screendata (as cons_regbuf is now)
-;- test for size of VDC ram -> number of consoles
+;- console parameters are within VDC ram - at SCREEN_BASE+$0800-32 offset
+;- test for size of VDC ram -> number of consoles, with 6 of them we are safe
 ;ram: $0000-$0fff - font, rest in 2k chunks for consoles (30/6 possible w/o attribute map)
 
-;this source always compile to MULTIPLE_CONSOLES!!!
-;(because they are at no cost...)
+;MULTIPLE_CONSOLES always works here
 
 #include <console.h>
 
@@ -45,51 +41,49 @@
 	;; by the initialisation code
 	;; vdc_console_init.s
 
-	.global cons_regbuf
 	.global cons_home
 	.global cons_clear
-	.global cons_clearl
 	.global vdcmodefill
 	.global vdcsetdataddy
 	.global putvdcreg
 	.global bputvdcreg
 	.global cons_showcsr
+	.global cons_savestat
 
 	;; switch to next virtual console
+	;; A: $00 - next console, $01-$7f - set number, >$80 - previous console
+
 console_toggle:
+		beq  do_next
+		bmi  do_prev
+		bpl  do_set
 
-		beq  do_toggle
+do_next:	lda cons_visible
+		clc
+		adc #1
+		cmp #MAX_CONSOLES
+		bcs ++
+		bne +
 
-		cmp  #1
-		beq  do_cons1
-		cmp  #2
-		beq  do_cons2
+do_prev:	lda cons_visible
+do_set:		sec
+		sbc #1
+		bmi ++
+	+	sta cons_visible
 
-do_cons1:
-		ldy #>CONSOLE_OFFS
-		lda #0				; default is console 1 (at $1000)
-		sta cons_visible
+		asl a				; *$0800
+		asl a
+		asl a
+		clc
+		adc #>CONSOLE_OFFS
+		tay
+		lda #0
 		jmp vdcsetscraddy
-
-do_cons2:
-		lda #1
-		sta cons_visible
-		ldy #>(CONSOLE_OFFS+$0800)	;^ what to do?
-		lda #0				; console 2 (at $1800)
-		jmp vdcsetscraddy
-
-do_toggle:
-		lda cons_visible
-		eor #1
-		sta cons_visible
-		ldx #VDC_DSPHI
-		jsr getvdcreg
-		eor #8				;^ what to do?
-		jmp putvdcreg
+	+	rts
 
 cons_clear:
 		ldy sbase
-cons_clearl:	lda #0				; clear region with MSB=.Y
+		lda #0
 		jsr vdcsetdataddy
 		lda #32				; space
 		jsr bputvdcreg
@@ -290,56 +284,71 @@ _no_of_specials equ *-special_mapping
 special_code:
 		.byte   0,115,107,127,113,109, 27, 29, 92, 30, 93,100, 94, 28
 
+		;; save console status (9 bytes after mapl), basing on sbase
+cons_savestat:	jsr vdc_setregbufaddr
+		ldy #8
+	-	lda mapl,y
+		jsr bputvdcreg
+		dey
+		bpl -
+		rts
+
+		;; load console status (9 bytes after mapl), basing on sbase
+cons_loadstat:	jsr vdc_setregbufaddr
+		ldy #8
+	-	jsr bgetvdcreg
+		sta mapl,y
+		dey
+		bpl -
+		rts
+
 cons1out:
 		ldx  #0
 
 		;; print char to console, X=number of console
 cons_out:
-		cpx  #2
+		cpx  #MAX_CONSOLES
 		bcs  -				; (silently ignore character, when X>1)
 		jsr  locktsw			; (this code isn't reentrant!!)
 		sta  cchar
 
-		cpx  cons_visible
-		beq  ++
+		cpx  cons_visible		; is it currently visible console?
+		beq  +
 
-		cpx  #0				; mark (79,0) on currently viewed console
-		bne  +
-		jsr vdcmark2			; it's the second one
+		txa
+		pha
+		jsr vdc_setmarkaddr		; no - mark (79,0) here
 		jsr bgetvdcreg
 		eor #$80
 		pha
-		jsr vdcmark2
+		jsr vdc_setmarkaddr
 		pla
 		jsr bputvdcreg
-		jmp  ++
-		
-	+	jsr vdcmark1			; or the first one
-		jsr bgetvdcreg
-		eor #$80
-		pha
-		jsr vdcmark1
 		pla
-		jsr bputvdcreg
+		tax
 
 	+	cpx  current_output		; do we have variables now?
 		beq  +
 
+		txa
+		pha
+		;; save current screen variables
+		jsr cons_savestat
+
+
+		pla
+		sta current_output
+		asl a				; *$0800
+		asl a
+		asl a
+		clc
+		adc #>CONSOLE_OFFS
+		sta sbase
+
 		;; load variables of alternate screen
-		stx  current_output
-		lda  sbase
-		eor  #8				;^ what to do?
-		sta  sbase
-		ldx  #8
-	-	ldy  mapl,x
-		lda  cons_regbuf,x
-		sta  mapl,x
-		tya
-		sta  cons_regbuf,x
-		dex
-		bpl  -
-	+
-		ldx  esc_flag
+		jsr cons_loadstat
+
+	+	ldx  esc_flag
 		bne  jdo_escapes
 
 		;; print normal character
@@ -657,13 +666,23 @@ esc_com10:
 ; Direct I/O
 ;-----------------------------------------------------------------------
 
-vdcmark1:	lda #0				;^ 1st console (79,0)
-		.byte $2c
-vdcmark2:	lda #8				;^ 2nd console (79,0)
+vdc_setmarkaddr:
+		lda cons_visible
+		asl a
+		asl a
+		asl a
 		clc
 		adc #>(CONSOLE_OFFS+size_x-1)
 		tay
 		lda #<(CONSOLE_OFFS+size_x-1)
+		jmp vdcsetdataddy
+
+vdc_setregbufaddr:
+		lda sbase
+		clc
+		adc #>(CONSOLE_OFFS+$0800-32)
+		tay
+		lda #<(CONSOLE_OFFS+$0800-32)
 		jmp vdcsetdataddy
 
 vdcmodecopy:	lda #$80			; set block mode to copy
@@ -761,9 +780,6 @@ ypos_table_hi:
 ;rvs_flag:		.byte 0	; bit 7 - RVS ON
 ;scrl_y1:		.byte 0	; scroll region first line
 ;scrl_y2:		.byte 0	; scroll region last line
-
-		;; room for storing screen-variables
-cons_regbuf:		.buf 9
 
 ;;; ZEROpage: esc_flag 1
 ;;; ZEROpage: esc_parcnt 1
