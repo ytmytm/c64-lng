@@ -17,6 +17,7 @@
 # define cursor  100
 # define size_x  40
 # define size_y  25
+# define MAX_CONSOLES		2
 #else
 ;// defines for VDC console
 # include <vdc.h>
@@ -24,6 +25,7 @@
 # define CONSOLE_OFFS $1000 ; offset for first console - equal to font(s) size(s)
 # define size_x  80
 # define size_y  25
+# define MAX_CONSOLES		6
 #endif
 
 #endif
