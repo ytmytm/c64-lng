@@ -8,6 +8,8 @@
    If you've noticed a bug or created an additional feature, let me know.
    My (internet) email-address is dallmann@heilbronn.netsurf.de
 
+ Apr 11 2001 *poldi* DEFINES_MAX now 1000 (was 500)
+
  Sep 7 2000  *poldi* INCLUDE_DEPTH_MAX now 8 (was 5) + fixed segfault on hitting limit
 
  Dec 23 1999 *poldi* fixed bug in processing of special functions
@@ -127,7 +129,7 @@ void macroout(char *);
 #define INCLUDE_DEPTH_MAX 8
 #define IF_DEPTH_MAX 10
 #define LINE_LENGTH_MAX 500
-#define DEFINES_MAX 500
+#define DEFINES_MAX 1000
 #define MACRO_LENGTH_MAX 1000
 #define PARAMETERS_MAX 10          /* not over 30 ! */
 #define SPEC_LAB_STACK_SIZE 20     /* max depth of stack */
