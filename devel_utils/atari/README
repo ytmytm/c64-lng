@@ -6,6 +6,10 @@ copy there also makeimage (built from makeimage.c :) and run it there. You will
 have atari.bin which is file ready to be loaded by Atari DOS. Unfortunately I
 don't know how to move it to a bootable disk, so you must load it from DOS.
 
+Use make.sh script to build lngboot.atr disk image for use under emulator.
+It should work pretty smart. Or you can use DOS and copy atari.bin to disk
+image chaos.atr. It should allow for easy loading upon boot.
+
 Some tools from Internet that I have gathered here:
 
 femul-1.4.c	- every Atari poweruser knows what's that for :) (find in source
@@ -17,7 +21,15 @@ unix2atr-0.9.c	- I use it to move atari.bin to a disk image so I can load it
 
 binload		- Atari binary format analyzer
 
+atr2unix-1.2.c	- for getting files out of .atr
+
+chaos.atr	- Chaos boot loader, copy file there and should be able to
+		  load it on boot
+
+dos25/		- DOS.SYS, DUP.SYS
+mydos/		- DOS.SYS, DUP.SYS (actually, working)
 
 Maciej Witkowiak
 <ytm@elysium.pl>
 27.12.2000
+17.09.2001
