@@ -37,10 +37,15 @@ IAPPS=connd ftp tcpipstat tcpip ppp loop slip httpd telnet popclient
 
 .PHONY : all apps kernel libstd help package clean distclean devel
 
-export PATH+=:$(PWD)/devel_utils/:.
+export PATH+=:$(PWD)/devel_utils/:$(PWD)/devel_utils/atari:.
 export LUPO_INCLUDEPATH=../kernel
 export COMPFLAGS
 export MACHINE
+
+BINDIR=$(patsubst c%,bin%,$(MACHINE))
+  ifeq "$(MACHINE)" "atari"
+    BINDIR="binatari"
+  endif
 
 all : kernel libstd apps help
 
@@ -58,16 +63,20 @@ help :
 
 devel :
 	$(MAKE) -C devel_utils
-
-BINDIR=$(patsubst c%,bin%,$(MACHINE))
+	$(MAKE) -C devel_utils/atari
 
 package : 
 	-mkdir $(BINDIR) pkg
-	cp kernel/boot.$(MACHINE) kernel/lunix.$(MACHINE) $(MODULES:%=kernel/modules/%) $(BINDIR)
-	cd $(BINDIR) ; mksfxpkg $(MACHINE) ../pkg/core.$(MACHINE) \
-         "*loader" boot.$(MACHINE) lunix.$(MACHINE) $(MODULES)
-	cd apps ; mksfxpkg $(MACHINE) ../pkg/apps.$(MACHINE) $(APPS) $(IAPPS)
-	cd help ; mksfxpkg $(MACHINE) ../pkg/help.$(MACHINE) *.html
+	-cp kernel/boot.$(MACHINE) kernel/lunix.$(MACHINE) $(MODULES:%=kernel/modules/%) $(BINDIR)
+ifeq "$(MACHINE)" "atari"
+	  makeimage $(BINDIR)/boot.$(MACHINE) $(BINDIR)/lunix.$(MACHINE) $(BINDIR)/atari.bin
+	  makeatr pkg/lng$(MACHINE).atr $(BINDIR)/atari.bin
+else
+	  cd $(BINDIR) ; mksfxpkg $(MACHINE) ../pkg/core.$(MACHINE) \
+           "*loader" boot.$(MACHINE) lunix.$(MACHINE) $(MODULES)
+	  cd apps ; mksfxpkg $(MACHINE) ../pkg/apps.$(MACHINE) $(APPS) $(IAPPS)
+	  cd help ; mksfxpkg $(MACHINE) ../pkg/help.$(MACHINE) *.html
+endif
 
 clean :
 	$(MAKE) -C kernel clean
@@ -76,11 +85,13 @@ clean :
 	$(MAKE) -C help clean
 
 distclean : clean
+	$(MAKE) -C kernel distclean
 	$(MAKE) -C devel_utils clean
+	$(MAKE) -C devel_utils/atari clean
 	-cd kernel ; rm boot.c* lunix.c* globals.txt
 	-cd bin64 ; rm $(MODULES) boot.* lunix.* lng.c64
 	-cd bin128 ;  rm $(MODULES) boot.* lunix.* lng.c128
 	-cd include ; rm jumptab.h jumptab.ca65.h ksym.h zp.h
-	-rm -rf pkg
+	-rm -rf pkg binatari
 	find . -name "*~" -exec rm -v \{\} \;
 	find . -name "#*" -exec rm -v \{\} \;

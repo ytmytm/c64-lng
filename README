@@ -126,6 +126,34 @@ compiling lunix
      the Commodore64 running Novaterm9.5)
 
 
+   o Make an Atari bootable disk
+
+     Edit the toplevel makefile and change the line
+     
+     MACHINE=c64
+     
+     to
+     
+     MACHINE=atari
+
+     and remove everything from MODULES= line
+
+     Configure the kernel to your needs by editing kernel/atari/config.h.
+
+     Then do:
+
+     make distclean
+     make devel
+     make
+     make package
+
+     which will result in bootable floppy image: pkg/lngboot.atr
+     Don't worry with errors after 'make' step because currently applications
+     for Atari cannot be built now. However they are binary compatible across
+     all supported architectures so you might build system for C64/128 and
+     copy applications from there.
+
+
    o Notes to the Commodore 128 version
 
      Edit the toplevel makefile and change the line
@@ -146,6 +174,7 @@ compiling lunix
    Note2: The applications in the apps subdirectory are architecture 
           independent and run on the C64 and C128 version of LNG
           without recompilation.
+
 
   Case B)
 
@@ -588,6 +617,9 @@ apps/README   - more information about writing and compiling apps - for luna
 
 kernel/README - detailed description of system variables and some other
                 more general things
+
+kernel/atari/README      - Status of the Atari port
+devel_utils/atari/README - Atari tools readme file
 
 There are several other READMEs in the kernel directory.
 

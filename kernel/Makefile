@@ -84,7 +84,7 @@ modules : $(patsubst %,modules/%,$(MODULES))
 clean   : 
 	-rm *.o $(patsubst %,modules/%,$(MODULES)) ../include/config.h
 
-maintainer-clean : clean
-	-rm ../include/zp.h ../include/jumptab.h lunix.c* boot.c* \
+distclean : clean
+	-rm ../include/zp.h ../include/jumptab.h lunix.c* boot.c* lunix.atari boot.atari \
             globals.txt ../include/ksym.h
 

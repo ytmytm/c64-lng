@@ -138,6 +138,9 @@ void getcmd(unsigned char *buf);
 static void loaddisk(char *path,int disk);
 static void decode(unsigned char *buf);
 int iscmd(void);
+void getcmd1(unsigned char *buf);
+void myusleep(int us);
+void mysleepinit(void);
 
 /*
  * Macros
@@ -278,6 +281,7 @@ int main(int argc,char *argv[])
 		getcmd(buf);
 		decode(buf);
 	}
+	return 0;
 }
 
 static void err(const char *s)
@@ -400,8 +404,8 @@ static int get_atari(void)
 {
 	int fd;
 	char portname[64]="/dev/ttyS2";
-	struct stat stat_mouse,stat_tty;
-
+/*
+//	struct stat stat_mouse,stat_tty;
 //	if (stat("/dev/mouse",&stat_mouse)==0) {
 //		stat(portname,&stat_tty);
 //		if (stat_mouse.st_rdev==stat_tty.st_rdev) {
@@ -412,7 +416,7 @@ static int get_atari(void)
 //			*c='1';
 //		}
 //	}
-
+*/
 	fd = open(portname,O_RDWR);
 	if (fd<0) {
 		fprintf(stderr,"Can't open %s\n",portname);
@@ -585,13 +589,13 @@ static void loaddisk(char *path,int disk)
 	 * Read disk geometry
 	 */
 	if (seekcode[disk]!=xfd) {
-		struct atr_head atr;
+		struct atr_head myatr;
 		long paragraphs;
 
-		read(diskfd[disk],&atr,sizeof(atr));
-		secsize[disk]=atr.secsizelo+256*atr.secsizehi;
-		paragraphs=atr.seccountlo+atr.seccounthi*256+
-			atr.hiseccountlo*256*256+atr.hiseccounthi*256*256*256;
+		read(diskfd[disk],&myatr,sizeof(myatr));
+		secsize[disk]=myatr.secsizelo+256*myatr.secsizehi;
+		paragraphs=myatr.seccountlo+myatr.seccounthi*256+
+			myatr.hiseccountlo*256*256+myatr.hiseccounthi*256*256*256;
 		if (secsize[disk]==128) {
 			seccount[disk]=paragraphs/8;
 		}

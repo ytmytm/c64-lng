@@ -1,5 +1,7 @@
 from 0.20 to 0.21
 -----------------
+added: atari makeatr program that prepares bootable floppies (JJ)
+fixed: atari makeimage reports errors and accepts full paths as input (MW)
 fixed: o65.s uses system semaphores now (MW)
 fixed: renumbered major device numbers (MW)
 added: expand command (DD)

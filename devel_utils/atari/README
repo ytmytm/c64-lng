@@ -1,14 +1,13 @@
 
-These are utilities useful for building LUnix kernel and transferring it to
-Atari.
-After you have boot.atari and kernel.atari copy them to a temporary subdirectory,
-copy there also makeimage (built from makeimage.c :) and run it there. You will
-have atari.bin which is file ready to be loaded by Atari DOS. Unfortunately I
-don't know how to move it to a bootable disk, so you must load it from DOS.
-
-Use make.sh script to build lngboot.atr disk image for use under emulator.
-It should work pretty smart. Or you can use DOS and copy atari.bin to disk
-image chaos.atr. It should allow for easy loading upon boot.
+The proper way to build Atari bootdisk you should go back to top level directory
+and do:
+  make devel
+  make
+  make package
+Then you will have binatari/ directory with 'atari.bin' file that can be loaded
+and executed from Atari DOS and pkg/ directory with a bootable Atari disk image.
+As an alternative you can use make.sh script from this directory to build a disk
+image with MyDOS.
 
 Some tools from Internet that I have gathered here:
 
@@ -19,12 +18,11 @@ femul-1.4.c	- every Atari poweruser knows what's that for :) (find in source
 unix2atr-0.9.c	- I use it to move atari.bin to a disk image so I can load it
 		  on Real Machine (tm) from DOS
 
-binload		- Atari binary format analyzer
+binload-2.5.c	- Atari binary format analyzer
 
 atr2unix-1.2.c	- for getting files out of .atr
 
-chaos.atr	- Chaos boot loader, copy file there and should be able to
-		  load it on boot
+makeimage.c	- to make atari.bin file out of boot.atari and lunix.atari
 
 dos25/		- DOS.SYS, DUP.SYS
 mydos/		- DOS.SYS, DUP.SYS (actually, working)
@@ -33,3 +31,4 @@ Maciej Witkowiak
 <ytm@elysium.pl>
 27.12.2000
 17.09.2001
+23.11.2002

@@ -13,8 +13,7 @@ mkdir atarifiles
 cp mydos/* atarifiles/
 cp ../../kernel/boot.atari .
 cp ../../kernel/lunix.atari .
-./makeimage
-mv atari.bin atarifiles/LUNIX.BIN
+./makeimage boot.atari lunix.atari atarifiles/LUNIX.BIN
 ./unix2atr -um 720 lngboot.atr atarifiles
 rm boot.atari lunix.atari atarifiles/*
 rmdir atarifiles
