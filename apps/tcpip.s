@@ -123,6 +123,7 @@ module_struct:
 ipv4_lock:
 		clc
 		rts						; alway succeed
+
 ipv4_unlock:
 		;; <== should do something in here!
 		clc
@@ -2625,10 +2626,10 @@ tout_check:
 		ldx  userzp+2
 	+	jmp  $ffff
 
-; check socket and do JOBs if neccessary
-;  < X=socket
+		;; check socket and do JOBs if neccessary
+		;; <  userzp+2 = socket
 
-sockserv: ;   userzp+2=socket
+sockserv:
 		ldx  userzp+2
 		lda  sockstat,x
 		and  #$0f
@@ -2947,6 +2948,24 @@ icmp_modul:
 
 	+	jmp  icmp_typeunknown
 
+		
+		;;  UDP protocol modul (for now it just discards all packets)
+		
+udp_modul:
+		sei
+		ldx  udplst         ; remove top element from icmp-list
+		bmi  -
+		stx  userzp+3
+		lda  buf_l2nx,x
+		sta  udplst
+		bpl  +
+		sta  udplst+1
+	+	cli
+		
+		db("discarding UDP")
+		ldx  userzp+3
+		jmp  killbuffer
+		
 ;------------------------------------------------------------------------
 ; USER CALLs
 ;------------------------------------------------------------------------
@@ -3462,8 +3481,30 @@ enter_main_loop:
 
 main_loop:
 		cli
-		jsr  pack_poll
 		jsr  tout_check
+
+		jsr  pack_poll
+		
+	-	sei
+		lda  iplst
+		and  tcplst
+		and  icmplst
+		and  udplst
+		cli
+		bmi  --
+
+#ifdef debug
+		inc  53280
+#endif
+
+		;; another core loop
+		;;  (process incoming packets as fast as possible)
+
+	-	jsr  ip_modul
+		jsr  tcp_modul
+		jsr  udp_modul
+		jsr  icmp_modul
+		
 		lda  #SOCKNUM-1
 		sta  userzp+2
 
@@ -3475,23 +3516,18 @@ main_loop:
 	+	dec  userzp+2
 		bpl  -
 
+		jsr  pack_poll
+
+		sei
 		lda  iplst
 		and  tcplst
 		and  icmplst
-		;and  udplst
-		bmi  --
+		and  udplst
+		cli
+		bpl  --
 
-#ifdef debug
-		inc  53280
-#endif
-		jsr  ip_modul
-		jsr  icmp_modul
-		jsr  tcp_modul
-		;jsr  udp_modul
 		jmp  main_loop
-
-		rts
-
+		
 ;; 
 ;; _prockilled:
 ;; 		;; this is called eyervtime a process is going to be killed
