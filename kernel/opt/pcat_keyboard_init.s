@@ -50,5 +50,5 @@ keyboard_init:
 	+	rts
 
 _startmsg:
-		.text "PC/AT Keyboard module version 0.1"
+		.text "PC/AT Keyboard module version 0.2"
 		.byte $0a,$00
