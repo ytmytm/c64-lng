@@ -85,8 +85,6 @@ irq_handler_2:
 		lda  #MEMCONF_SYS		; change value for IRQ/NMI memory conf.
 		SETMEMCONF				; -> C64-KERNAL-ROM + I/O
 		cld						; (might need arithmetic)
-		lda  lk_ipid
-		bmi  _idle				; skip next, if we're idle
 
 		;; system dependend taskswitching core
 		;;  includes:	 _checktimer

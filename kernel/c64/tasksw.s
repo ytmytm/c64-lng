@@ -1,8 +1,11 @@
 		;; For emacs: -*- MODE: asm; tab-width: 4; -*-
-		
+
 		;; add CPU time spent to task's time
 		;;  5 bytes -> overflow after 12 days, 22 hours, 4 minutes, ...
-		
+
+		lda  lk_ipid
+		bmi  _idle				; skip next, if we're idle
+
 		lda  #0
 		sta  CIA1_CRB           ; stop timer2 of CIA1
 		ldy  #tsp_time
@@ -43,12 +46,12 @@ _checktimer:
 		inc  lk_sleepcnt+1
 		bne  _irq_jobptr		; (not jet)
 		jsr  _wakeup			; Yes!
-		
+
 _irq_jobptr:
 		bit  $ffff				; placeholder for up to 3 IRQ routines
 		bit  $ffff				; all called once every 1/64 second
 		bit  $ffff
-		
+
 	- +	lda  #$11
 		sta  CIA1_CRB			; restart timer2 of CIA1
 		pla
@@ -65,3 +68,5 @@ _irq_alertptr:
 		lda  #4
 		sta  CIA1_ICR			; disable TOD interrupt
 		jmp  -
+
+;_idle is here
