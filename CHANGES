@@ -1,5 +1,6 @@
 from 0.20 to 0.21
 -----------------
+fixed: renumbered major device numbers (MW)
 added: expand command (DD)
 fixed: o65_loader won't relocate zeropage as this is not needed (MW)
 added: skeleton.ca65.s and rules for apps/Makefile to build *.o65 apps, more in README/apps (MW)

@@ -2,11 +2,11 @@
 #define _FS_H
 
 #define MAJOR_PIPE    1
-#define MAJOR_IEC     2
-#define MAJOR_CONSOLE 3
+#define MAJOR_CONSOLE 2
+#define MAJOR_SYS     3
 #define MAJOR_USER    4
-#define MAJOR_IDE64   5
-#define MAJOR_SYS     6
+#define MAJOR_IEC     5
+#define MAJOR_IDE64   6
 
 #define fmode_ro  0
 #define fmode_wo  1
