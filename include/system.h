@@ -4,7 +4,7 @@
 
 ;// LNG-magic and version
 #define LNG_MAGIC   $fffe
-#define LNG_VERSION $0014   ;// in decimal => 0, 20
+#define LNG_VERSION $0015   ;// in decimal => 0, 21
 
 ;// O65 file format version
 #define O65_MAGIC    $0001
