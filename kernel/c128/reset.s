@@ -1,11 +1,19 @@
-		;; switch to LUnix' memory configuration
+		;; setup LUnix' memory configuration
 
-		lda #%00111110			; only RAM+I/O, bank 0
+		lda #%00111110				; only RAM+I/O, bank 0
 		sta MMU_CR
 		sta MMU_IOCR
-		sta MMU_PCRA				; also as preconfig A (kernel default)
-		sta MMU_PCRB				; also as preconfig B (user default)
-		lda #%00000000			; noshare, VIC in bank 0
+		sta MMU_PCRA				; bank0 as preconfig A
+		lda #%01111110
+		sta MMU_PCRB				; bank1 as preconfig B
+#ifdef HAVE_256K
+		lda #%10111110
+		sta MMU_PCRC				; bank2 as preconfig C
+		lda #%11111110
+		sta MMU_PCRD				; bank3 as preconfig D (possible problems)
+#endif
+		;lda #%00001111				; VIC in bank 0, share both 16K (for bootstrap only)
+		lda #%00000000				; VIC in bank 0, noshare
 		sta MMU_RCR
 		ldx #0
 		stx MMU_P0H
@@ -16,7 +24,7 @@
 
 #ifdef VDC_CONSOLE
 		lda  VIC_YSCL			; switch off VIC screen
-		and  #%11101111			; (makes compuer run slightly faster)
+		and  #%11101111			; (makes computer run slightly faster)
 		sta  VIC_YSCL
 #endif
 
