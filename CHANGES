@@ -1,5 +1,6 @@
 from 0.17 to 0.18 (Sep 25 2000)
 -------------------------------
+added: httpd - an experimental webserver (DD)
 added: support of the (german) DCF-77 receiver (Alexander Bluhm)
 added: RTC emulation using CIA1 (Alexander Bluhm)
 added: experimental 6510/8500 detection code (see bootstrap.s)

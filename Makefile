@@ -11,7 +11,7 @@ COMPFLAGS=
 # MACHINE=c64 to create Commodore64 version (binaries in bin64)
 # MACHINE=c128 for Commodore128 version (binaries in bin128)
 
-MACHINE=c128
+MACHINE=c64
 
 # Modules to include in package (created with "make package")
 
@@ -23,7 +23,7 @@ MODULES=sswiftlink sfifo64 rs232std swiftlink
 APPS=getty lsmod microterm ps sh sleep testapp wc cat tee uuencode \
      uudecode 232echo 232term telnet kill rm ls connd ftp buf cp tcpipstat \
      uptime time meminfo strminfo uname more slip tcpip ppp loop beep \
-     help env date ciartc dcf77 
+     help env date ciartc dcf77 httpd
 
 #============== end of configurable section ============================
 
