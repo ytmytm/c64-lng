@@ -1,5 +1,6 @@
 from 0.18 to 0.19 ...
 -------------------------------
+added: <br> tag for help and XHTML to help files (SH)
 added: some helpfiles, fifo64 (untested)
 fixed: misspelling of the word "libraries" mainly in lld.c and luna.c
 changed: system code is ready for dynamic console allocation (MW)
