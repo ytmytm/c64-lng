@@ -1,6 +1,12 @@
 #ifndef _CSTYLE_H
 #define _CSTYLE_H
 
+#ifdef USING_CA65
+#include <cstyle.ca65.h>
+#else
+
+;// macros for luna
+
 ;// macros for if, ifnot, else and endif
 
 #begindef if(cond)
@@ -99,6 +105,8 @@ _ru%%next,push,ptop%%:  ;// repeat
    ldy  *-1 ; #>address
    lda  #<address
 #enddef
+
+#endif
 
 #endif
 

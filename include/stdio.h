@@ -1,7 +1,12 @@
 #ifndef _STDIO_H
 #define _STDIO_H
 
+#ifndef USING_CA65
 #include <jumptab.h>
+#else
+#include <jumptab.ca65.h>
+#endif
+
 #include <fs.h>
 
 #define stdin  0

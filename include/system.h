@@ -153,10 +153,15 @@
 #define SKIP_BYTE      .byte $24           ;// 8bit BIT instruction
 #define SKIP_WORD      .byte $2c           ;// 16bit BIT instruction
 
+#ifndef USING_CA65
 ;// code relocator continues at "adr" (ignores a region full of data)
 #define RELO_JMP(adr)  .byte $0c:.word adr ;// pseudo opcode (16bit argument)
-
 ;// code relocator has nothing more to do
 #define RELO_END       .byte $02           ;// pseudo opcode (no argument)
+#else
+;// empty macros for ca65
+#define RELO_JMP(adr)
+#define RELO_END
+#endif
 
 #endif

@@ -697,6 +697,10 @@ author's problems due to conflict between cc65 and GNU GPL license.
 
 You can learn more about .o65 on Andre Fachat's pages at:
 http://www.6502.org/users/andre/index.html
+For more information about writing .o65 apps for LNG read apps/README and
+example application - apps/skeleton.ca65.s.
+It is very little effort to add a new .o65 source to apps, Makefiles will
+do everything for you.
 
 The current implementation requires that the object file imports LUNIXKERNEL
 label, only in 16-bit relocation mode (like: jmp LUNIXKERNEL+4) with even

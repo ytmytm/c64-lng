@@ -6,8 +6,7 @@
 ; TODO
 ; - change locking into standard semaphores
 ; - some things seem to be calculated twice
-; - decide what to do with system zpage relocation - nmizp as base? (then usable is @$0020)
-; - get address of 'main' (entry point) from exported variables (later or never)
+; - get address of '_main' (entry point) from exported variables (later or never)
 ;   (execute.s will need changes then too)
 
 #include <system.h>
@@ -115,21 +114,10 @@ o65_loader:	;; now, this is UGLY!!! I hope that someone who knows how
 		jmp err_hdr		; not LUnix - illegal code
 
 _cont:
-		;; zero segment check
-		;; in fact zlen should be ignored because
-		;; LNG applications have to register tmpzp locations
-;		lda zlen	
-;;		beq +			;; untrue OR zlen should be set by compiler
-;		cmp #64+8+8+1		; $40*user,8*tmp,8*sys
-;		bcs err_hdr		; too many zeropage locations
-;		lda #<userzp		; first free to use zpage location
-		lda #<nmizp
-		sec
-		sbc zbase
-		sta zerod
-		lda #0
-		sta zerod+1
-	+
+		;; zero segment check - zbase, zlen are ignored, zerod is not set
+		;; system.h header is used to reference zero page locations, so
+		;; no relocation is needed
+
 		stx p1			; save fd
 		;; align header lengths (as in original loader)
 		lda tlen
@@ -427,8 +415,8 @@ o65_reldiff:	; get difference to segment
 		rts
 	+	cmp #SEG_ZERO
 		bne o65_reldiff_err
-		lda zerod
-		ldx zerod+1
+		lda #0			; don't relocate zero page - return $0000 as base
+		tax
 		rts
 o65_reldiff_err:			; unknown segment type
 		rts
@@ -501,10 +489,10 @@ textd:		;.word 0
 zbase:		.word 0			; zbase (once)
 datad:		;.word 0
 zlen:		.word 0			; zlen  (once or never)
-zerod:		;.word 0
+;zerod:		;.word 0
+bssd:		;.word 0
 stack:		.word 0			; stack (never)
 
-bssd:		.word 0
 
 #else
 o65_loader:	rts			; need to put something...

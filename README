@@ -583,6 +583,9 @@ Known Bugs
 Additional documentation
 ------------------------
 
+apps/README   - more information about writing and compiling apps - for luna
+		and ca65 (.o65 file format)
+
 kernel/README - detailed description of system variables and some other
                 more general things
 
