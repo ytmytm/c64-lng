@@ -12,7 +12,7 @@ COMPFLAGS=
 # MACHINE=c128 for Commodore128 version (binaries in bin128)
 # MACHINE=atari for Atari 65XE/800/130 version (no binaries right now)
 
-MACHINE=atari
+MACHINE=c64
 
 # Modules to include in package (created with "make package")
 
@@ -88,25 +88,26 @@ binaries: all
 	-mkdir $(BINDIR)
 	-cp kernel/boot.$(MACHINE) kernel/lunix.$(MACHINE) $(MODULES:%=kernel/modules/%) $(BINDIR)
 
-package : binaries
+cbmpackage : binaries
 	-mkdir pkg
 	cd $(BINDIR) ; mksfxpkg $(MACHINE) ../pkg/core.$(MACHINE) \
            "*loader" boot.$(MACHINE) lunix.$(MACHINE) $(MODULES)
 	cd apps ; mksfxpkg $(MACHINE) ../pkg/apps.$(MACHINE) $(APPS) $(IAPPS)
 	cd help ; mksfxpkg $(MACHINE) ../pkg/help.$(MACHINE) *.html
 	cd scripts ; mksfxpkg $(MACHINE) ../pkg/scripts.$(MACHINE) $(SAPPS)
-# allowed to fail because ca65 may be not present
 	-cd samples ; \
 	 cp --target-directory=. luna/skeleton ca65/skeleton.o65 cc65/hello ; \
 	 mksfxpkg $(MACHINE) ../pkg/samples.$(MACHINE) skeleton skeleton.o65 hello ; \
 	 rm skeleton skeleton.o65 hello
 
-ataridisc: binaries
+ataripackage: binaries
 	makeimage $(BINDIR)/boot.$(MACHINE) $(BINDIR)/lunix.$(MACHINE) $(BINDIR)/atari.bin
+	cp $(BINDIR)/atari.bin pkg
+
+ataridisc: binaries
 	makeatr lng-$(MACHINE).atr $(BINDIR)/atari.bin
 
 cbmdisc: binaries
-
 	echo creating LUnix disc image for $(MACHINE)
 	c1541 -format lunix,00 d64 lunix-$(MACHINE).d64 > /dev/null
 
@@ -138,8 +139,10 @@ cbmdisc: binaries
 
 ifeq "$(MACHINE)" "atari"
 disc:	ataridisc
+package: ataripackage
 else
 disc:	cbmdisc
+package: cbmpackage
 endif
 
 clean :

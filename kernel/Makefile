@@ -1,7 +1,11 @@
 # -*- make -*-
 
 # List of modules
-MODULES=$(addprefix modules/,sswiftlink sfifo64 rs232std swiftlink fifo64)
+ifeq "$(MACHINE)" "atari"
+    MODULES=
+else
+    MODULES=$(addprefix modules/,sswiftlink sfifo64 rs232std swiftlink fifo64)
+endif
 
 #============== end of configurable section ============================
 
