@@ -45,6 +45,8 @@
 #  define iecstatus_timeout       $20
 #define iecsmb_secadr 6
 #define iecsmb_dirstate 7
+//		$80 - opened stream is a directory, stream has been just opened
+//		$c0 - directory header has been skipped
 
 #define usersmb_ufunc 5
 #define fsuser_fgetc  1
