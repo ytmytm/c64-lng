@@ -31,11 +31,6 @@
 
 main:
 
-; Save system stuff and setup the stack
-
-       	tsx
-       	stx    	spsave       	; save system stk ptr
-  
 		; tell the system how many zeropage
 		; bytes we need
 		;set_zeropage_size(14)
@@ -74,12 +69,7 @@ _exit:
 	; Run module destructors
 ;;  	jsr	donelib
 
-; Restore system stuff
-
-	ldx	spsave
-	txs
-
-; Back to LUnix
+; Back to LUnix - suicide
 
 	rts
 
@@ -87,8 +77,6 @@ _exit:
 ; Data
 
 .bss
-spsave:	.res	1
-
 stackspace:
 		.res 1024
 stacktop:
