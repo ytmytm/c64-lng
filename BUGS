@@ -18,3 +18,5 @@
 - Makefile: disc, package is broken for Atari
 
 - hangs on atari 130xe due to PIA init
+
+- lunixrc is only on disk image, not in package release

@@ -110,7 +110,7 @@ cbmdisc: binaries
 
 	cd kernel; for i in \
 		lunixrc \
-		; do c1541 -attach ../lunix64.d64 -write $$i > /dev/null \
+		; do c1541 -attach ../lunix64.d64 -write $$i .$$i > /dev/null \
 		; done
 
 	cd apps; for i in \

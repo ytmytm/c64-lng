@@ -72,7 +72,7 @@ init:						; former called microshell
 		jmp  ploop
 #else
 tryboot:
-		;; try to execute "lunixrc"
+		;; try to execute ".lunixrc"
 		lda  console_fd
 		sta  appstruct2+0		; childs stdin
 		sta  appstruct2+1		; childs stdout
@@ -274,7 +274,7 @@ appstruct:
 		.buf  32
 
 #ifdef HAVE_INITSCRIPT
-;; boot file (lunixrc)
+;; boot file (.lunixrc)
 ;; we shouldnt use a shell _here_,
 ;; but execute shell script via kernel
 appstruct2:
@@ -287,7 +287,7 @@ appstruct2:
    		.byte 0
    		.text "-v"
    		.byte 0
-   		.text "lunixrc"
+   		.text ".lunixrc"
   		.byte 0
 		.buf  32-(3+3+8)
 #endif
