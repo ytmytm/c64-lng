@@ -1,8 +1,11 @@
+; For emacs: -*- MODE: asm; tab-width: 4; -*-
+
 		;; semaphore locking
 
 #include <system.h>
 #include <kerrors.h>
-		
+#include <cia.h>
+			
 .global lock
 .global unlock
 .global bmap
@@ -123,7 +126,9 @@ unlock:	clc
 _sem_cleanup:
 		tya
 		bne  +					; undefined semaphores
-		lda  #$20				; defined semaphores
+		
+		;; defined semaphores
+		lda  #$2c				; (op-code of BIT $xxxx instruction)
 		cpx  #lsem_irq1
 		beq  _irq1off
 		cpx  #lsem_irq2
@@ -141,7 +146,7 @@ _sem_cleanup:
 _alertoff:						; (alert off)
 		sta  _irq_alertptr
 		lda  #4
-		sta  $dc0d
+		sta  CIA1_ICR
 		rts
 
 _irq1off:						; (remove IRQ-job 1)

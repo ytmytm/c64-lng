@@ -65,6 +65,7 @@ search_end:
 		dey
 		lda  tmpzp
 		sta  (tmpzp+2),y
+		clc
 		cli
 		rts						; done
 		

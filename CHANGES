@@ -1,5 +1,8 @@
 from 0.17 to pre-0.18
 ------------------------------
+fixed: IRQ hooking/unlocking, 
+       add_module might return with set carry without error,
+       Some Makefile fixes (Alexander Bluhm)
 added: beep application (trivial) (DD)
 added: sid support and beep ('\007') character support to all consoles (MW)
 changed: c128 keyboard is fully supported (new flags in altflags) (MW)

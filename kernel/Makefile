@@ -3,7 +3,7 @@ MODULES=sswiftlink sfifo64 rs232std swiftlink
 
 #============== end of configurable section ============================
 
-.PHONY : all clean package
+.PHONY : all modules clean maintainer-clean
 
 export LUPO_INCLUDEPATH=../include
 VPATH=../include

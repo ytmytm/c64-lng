@@ -26,7 +26,7 @@ APPS=getty lsmod microterm ps sh sleep testapp wc cat tee uuencode \
 
 #============== end of configurable section ============================
 
-.PHONY : all package clean kernel apps libstd help
+.PHONY : all apps kernel libstd help package clean distclean 
 
 export PATH+=:$(PWD)/devel_utils/:.
 export LUPO_INCLUDEPATH=../kernel
@@ -36,36 +36,36 @@ export MACHINE
 all : kernel libstd apps
 
 apps : libstd
-	make -C apps
+	$(MAKE) -C apps
 
 kernel :
-	make -C kernel
+	$(MAKE) -C kernel
 
 libstd :
-	make -C lib
+	$(MAKE) -C lib
 
 help :
-	make -C help
+	$(MAKE) -C help
 
 BINDIR=$(patsubst c%,bin%,$(MACHINE))
 
 package : 
 	-mkdir $(BINDIR)
-	cp -va kernel/boot.$(MACHINE) kernel/lunix.$(MACHINE) \
+	cp kernel/boot.$(MACHINE) kernel/lunix.$(MACHINE) \
          $(MODULES:%=kernel/modules/%) $(APPS:%=apps/%) $(BINDIR)
 	cd $(BINDIR) ; c64arch lng.$(MACHINE) "*loader" \
          boot.$(MACHINE) lunix.$(MACHINE) $(APPS) $(MODULES)
 
 clean :
-	make -C kernel clean
-	make -C apps clean
-	make -C lib clean
-	make -C help clean
+	$(MAKE) -C kernel clean
+	$(MAKE) -C apps clean
+	$(MAKE) -C lib clean
+	$(MAKE) -C help clean
 
 distclean : clean
 	-cd kernel ; rm boot.c* lunix.c* globals.txt
 	-cd bin64 ; rm $(APPS) $(MODULES) boot.* lunix.* lng.c64
 	-cd bin128 ;  rm $(APPS) $(MODULES) boot.* lunix.* lng.c128
-	-cd include ; rm ksym.h zp.h
+	-cd include ; rm jumptab.h ksym.h zp.h
 	find . -name "*~" -exec rm -v \{\} \;
 	find . -name "#*" -exec rm -v \{\} \;

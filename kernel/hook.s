@@ -1,3 +1,5 @@
+; For emacs: -*- MODE: asm; tab-width: 4; -*-
+
 		;; hook into the system by a IRQ or NMI or alert handler
 
 		;; the system must register in some way, that the task
@@ -45,13 +47,16 @@ hook_irq:
 		beq  _err_hook			; all slots allocated, then return with error
 		ldx  #0
 		lsr  a
-		bcs  +					; X=0, if lsem_irq1 is unused
+		bcc  +					; X=0, if lsem_irq1 is unused
+		
 		inx
 		lsr  a
-		bcs  +					; X=1, if lsem_irq2 is unused
+		bcc  +					; X=1, if lsem_irq2 is unused
+		
 		inx						; X=2, if lsem_irq3 is nuused
-		stx  tmpzp+2
-	+	clc						; perform lock of sem. (non blocking)
+		clc						; perform lock of sem. (non blocking)
+		
+	+	stx  tmpzp+2
 		jsr  lock
 		ldx  tmpzp
 		ldy  tmpzp+1			; (address of handler)

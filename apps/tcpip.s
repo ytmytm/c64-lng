@@ -3307,15 +3307,14 @@ ipv4_accept:
 		
 	+	plp
 		jsr  create_fd
-		bcs  +
+		bcs  +  ; too many files!
 		rts
+
 	+	lda  socktype,x
 		and  #$7f
 		sta  socktype,x
 		jsr  ipv4_close
 		lda  #lerr_toomanyfiles
-		.byte $2c
-	-	lda  #E_NOPERM
 		jmp  lkf_catcherr
 
 
@@ -3377,6 +3376,9 @@ ipv4_tcpinfo:
 		cli
 		rts
 		
+	-	lda  #E_NOPERM
+		jmp  lkf_catcherr
+
 ; sockinfo
 ;  <- X=socket, bit$ pointer to struct (localport,rem.IP,rem.port)
 ;  -> A=sockstat 0..10 (bit7=listen), X/Y=PID
