@@ -14,6 +14,7 @@ my to-do list:
 -- distribute lunix in a >compressed< archive
 
 ytm todo:
+- need to check if atari/pcat keyboard weren't broken during last change
 - rewrite fs stuff to support block I/O (fread and fwrite)
   e.g. for IEC: enter_atomic, load up to 254 bytes and leave_atomic;
   for IDE64: enter ROM compatible mode, load WHOLE block, leave ROM mode

@@ -4,15 +4,13 @@
 ; LUnix - keyscanning
 ;   invented for old and dusty keyboards :-)
 ;
-; has problems with SHIFT on some emulators (don't exactly know why)
-;
 ; this will become a module in a later version
 ; (a module that is inserted at startup) 
 ;********************************************
 
-; C128 extension by Maciej 'YTM/Elysium' Witkowiak <ytm@elysim.pl>
+; C128 extension by Maciej 'YTM/Elysium' Witkowiak <ytm@elysium.pl>
 ; 31.12.1999
-; for now there's no difference between keypad and numkeys although IIRG
+; for now there's no difference between keypad and numkeys although IIRC
 ; there's special keypad mode, so these should probably emit some ESC-sequences
 ; 14.05.2000
 ; added more flags to 'altflags', CAPS is special (checked before table lookup), but
@@ -22,26 +20,16 @@
 ; 23.12.2000
 ; added $df keycode handler for previous console
 ; 04.03.2003
-; removed petscii
-
-#include <config.h>
-#include <system.h>
-#include MACHINE_H
-#include <keyboard.h>
-#include <zp.h>
-
-; .extern hook_irq
-; .extern printk
-; .extern panic
+; moved common stuff to machine-independent code
 
 		;; additional global needed by
 		;; keyboard_init which is run at boottime
 		;; (they will get a "lkf_" prefix there!)
-		
+
 		.global keyb_scan
-		
+
 btab2i:		.byte $fe, $fd, $fb, $f7, $ef, $df, $bf, $7f
-		
+
 #ifdef C128
 btab2i2:
 		.byte $ff, $ff, $ff		;these 3 are common for both tables
@@ -165,21 +153,16 @@ _keytab_shift:
 ;done:			.buf 8			; map of done keys
 ;last:			.buf 8			; map as it was scanned the last time
 #endif
-		
-;;; ZEROpage: altflags 1
+
 ;;; ZEROpage: keycode 1
-		
+;keycode:		.buf 1			; keycode (equal to $cb in C64 ROM)
+
 ljoy0:			.byte $ff		; last state of joy0
 ljoy1:			.byte $ff		; last state of joy1
 
-joy0result:		.byte $ff		; current state of joy0
-joy1result:		.byte $ff		; current state of joy1
-
 flag:			.byte 0			; must be zero at startup
 lst:			.byte $ff		; must be $ff at startup
-          
-;altflags:		.buf 1			; altflags (equal to $28d in C64 ROM)
-;keycode:		.buf 1			; keycode (equal to $cb in C64 ROM)
+
 
 		;; interrupt routine, that scans for keys
 
@@ -198,7 +181,7 @@ lst:			.byte $ff		; must be $ff at startup
 		sta  joy1result
 		stx  ljoy1
 		rts
-          
+
 keyb_scan:
 		ldx  #0
 		lda altflags
@@ -250,8 +233,8 @@ keyb_scan:
 		stx  lst				; remember summary
 		ldx  #0
 		jmp  _keyscan_main
-          
- 
+
+
 	+	bit  flag				; if flag is null, skip
 		bmi  +
 #ifndef C128
@@ -269,7 +252,7 @@ keyb_scan:
 		bpl  -					; clear maps
 
 	+	rts						; return to system
-          
+
 _keyscan_main:
 		lda  btab2i,x			; prepare for scanning one line
 		sta  port_row
@@ -342,7 +325,7 @@ contnxtbit:
 		iny
 		bne  -					; loop should not be left this way
 		;; jsr  panic				; (just for debugging :)
-		
+
 contnxtline:	
 		pla						; line is completed
 		sta  last,x				; remember result of scan
@@ -362,7 +345,7 @@ contnxtline:
 
 		tay
 		jmp  _keyscan_main
-          
+
 	+	lda  #$ff
 		sta  port_row				; reset port_row
 #ifdef C128
@@ -395,74 +378,5 @@ contnxtline:
 		sta  done,x
 
 		; queue key into keybuffer
+		;; machine-dependent code returns with keycode offset in X register
 		ldx  keycode
-		lda  altflags
-		tay
-		and  #keyb_lshift | keyb_rshift
-		bne  +++
-		tya
-		and  #keyb_ctrl
-		bne  +
-		tya
-		and  #keyb_caps
-		bne  ++
-		lda  _keytab_normal,x
-		jmp  _addkey
-
-	+	lda  _keytab_normal,x	; keytab_ctrl ? (not yet)
-		and  #$1f
-		jmp  _addkey
-
-	+	lda  _keytab_normal,x	; CAPS
-		cmp  #$61		; if >='a'
-		bcc  _addkey
-		cmp  #$7b		; and =<'z'+1
-		bcs  _addkey
-		and  #%11011111		; lower->UPPER
-		jmp  _addkey
-
-	+	lda  _keytab_shift,x
-
-		;; adds a keycode to the keyboard buffer
-		;; (has to expand csr-movement to esacape codes)
-
-_addkey:
-		tax
-		and #%11110000
-		cmp #$e0				; keyboard 'lock' keys?
-		bne +					; no - continue
-		txa
-		and #%00001111
-		tay
-		lda altflags
-		eor locktab,y				; update flags information
-		sta altflags
-		rts					; and leave
-	+	txa
-
-		cmp  #$80
-		bcc  +
-		cmp  #$f0
-		bcs  to_toggle_console
-		cmp #$df				; one special key...
-		beq ++
-
-		cmp  #$85				; $81/$82/$83/$84 - csr codes
-		bcs  +
-		;; generate 3byte escape sequence
-		pha
-		lda  #$1b
-		jsr  console_passkey			; (console_passkey is defined in fs_cons.s)
-		lda  #$5b
-		jsr  console_passkey
-		pla
-		eor  #$c0				; $8x becomes $4x
-	+ 	jmp  console_passkey			; pass ascii code to console driver
-
-	+	lda #$88
-		bne +
-to_toggle_console:
-		and  #$07
-	+	jmp  console_toggle			; call function of console driver
-							; (console_toggle is defined is console.s)
-

@@ -5,8 +5,8 @@
 		;; based on code/documents by
 		;; Jim Rosemary, Ilker Ficicilar and Daniel Dallmann
 		;;
-		;; by Maciej 'YTM/Alliance' Witkowiak <ytm@friko.onet.pl>
-		;; 11-13.02.2000, 22.12.2000
+		;; by Maciej 'YTM/Elysium' Witkowiak <ytm@elysium.pl>
+		;; 11-13.02.2000, 22.12.2000, 04.03.2003
 
 ;TODO
 ;- someone should test it on a SCPU, 2MHz clock works better than 1MHz one, but
@@ -17,23 +17,8 @@
 ;- my 2nd PC keyboard has 3 more extended keys: power, sleep, wake (2 new scancodes) for APM
 ;  do something with them? how many of the PC keyboards have such features?
 
-#include <config.h>
-#include <system.h>
-#include MACHINE_H
-#include <keyboard.h>
-#include <zp.h>
-
 #define	EXT_KEY		$e0		; code for extended scancodes
 #define KEY_RELEASED	$f0		; next scancode is for released key
-
-; .extern hook_irq
-; .extern printk
-; .extern panic
-
-; codes $80-$84, $f0-f2 are internally used by console driver
-; codes $e0-$ef are reserved for use by keyboard driver for altflags
-;	(although not used here, C64/128 keyboard driver needs them)
-; code  $df is a partner of $f0 - prev/next console
 
 #define dunno		$7f
 #define f1_c		$f1	;  internal code! -> switch to console 1
@@ -49,16 +34,12 @@
 #define f11_c		dunno
 #define f12_c		dunno
 #define home_c		dunno
-#define arrow_left_c	$1b     ;  arrow_left = escape
-#define arrow_up_c	$5e	;  arrow up = ^
 #define csr_up_c	$81	;  internal codes! -> ESC[A
 #define csr_down_c	$82	;  internal codes! -> ESC[B
 #define csr_left_c	$84	;  internal codes! -> ESC[D
 #define csr_right_c	$83	;  internal codes! -> ESC[C
 #define sdel_c		dunno
 #define shome_c		dunno
-
-;//#define sarrow_up_c     $1c     ; shift + arrow_up = pi
 
 #define tab_c		$09
 #define esc_c		$1b	; esc is truly ESC
@@ -125,7 +106,6 @@ _keytab_shift:
 		.byte "0", ".", "2", "5", "6", "8", esc_c, none_c
 		.byte f11_c, "+", "3", "-", "*", "9", dunno, none_c
 
-
 ; there are only a few extended keys, so they are evaluted by table with scancodes
 
 _extkey_scan:	.byte $4a, $5a, $69, $6b, $6c, $70	; 13 total
@@ -141,6 +121,8 @@ _extkey_tab:	.byte $2f, cr_c, end_c, csr_left_c, home_c, insert_c
 _alts_scancodes:
 		.byte $14, $12, $59, $58	; ctrl, rshift, lshift, caps
 		.byte $11, $7e, $77, $77	; alt, scrolllock, numlock, numlock
+		;; locktab is unused but we must keep _addkey happy about it
+locktab:
 _alts_altflags:
 		.byte keyb_ctrl, keyb_rshift, keyb_lshift, keyb_caps
 		.byte keyb_alt, keyb_ex1, keyb_ex2, keyb_ex3
@@ -148,17 +130,11 @@ _alts_locktab:
 		.byte 0, 0, 0, 1		; shifts and controls are modifiers and rest
 		.byte 1, 1, 1, 1		; is lockable (=ignore release, toggle on press)
 
-;;; ZEROpage: altflags 1
 ;;; ZEROpage: keycode 1
+;keycode:		.buf 1			; keycode (equal to $cb in C64 ROM)
 
 ljoy0:			.byte $ff		; last state of joy0
 ljoy1:			.byte $ff		; last state of joy1
-
-joy0result:		.byte $ff		; current state of joy0
-joy1result:		.byte $ff		; current state of joy1
-
-;altflags:		.buf 1			; altflags (equal to $28d in C64 ROM)
-;keycode:		.buf 1			; keycode (equal to $cb in C64 ROM)
 
 		;; interrupt routine, that scans for keys and tests joysticks
 		;; (exit via RTS)
@@ -183,22 +159,21 @@ keyb_scan:
 		;; keyboard is processed here
 
 	+	jsr keyb_atscanner		; do scan
-		bne +				; is there antything?
+		bne +				; is there anything?
 	-	rts				; no - exit
 
-	+					; yes - process data
-		cmp #EXT_KEY
+	+	cmp #EXT_KEY			; yes - process data
 		bne +				; was it extended key set?
 		jmp keyb_proc_ext
-	+
-		cmp #KEY_RELEASED		; was sth pressed or released?
+
+	+	cmp #KEY_RELEASED		; was sth pressed or released?
 		bne +
 		jmp keyb_clear_altflag		; check modifiers
 
 	+	cmp #$83			; f7 is $83 :-(
 		bne +
 		lda #f7_c
-		bne _addkey
+		jmp _addkey
 
 	+	lda keycode
 		bmi -				; is it normal scancode?	
@@ -232,63 +207,9 @@ keyb_proc_ext:
 		jmp _addkey
 
 keyb_queuekey:
-		; queue key into keybuffer
-	+	ldx  keycode
-		lda  altflags
-		tay
-		and  #keyb_lshift | keyb_rshift
-		bne  +++
-		tya
-		and  #keyb_ctrl
-		bne  +
-		tya
-		and  #keyb_caps
-		bne  ++
-		lda  _keytab_normal,x
-		jmp  _addkey
-
-	+	lda  _keytab_normal,x	; keytab_ctrl ? (not yet)
-		and  #$1f
-		jmp  _addkey
-
-	+	lda  _keytab_normal,x	; CAPS
-		cmp  #$61		; if >='a'
-		bcc  _addkey
-		cmp  #$7b		; and =<'z'+1
-		bcs  _addkey
-		and  #%11011111		; lower->UPPER
-		jmp  _addkey
-
-	+	lda  _keytab_shift,x
-
-		;; adds a keycode to the keyboard buffer
-		;; (has to expand csr-movement to esacape codes)
-
-_addkey:
-		cmp  #$80
-		bcc  +
-		cmp  #$f0
-		bcs  to_toggle_console
-		cmp  #$df
-		beq  ++
-		cmp  #$85				; $81/$82/$83/$84 - csr codes
-		bcs  +
-		;; generate 3byte escape sequence
-		pha
-		lda  #$1b
-		jsr  console_passkey		; (console_passkey is define in fs_cons.s)
-		lda  #$5b
-		jsr  console_passkey
-		pla
-		eor  #$c0			; $8x becomes $4x
-	+ 	jmp  console_passkey		; pass ascii code to console driver
-
-	+	lda  #$88
-		bne  +
-to_toggle_console:
-		and  #$07
-	+	jmp  console_toggle		; call function of console driver
-						; (console_toggle is defined is console.s)
+		;; queue key into keybuffer
+		ldx  keycode
+		jmp  _queue_key
 
 		;; PC AT compatible keyboard scanner begins here
 		;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;

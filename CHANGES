@@ -1,5 +1,6 @@
 from 0.20 to 0.21
 -----------------
+changed: more keyboard code is common throughout archs (MW)
 changed: Makefile fixes so package/disc works for all archs (MW)
 added: lkf_loado65 kernel-function; it loads o65 modules without running them (GK)
 changed: improved the documentation-comments for the spawn functions (GK)
