@@ -8,8 +8,11 @@
 
 		;; CHANGE LOG:
 		;; $Log$
+		;; Revision 1.5  2001/05/14 20:12:35  dallmann
+		;; fixed bug in _check_blocking (AT)
+		;;
 		;; Revision 1.4  2001/05/07 17:16:26  dallmann
-		;; bmap renamed to bit_n_set, lock returns with c=1 without error
+        ;; bmap renamed to bit_n_set
 		;;
 
 #include <system.h>
@@ -21,8 +24,14 @@
 .global unlock
 .global bit_n_set
 
-		SEMID_MAX equ 40		; number of available semaphores
-								; (do not change!)
+		;; temporary definition
+		;; - eventually should move to separate header for system-wide use
+
+#define SKIPWORD    $2c			;6502 2-byte 'BIT' instruction
+
+		;; number of available semaphores
+	
+		SEMID_MAX equ 40		;do not change!
 
 		;; masks for setting and clearing individual bits in bytes
 		;; - index 0->7 for lsb->msb of a byte
@@ -39,13 +48,14 @@ bit_n_set:   .byte $01,$02,$04,$08,$10,$20,$40,$80
 		;; calls: block
 
 _check_blocking:
-		lda  tmpzp+4			;recover semaphore number
+		ldx  tmpzp+4            ;recover semaphore number
 		plp						;block on unavailable global?
 		bcc  -					;b:no
 
-		pha						;remember semaphore number
+		txa                     ;remember semaphore number
+		pha
 		lda  #waitc_semaphore
-		jsr  block				;block with sem/sem-no
+		jsr  block              ;block with sem/sem#
 		pla
 		tax
 		sec						;keep blocking (fall through)
@@ -75,8 +85,8 @@ lock:
 		ora  bit_n_set,x
 		sta  (lk_tsp),y
 
-	+	plp
-		clc						;(in case blocking call was already locked)
+	+	plp                     ;blocking calls have C=1...
+		clc                     ;...but not any more
 		rts
 
 		;; function: unlock
@@ -104,9 +114,14 @@ unlock:
 		jsr  mun_block			;unblock all waiting tasks
 
 	+	plp
-		clc						;never return an error
+		clc
 		rts
 
+		;; temporary code sequence?
+		;; - same sequence in 'hook.s', 'signal.s', & 'taskctrl.s'
+		;; - consider introducing 'term_illarg' in 'error.s',
+		;;   should load accumulator with err# and fall through
+		;;   to 'suicerrout'
 
 	-	lda  #lerr_illarg
 		jmp  suicerrout
@@ -121,11 +136,7 @@ unlock:
 		;; > X=index to bit of lock in byte
 		;; > A=0 if currently unlocked in TSP, else lock bit is set
 		;; > Z=1 if currently unlocked in TSP, 0 if currently locked
-		;; > C=0
 		;; > I=1 (IRQs disabled)
-		;;
-		;; if lock number is not valid:
-		;; > C=1
 
 		;; changes: tmpzp(4)
 
@@ -133,17 +144,17 @@ _validate_lock:
 		cpx  #SEMID_MAX			;valid lock number?
 		bcs  -					;b:no -> terminate process with error
 
-		sei						;disable IRQs
 		txa
-		sta  tmpzp+4			;save lock number
 		lsr  a					;calc byte offset
 		lsr  a
 		lsr  a
 		clc
-		adc  #tsp_semmap		;(this leaves C=0)
+		adc  #tsp_semmap
 		tay
-		txa						;calc bit offset
-		and  #$07
+		txa
+		sei                     ;disable IRQs (enter critical section)
+		sta  tmpzp+4
+		and  #$07               ;calc bit offset
 		tax
 		lda  (lk_tsp),y			;check TSP lock status
 		and  bit_n_set,x		;Z=1 -> locked
@@ -168,7 +179,7 @@ _sem_cleanup:
 
 		;; remaining handlers are simply and similarly disabled
 
-		lda  #$2c				;(op-code of BIT $xxxx instruction)
+		lda  #SKIPWORD
 
 		cpx  #lsem_irq1		
 		beq  _irq1off
@@ -208,7 +219,7 @@ _nmioff:						; (remove NMI-job)
 		ldx  #lsem_nmi			; make sure semaphore number is valid
 	+	php
 		sei
-		lda  $2c				; remove NMI-Job
+		lda  #SKIPWORD          ; remove NMI-Job
 		sta  _nmi_jobptr
 		lda  #<_nmi_donothing	; reset enable and disable call
 		sta  _nmi_dis+1
