@@ -10,7 +10,7 @@
 #include <jumptab.h>
 #include <kerrors.h>
 				
-; can't be used for shared librarys !
+; can't be used for shared libraries !
 		
   _remalloc_do_free:
 		ldy  $01,x

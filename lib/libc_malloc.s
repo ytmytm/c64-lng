@@ -13,7 +13,7 @@
 #include <kerrors.h>
 #include "lib_conf.h"
 
-; Can't be used for shared librarys !
+; Can't be used for shared libraries !
 
 #ifdef debug
 #  begindef db(text)

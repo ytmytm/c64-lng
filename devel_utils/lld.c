@@ -20,7 +20,7 @@
    Nov 1  1998 *poldi*  added: "-d file", output readable list of all
                                global labels and their value
    Jun 21 1997 *poldi*  added: environment variable that holds a list of
-                               librarys that are included per default.
+                               libraries that are included per default.
                         added: flag for quiet operation
                         fixed: duplicated global error message
 
@@ -37,7 +37,7 @@
 
 #undef debug
 
-#define USE_GETENV              /* use LLD_LIBRARYS to find librarys */
+#define USE_GETENV              /* use LLD_LIBRARIES to find libraries */
 
 #ifdef _AMIGA
 const char *VERsion="$VER: lld 0.07 "__AMIGADATE__" $";
@@ -46,19 +46,19 @@ const char *VERsion="$VER: lld 0.07 "__AMIGADATE__" $";
 #define PATH_SEPARATOR ':'      /* character used as path separator */
 #endif
 
-  /* export LLD_LIBRARYS=/usr/lib/c64:/usr/lib/lunix
+  /* export LLD_LIBRARIES=/usr/lib/c64:/usr/lib/lunix
                                      ^        ^ dir. separator
                                path separator
 
-  NOTE: LLD_LIBRARYS  used for normal objectfiles
-        LUNA_LIBRARYS used for lunix objectfiles
-	LNG_LIBRARYS  used for normal objectfiles in LNG mode
+  NOTE: LLD_LIBRARIES  used for normal objectfiles
+        LUNA_LIBRARIES used for lunix objectfiles
+	LNG_LIBRARIES  used for normal objectfiles in LNG mode
   */
 
 #define FILES_MAX 50        /* max number of files to link */
 #define GLOBALS_MAX 500     /* max number of globals in an objectfile */
 #define LABEL_LENGTH_MAX 40 /* max length of label-names */
-#define LIB_NUM_MAX 4       /* max number of librarys to link against */
+#define LIB_NUM_MAX 4       /* max number of libraries to link against */
 #define MOD_NUM_MAX FILES_MAX /* max number of objects in a library */
 
 #define NOTHING (-1)
@@ -484,7 +484,7 @@ void write_buffer(FILE *outf)
 
 void Howto()
 {
-  printf("lld [-lLNaoqs] input-files...\n");
+  printf("lld [-dlLNaoqs] input-files...\n");
   printf("  linker for objectcode created by 'luna' 6502/10 assembler\n");
   printf("  this is version 0.07\n");
   printf("  -d file = dump list of all global addresses in file\n");
@@ -497,9 +497,9 @@ void Howto()
   printf("  -s address (start address in decimals, default 4096)\n");
 #ifdef USE_GETENV
   printf(" environment\n");
-  printf("  LLD_LIBRARYS ':' separated list of standard librarys\n");
-  printf("  LUNIX_LIBRARYS same list but used in LUnix-mode\n");
-  printf("  LNG_LIBRARYS same list but used in LNG-mode\n");
+  printf("  LLD_LIBRARIES '%c' separated list of standard libraries\n",PATH_SEPARATOR);
+  printf("  LUNIX_LIBRARIES same list but used in LUnix-mode\n");
+  printf("  LNG_LIBRARIES same list but used in LNG-mode\n");
 #endif
   exit(1);
 }
@@ -556,7 +556,7 @@ void main(int argc, char **argv)
 		case 'l': { 
 		  i++;
 		  if (lib_num>=LIB_NUM_MAX) {
-			error("too many librarys");
+			error("too many libraries");
 			exit(1); }
 		  lib[lib_num]=argv[i];
 		  lib_num++;
@@ -586,7 +586,7 @@ void main(int argc, char **argv)
 
   if (lib_flag) {
     if (lib_num!=0) {
-      error("can't create library including librarys");
+      error("can't create library including libraries");
       exit(1); }
     make_lib();
     exit(0); }
@@ -677,12 +677,12 @@ void main(int argc, char **argv)
   /* add librays specified by environment variable */
 
   if (lunix_mode)
-    envtmp=getenv("LUNIX_LIBRARYS");
+    envtmp=getenv("LUNIX_LIBRARIES");
   else
     if (lng_mode)
-      envtmp=getenv("LNG_LIBRARYS");
+      envtmp=getenv("LNG_LIBRARIES");
     else
-      envtmp=getenv("LLD_LIBRARYS");
+      envtmp=getenv("LLD_LIBRARIES");
   
   if (envtmp!=NULL) {
     char *tmp_name;
@@ -691,7 +691,7 @@ void main(int argc, char **argv)
       i=0;
       while (envtmp[i]!='\0' && envtmp[i]!=PATH_SEPARATOR) i++;
       if (lib_num>=LIB_NUM_MAX) {
-        error("too many librarys\n");
+        error("too many libraries\n");
         exit(1); }
       tmp_name=(char*)malloc(sizeof(char)*(i+1));
       strncpy(tmp_name,envtmp,i);
@@ -701,7 +701,7 @@ void main(int argc, char **argv)
       else break; } }
 #endif
 
-  /* now get symbols from librarys */
+  /* now get symbols from libraries */
 
   f_num=0;
   while (f_num<lib_num) {
@@ -904,7 +904,7 @@ void main(int argc, char **argv)
 
   f_num++; }
 
-  /* include stuff from librarys */
+  /* include stuff from libraries */
 
   f_num=0;
   while (f_num<lib_num) {

@@ -11,7 +11,7 @@
 #include <jumptab.h>
 #include <kerrors.h>
 
-; can't be used for shared librarys !
+; can't be used for shared libraries !
 
 #ifdef debug
 #  begindef db(text)

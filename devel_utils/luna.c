@@ -384,10 +384,10 @@ void Howto()
 {
   printf("Luna 6502/10-cross-assembler version 1.30\n");
   printf("Usage:\n");
-  printf("  luna [-jlLoOpqR] sourcefile\n");
+  printf("  luna [-jlLoOpdqRW] sourcefile\n");
   printf("    -j = no automatic bra->jmp conversion\n");
   printf("    -l labelfile = file to store globals in\n");
-  printf("    -L = call lld to link against standard librarys\n");
+  printf("    -L = call lld to link against standard libraries\n");
   printf("    -o outputfile (default is \"c64.out\" or \"c64.o\")\n");
   printf("    -O = create object instead of executable\n");
   printf("    -p = disable pre-proccessing by lupo\n");
