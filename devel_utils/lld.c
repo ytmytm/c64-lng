@@ -8,6 +8,9 @@
    If you've noticed a bug or created an additional feature, let me know.
    My (internet) email-address is dallmann@heilbronn.netsurf.de
 
+   Nov 15 2000 *mouse*  added: appleii_mode, -a flag to toggle
+			(don't write out two-byte header of start address)
+
    Feb 18 2000 *poldi*  -N : LNG mode operation
 
    Jun 9  1999 *poldi*  code cleaning
@@ -481,13 +484,14 @@ void write_buffer(FILE *outf)
 
 void Howto()
 {
-  printf("lld [-lLoqs] input-files...\n");
+  printf("lld [-lLNaoqs] input-files...\n");
   printf("  linker for objectcode created by 'luna' 6502/10 assembler\n");
   printf("  this is version 0.07\n");
   printf("  -d file = dump list of all global addresses in file\n");
   printf("  -l library-file\n");
   printf("  -L = create library instead of executable\n");
   printf("  -N generate LNG binary\n");
+  printf("  -a apple II mode - output raw binary (no 2-byte start adr header)\n");
   printf("  -o output-file (default is c64.out or c64.lib)\n");
   printf("  -q quiet operation\n");
   printf("  -s address (start address in decimals, default 4096)\n");
@@ -527,6 +531,7 @@ void main(int argc, char **argv)
   int           mod_cnt;
   int           lunix_mode;
   int           lng_mode;
+  int		appleii_mode;
 
   char          *envtmp;
   char          *dump_file_name;
@@ -535,13 +540,14 @@ void main(int argc, char **argv)
   dump_file_name=0;
   pc=0x1000; /* default value, also for LUnix-executables */
 
-  lunix_mode=quiet_mode=lng_mode=0;
+  lunix_mode=quiet_mode=lng_mode=appleii_mode=0;
   i=1; lib_flag=0; j=0;
   while ( i<argc ) {
     if (argv[i][0]=='-') {
       j=1;
       while (argv[i][j]!='\0') {
         switch (argv[i][j]) {
+		case 'a': { appleii_mode++; break; }
 		case 'd': { i++; dump_file_name=argv[i]; j=0; break; }
 		case 'o': { i++; file_output=argv[i]; j=0; break; }
 		case 'L': { lib_flag=1; break; }
@@ -834,8 +840,11 @@ void main(int argc, char **argv)
     if (lng_mode) {
       pc_end++; /* have to add $02=endofcode-marker */ }
     else {
-      write_byte(outf,pc & 0xff);
-      write_byte(outf,(pc>>8)&0xff); /* put start address */ }
+      if( appleii_mode == 0 ) /* apple ii mode - don't write hdr *mouse* */
+      {
+        write_byte(outf,pc & 0xff);
+        write_byte(outf,(pc>>8)&0xff); /* put start address */ }
+    }
   }
 
   f_num=0;
