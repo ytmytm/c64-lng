@@ -147,7 +147,7 @@ recdofcs:
 		;; store recvd byte & inc pointer
 				
 dest_addr equ  *+1
-mem_write:
+		;; mem_write
 		sta  SELFMOD
 		inc  dest_addr
 		beq  +					; crossed page boundary
@@ -165,7 +165,7 @@ ignore_input:
 		cmp  buf_lenh,x
 		bcc  isnotfull
 
-ignoreRest:						; packet is too big ! (discard)
+		;; ignoreRest						; packet is too big ! (discard)
 		lda  #$80				; bit -> bmi,bvc (ignore further input)
 		sta  recstat
 recend:	clc
@@ -560,10 +560,6 @@ ppp_lock:
 		cli
 		rts
 
-	-	db("putpack overrun")
-		tax
-		jsr  lkf_pfree
-
 	+ 	cli
 		sec
 	-	rts
@@ -597,7 +593,7 @@ ppp_getpacket:
 		cli
 		
 		db("got pack")
-	-	rts
+		rts
 		
 
 		;; pass packet to ppp-driver
@@ -1827,9 +1823,7 @@ sndfcs:		.byte 0,0
 sndtemp:	.byte 0
 
 recstat:   .byte 0
-reccnt:    .byte 0,0,0
 loss_count: .byte 0
-errcnt:    .byte 0,0
 sndstat:   .byte $40	;was 0
 sndlenl:   .byte 0
 sndlenh:   .byte 0
@@ -1847,8 +1841,6 @@ reclst_t:  .byte $ff ; top of receive-list
 reclst_c:  .byte $ff ; pointer into receive-list (to current buffer)
 reclst_b:  .byte $ff ; bottom of receive-list
 
-recip_t:   .byte $ff ; top of receive-list (received IP packets)
-recip_b:   .byte $ff ; bottom of receive-list (received IP packets)
 
 moddesc:
 	RS232_struct2	; MACRO defined in rs232.h (rs232_{unlock,ctrl,getc,putc})
@@ -2109,6 +2101,7 @@ get_namenpw:
 		inx
 		cpx  #16
 		bne  -					; (limit to 16 chars)
+		.byte $24 			; skip iny
 	-	iny
 		lda  (userzp),y
 		bne  -

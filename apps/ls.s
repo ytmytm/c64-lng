@@ -44,7 +44,7 @@ HowTo:
 
 		iny
 		lda  (userzp),y
-		cmp  #108				; "l"
+		cmp  #"l"				; "l"
 		bne  HowTo
 		lda  #$80
 		sta  long_flag
@@ -53,28 +53,69 @@ HowTo:
 		bne  HowTo
 		iny
 		jmp  -
+		
+		;; print the first filename 4/30/2000 bburns@wso.williams.edu
+print_file:
+		ldy  #0					; (recall position of filename)
+		
+	-	lda  (userzp),y
+		beq  +					; branch on whitespace
+		jsr  out				; print the character
+		iny						; move to the next
+		bne  -					; (loop exits in any case = good :-)
+
+	+	lda  #$0a				; print the newline.
+		jsr  out
+		rts		
+
+		;; print the no such file or dir error message.
+no_such:	
+		ldx  #stderr
+		bit  no_such_txt
+		jsr  lkf_strout
+		jsr	 print_file
+		lda  #1
+		rts
 
 do_open:
 		;; no other args?
-		tya
-		tax
+		sty  userzp				; now (userzp) points to filename|dirname
+		ldy  #0
 		lda  (userzp),y
-		beq  +
+		beq  dir
 	-	iny
 		lda  (userzp),y
 		bne  -
 		iny
-		lda  (userzp),y
-		bne  HowTo
+		lda  (userzp),y			; too many arguments ?
+		bne  HowTo				; if so, print howto
 
+		lda  userzp				; Try to open it as a file.
+		ldy  userzp+1
+		ldx  #fmode_ro			; (open read-only)
+		jsr  fopen
+		bcc  file
+		cmp	 #lerr_nosuchfile	; If that's the reason for failure...
+		beq  +
+		jmp  lkf_suicerrout
+		
 		;; open directory
-	+	txa
+dir:							; Try to open it as a directory.
+	+	lda  userzp
 		ldy  userzp+1
 		jsr  fopendir
-		nop
+		bcc	 +
+		cmp	 #lerr_nosuchdir
+		beq  no_such
+		jmp  lkf_suicerrout
+
+file:	
+		jsr  print_file
+		lda  #0
+		rts
 		
 		;; read directory entries
-		bit  dir_struct
+	+	bit  dir_struct
 loop:
 		sec
 		lda  #<dir_struct
@@ -117,16 +158,16 @@ print_perm:
 		bit  noperm_txt
 		jsr  lkf_strout			; (don't replace with jmp!)
 		rts
-	+	ldx  #100				; "d"
+	+	ldx  #"d"				; "d"
 		lda  #$80
 		jsr  mout
-		ldx  #114				; "r"
+		ldx  #"r"				; "r"
 		lda  #$04
 		jsr  mout
-		ldx  #119				; "w"
+		ldx  #"w"				; "w"
 		lda  #$02
 		jsr  mout
-		ldx  #120				; "x"
+		ldx  #"x"				; "x"
 		lda  #$01
 		jsr  mout
 space:
@@ -184,11 +225,15 @@ out:	sec
 		jsr  fputc
 		nop
 		rts
-		
+
 		.byte $02				; End Of Code - marker !
 
 hextab:	.text "0123456789abcdef"
-		
+
+no_such_txt:	
+		.text "No such file or directory: "		
+		.byte $00
+						
 howto_txt:
 		.text "Usage: ls [-l] [dir]"
 		.byte $0a,$00

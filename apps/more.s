@@ -69,8 +69,14 @@ ok:
 go:		ldx  userzp+1			; free unused argument memory
 		jsr  lkf_free
 
-		lda  #23
-		sta  userzp
+		ldy  #tsp_termwy
+		lda  (lk_tsp),y			; get number of visible lines
+		sec
+		sbc  #1
+		sta  userzp				; leave at least 1 line (for more prompt)
+		sec
+		sbc  #3
+		sta  l_num				; for the future leave at least 3 old lines
 
 loop:	
 	-	ldx  #stdin
@@ -102,6 +108,7 @@ loop:
 		cmp  #$20
 		bne  -
 
+l_num equ *+1					; number of lines to print (default 20)
 		lda  #20
 	-	sta  userzp
 		ldx  #stdout

@@ -327,9 +327,9 @@ st_cons:
 		bne  -
 		rts
 st_stream:
-		lda  #"I"
+		lda  #"i"
 		jsr  out
-		lda  #"O"
+		lda  #"o"
 		jsr  out
 		lda  #" "
 		jsr  out
@@ -339,7 +339,7 @@ st_stream:
 st_sema:
 		lda  #" "
 		jsr  out
-		lda  #"S"
+		lda  #"s"
 		jsr  out
 		lda  #" "
 		jsr  out

@@ -75,7 +75,7 @@ Quick guide in using TCPIP
   o You can use TELNET like on your UNIX-account (default port 23) to
     log into an other machine. 
 
-  o You can do what the UNIX-command FINGER does, just select port 80
+  o You can do what the UNIX-command FINGER does, just select port 79
     and type the username from that person you want to finger up and press
     return. (you can also press return without a username to get a list
     of users).
@@ -84,7 +84,7 @@ Quick guide in using TCPIP
     running.
 
   o You can get pages from World Wide Web (WWW) by sending requests to
-    port 79 of the www-server.
+    port 80 of the www-server.
 
   o You can do what IRC does, connect to port 6667 of an IRC-server.
 

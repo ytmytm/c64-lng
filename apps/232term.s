@@ -149,7 +149,6 @@ loop:
 		;; > c=1 means no more bufferspace left, don't call me again
 		;;       until "trigger receive"
 rec_handler:
-inc $400
 		ldx  recwptr
 		sta  recbuf,x
 		inx
@@ -166,7 +165,6 @@ inc $400
 		;; > c=1 means no more bytes to send, don't call me again
 		;;       until "trigger send"
 send_handler:
-inc $401
 		ldx  sndrptr
 		cpx  sndwptr
 		beq  ++
@@ -222,22 +220,6 @@ term_ok_txt:
 		.text "Running, press RUN/STOP to exit"
 		.byte $0a,$00
 
-trig_rec_txt:
-		.text "receiver triggered"
-		.byte $0a,$00
-
-done_rec_txt:
-		.text "message received"
-		.byte $0a,$00
-
-trig_snd_txt:
-		.text "sender triggered"
-		.byte $0a,$00
-				
-done_txt:
-		.text "loop completed"
-		.byte $0a,$00
-		
 baudcode:
 		.byte RS232_baud300
 		.byte RS232_baud600

@@ -38,6 +38,8 @@ bigloop:
 		bcc  +
 		ldx  userzp+1
 		jsr  lkf_free
+
+		jsr  slip_unlock
 		lda  #2
 		rts						; exit(2)
 		

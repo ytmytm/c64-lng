@@ -6,7 +6,7 @@
 	
 #include <system.h>
 #include <stdio.h>
-#include <c64.h>
+#include <c64/c64.h>
 
 		start_of_code equ $1000
 
@@ -23,7 +23,8 @@
 		cmp  #1
 		beq  +
 
-HowTo:	ldx  #stdout
+		;; HowTo
+		ldx  #stdout
 		bit  howto_txt
 		jsr  lkf_strout
 		lda  #1

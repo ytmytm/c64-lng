@@ -67,7 +67,7 @@ start:	lda  #0					; reset status
 
 		;; read a single commandline
 		
-in_loop:  
+in_loop:
 		sec						; forced (blocking) getc
 		ldx  #stdin
 		jsr  fgetc
@@ -80,6 +80,10 @@ in_loop:
 exit0:	lda  #0
 		jmp  lkf_suicide			; exit with exitcode 0
 
+got_tab:
+		jsr  ccomplete
+		jmp  in_loop
+		
 	+	bit  escape_flag
 		bmi  do_escape
 		
@@ -89,8 +93,11 @@ exit0:	lda  #0
 		beq  forw_to_screen		; return
 		cmp  #$1b				; <ESC> ?
 		beq  got_escape
+		cmp  #9					; TAB (command completion)
+		beq  got_tab
 		cmp  #8
 		bne  in_loop			; unknown, ignore
+		
 
 		;; backspace
 		ldx  cmdlen
@@ -278,6 +285,7 @@ oeb:	lda  #0					; add $00 to filename
 	+	lda  #stdout
 	+	ldy  #1
 		sta  (userzp),y
+		lda  #stderr			; changed! always use stderr
 		iny
 		sta  (userzp),y
 		lda  userzp
@@ -619,6 +627,7 @@ add_hist:
 		cmp  #1
 		bne  -
 		beq  add_ok
+
 	+	ldy  #0
 	-	inx
 		cpy  cmdlen
@@ -628,6 +637,7 @@ add_hist:
 		bne  add_ok
 		iny
 		bne  -
+
 	+	lda  histbuf,x
 		bne  add_ok
 		rts						; no need to add same commandline twice
@@ -660,6 +670,87 @@ add_ok:
 	+	lda  #1
 		sta  histbuf,x
 	+	rts
+
+		;; try to complete string using history buffer
+ccomplete:
+		;; command completion
+		ldy  cmdlen
+		lda  #1
+	-	sta  cmdbuf,y			; no completion yet
+		iny
+		bne  -
+
+		ldx  hist_wr
+csearch:
+		lda  histbuf,x
+		cmp  #1
+		beq  endcsearch
+
+	-	dex
+		lda  histbuf,x
+		beq  +
+		cmp  #1
+		bne  -
+		beq  endcsearch
+
+	+	ldy  #0
+	-	inx
+		cpy  cmdlen
+		beq  +					; found candidate
+		lda  cmdbuf,y
+		cmp  histbuf,x
+		bne  nextc
+		iny
+		bne  -
+		rts
+
+		;; complete as far as possible
+
+	+ -	lda  histbuf,x
+		beq  ++
+		cmp  #" "
+		beq  ++
+	 	lda  cmdbuf,y
+		cmp  #1
+		beq  +
+		cmp  histbuf,x
+		bne  ++++
+	+	lda  histbuf,x
+		sta  cmdbuf,y
+		inx
+		iny
+		bne  -
+		rts
+	+	lda  cmdbuf,y
+		cmp  #" "
+		beq  +
+		cmp  #1
+		bne  ++
+	+	lda  #" "
+		sta  cmdbuf,y
+		iny
+	+	lda  #0
+		sta  cmdbuf,y
+		
+		;; step to next history element
+nextc:	
+	-	dex
+		lda  histbuf,x
+		bne  -
+		dex
+		jmp  csearch
+
+endcsearch:
+		ldy  cmdlen
+	-	lda  cmdbuf,y
+		beq  +
+		cmp  #1
+		beq  +
+		jsr  putc
+		iny
+		bne  -
+	+	sty  cmdlen
+		rts
 
 		;; added functions
 
@@ -744,7 +835,7 @@ txt0:	.text  "you have running jobs"
 		.byte $0a,$00
 
 txt_welcome:
-		.text  "LUnix Shell Version 2.1beta (26May1999)"
+		.text  "LUnix Shell Version 2.2beta (15Feb2000)"
 		.byte $0a,$00
           
 child_message_txt:

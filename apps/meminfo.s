@@ -42,7 +42,7 @@
 		clc
 		adc  #1
 		sta  (userzp),y
-	+	inx
+		inx
 		bne  -
 		cli
 

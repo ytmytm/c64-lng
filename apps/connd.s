@@ -15,6 +15,15 @@
 		.byte >(end_of_code-start_of_code+255)
 		.byte >start_of_code
 
+		;; set terminal width to vt100 standard 25x80
+		ldy  #tsp_termwx
+		lda  #80
+		sta  (lk_tsp),y
+		ldy  #tsp_termwy
+		lda  #25
+		sta  (lk_tsp),y
+		
+		;; get 4 bytes of zeropage
 		lda  #4
 		jsr  lkf_set_zpsize
 		

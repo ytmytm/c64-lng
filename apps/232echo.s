@@ -67,7 +67,7 @@ ask_baud:
 		tax
 		ldx  #0					; (ctrl - setbaud)
 		jsr  rs232_ctrl			; set selected baudrate
-		bcs  pr_error			; skip with error
+		bcs  pr_error2			; skip with error
 
 		print_string(term_ok_txt)
 
@@ -84,7 +84,9 @@ out:	sec
 		jsr  fputc
 		nop
 		rts
-				
+
+pr_error2:
+		jsr  rs232_unlock
 pr_error:
 		print_string(term_err_txt)
 		lda  #$ff				; return -1
@@ -110,13 +112,13 @@ loop:	lda  #0
 		bpl  -					; simple busy wait
 
 		lda  #0
-		sta  buffer_pointer			; reset read pointer
+		sta  buffer_pointer		; reset read pointer
 		sta  done_flag			; clear flag
 		ldx  #3
 		jsr  rs232_ctrl			; trigger start of send
 
 	-	bit  done_flag
-		bpl  -				; simple busy wait
+		bpl  -					; simple busy wait
 		
 		print_string(done_txt)
 		
@@ -130,7 +132,6 @@ loop:	lda  #0
 		;; > c=1 means no more bufferspace left, don't call me again
 		;;       until "trigger receive"
 rec_handler:
-inc $400
 		ldx  buffer_endptr
 		sta  linebuf,x
 		inx
@@ -143,8 +144,6 @@ inc $400
 		rts
 r_end:	lda  #$80
 		sta  done_flag			; set flag
-lda  #0
-sta  $400
 		sec
 		rts		
 		
@@ -154,7 +153,6 @@ sta  $400
 		;; > c=1 means no more bytes to send, don't call me again
 		;;       until "trigger send"
 send_handler:
-inc $401
 		ldx  buffer_pointer
 		cpx  buffer_endptr
 		beq  r_end
@@ -202,18 +200,6 @@ term_ok_txt:
 		.text "Running, press RUN/STOP to exit"
 		.byte $0a,$00
 
-trig_rec_txt:
-		.text "receiver triggered"
-		.byte $0a,$00
-
-done_rec_txt:
-		.text "message received"
-		.byte $0a,$00
-
-trig_snd_txt:
-		.text "sender triggered"
-		.byte $0a,$00
-				
 done_txt:
 		.text "loop completed"
 		.byte $0a,$00

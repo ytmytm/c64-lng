@@ -299,8 +299,9 @@ intcommand_cd:
 		;; (either "list" or "retr ...")
 
 read_server_data:
-		lda  #40
-		sta  cxpos				; cursor x position
+		ldy  #tsp_termwx
+		lda  (lk_tsp),y			; width of terminal
+		sta  cxpos				; no of charts before inserting newline
 		
 		clc
 		ldx  #IPV4_TCP
@@ -473,8 +474,9 @@ oloop:	sec
 		bne  ++
 		sec
 		jsr  fputc
-	+	lda  #40
-		sta  cxpos		
+	+	ldy  #tsp_termwx
+		lda  (lk_tsp),y			; width of terminal
+		sta  cxpos				; no of charts before inserting newline		
 		lda  #$0a
 		ldx  #stdout
 		
@@ -846,7 +848,7 @@ putc:	sec
 
 ip_struct:
 remote_ip:		.buf 4
-remote_port:	.word 21			; 21 is ftp-port
+				.word 21			; 21 is ftp-port
 				.buf 2
 		
 ipv4_struct:	IPv4_struct9		; defined in ipv4.h

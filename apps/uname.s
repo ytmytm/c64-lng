@@ -239,7 +239,8 @@ print_hwtype:
 		cmp  #larch_c128
 		bne  name_unknown
 		
-hwc128:	bit  txt_machtype128
+		;; hwc128
+		bit  txt_machtype128
 		jsr  lkf_strout	
 		jmp  +
 		
@@ -262,8 +263,7 @@ print_cputype:
 		lda  #"s"
 		jsr  putc
 	+	lda  lk_archtype
-		and  #larchf_type
-		cmp  #larch_c128
+		and  #larchf_8500
 		beq  +
 		bit  txt_cputype6510 ;(c64)
 		jsr  lkf_strout
