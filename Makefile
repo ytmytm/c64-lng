@@ -76,6 +76,7 @@ clean :
 	$(MAKE) -C help clean
 
 distclean : clean
+	$(MAKE) -C devel_utils clean
 	-cd kernel ; rm boot.c* lunix.c* globals.txt
 	-cd bin64 ; rm $(MODULES) boot.* lunix.* lng.c64
 	-cd bin128 ;  rm $(MODULES) boot.* lunix.* lng.c128
