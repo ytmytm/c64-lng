@@ -1,5 +1,10 @@
 from 0.19 to 0.20
 -------------------------------
+changed: New -i option for rm and handle multiple files (PD)
+Changed: New -vte options and handle multiple files (PD)
+added: False command (PD)
+added: True command (PD)
+added: Echo command with -nE options with esc sequences (PD)
 added: popclient application (DD)
 fixed: bug #420906 "Microshell: 'l/' is evil" (DD)
 fixed: 64net2 EOF handling (MW)
