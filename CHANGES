@@ -1,5 +1,6 @@
 from 0.20 to 0.21
 -----------------
+added: env can print/get/set variables of its parent process (MW)
 added: mkjumptab_h generates also LNG jumptable include for ca65 (o65 target) (MW)
 added: env prints environment, resolve_filename will use PWD if needed (MW)
 added: support for environment variables (setenv/getenv), limited to 256bytes per task (MW)

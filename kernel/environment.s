@@ -140,8 +140,14 @@ setenv:
 
 		lda #"="
 		sta (syszp),y			; restore 'NAME=value'
+		iny
+		lda (syszp),y			; get next character after '='
+		bne +
+		lda #0				; nothing - clear variable
+		tay
+		sta (syszp),y
 
-		lda syszp+2
+    +		lda syszp+2
 		ora syszp+3
 		beq _do_strcat			; skip if variable was not found
 

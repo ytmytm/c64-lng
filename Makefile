@@ -79,7 +79,7 @@ distclean : clean
 	-cd kernel ; rm boot.c* lunix.c* globals.txt
 	-cd bin64 ; rm $(MODULES) boot.* lunix.* lng.c64
 	-cd bin128 ;  rm $(MODULES) boot.* lunix.* lng.c128
-	-cd include ; rm jumptab.h ksym.h zp.h
+	-cd include ; rm jumptab.h jumptab.ca65 ksym.h zp.h
 	-rm -rf pkg
 	find . -name "*~" -exec rm -v \{\} \;
 	find . -name "#*" -exec rm -v \{\} \;
