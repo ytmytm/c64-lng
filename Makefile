@@ -25,7 +25,15 @@ APPS=getty lsmod microterm ps sh sleep testapp wc cat tee uuencode \
      uudecode 232echo 232term kill rm ls buf cp uptime time meminfo \
      strminfo uname more beep help env date ciartc dcf77 smwrtc \
      hextype clear true false echo touch expand \
-     b-co b-cs ide64rtc cd
+     b-co b-cs ide64rtc cd pwd
+	         
+# Test Applications
+
+TAPPS=amalloc
+
+# Scripts
+
+SAPPS=dir man hello.sh sysinfo sysinfo.sh
 
 # Internet Applications
 # will be put in the same package als APPS now, but may go into a
@@ -38,7 +46,8 @@ IAPPS=connd ftp tcpipstat tcpip ppp loop slip httpd telnet popclient
 .PHONY : all apps kernel libstd help package clean distclean devel
 
 export PATH+=:$(PWD)/devel_utils/:$(PWD)/devel_utils/atari:.
-export LUPO_INCLUDEPATH=../kernel
+export LUPO_INCLUDEPATH=:$(PWD)/kernel
+export LNG_LIBRARIES=$(PWD)/lib/libstd.a
 export COMPFLAGS
 export MACHINE
 
@@ -49,13 +58,13 @@ BINDIR=$(patsubst c%,bin%,$(MACHINE))
 
 all : kernel libstd apps help
 
-apps : libstd
+apps : devel libstd
 	$(MAKE) -C apps
 
-kernel :
+kernel : devel
 	$(MAKE) -C kernel
 
-libstd :
+libstd : devel
 	$(MAKE) -C lib
 
 help :
@@ -64,18 +73,58 @@ help :
 devel :
 	$(MAKE) -C devel_utils
 	$(MAKE) -C devel_utils/atari
+	$(MAKE) -C devel_utils/apple
 
-package : 
+binaries: all
+	-@cp kernel/boot.$(MACHINE) kernel/lunix.$(MACHINE) $(MODULES:%=kernel/modules/%) $(BINDIR)
+
+package : binaries
 	-mkdir $(BINDIR) pkg
-	-cp kernel/boot.$(MACHINE) kernel/lunix.$(MACHINE) $(MODULES:%=kernel/modules/%) $(BINDIR)
-ifeq "$(MACHINE)" "atari"
+	cd $(BINDIR) ; mksfxpkg $(MACHINE) ../pkg/core.$(MACHINE) \
+           "*loader" boot.$(MACHINE) lunix.$(MACHINE) $(MODULES)
+	cd apps ; mksfxpkg $(MACHINE) ../pkg/apps.$(MACHINE) $(APPS) $(IAPPS)
+	cd help ; mksfxpkg $(MACHINE) ../pkg/help.$(MACHINE) *.html
+	cd scripts ; mksfxpkg $(MACHINE) ../pkg/scripts.$(MACHINE) $(SAPPS)
+
+ataridisc: binaries
 	  makeimage $(BINDIR)/boot.$(MACHINE) $(BINDIR)/lunix.$(MACHINE) $(BINDIR)/atari.bin
 	  makeatr pkg/lng$(MACHINE).atr $(BINDIR)/atari.bin
+
+cbmdisc: binaries
+
+	echo creating LUnix disc image for $(MACHINE)
+	c1541 -format lunix,00 d64 lunix64.d64 > /dev/null
+
+	cd $(BINDIR); for i in \
+		loader fasthead fastloader \
+		boot.$(MACHINE) lunix.$(MACHINE) $(MODULES) \
+		; do c1541 -attach ../lunix64.d64 -write $$i > /dev/null \
+		; done
+
+	cd kernel; for i in \
+		lunixrc \
+		; do c1541 -attach ../lunix64.d64 -write $$i > /dev/null \
+		; done
+
+	cd apps; for i in \
+		$(APPS) $(IAPPS) $(TAPPS) \
+		; do c1541 -attach ../lunix64.d64 -write $$i > /dev/null \
+		; done
+
+	cd help; for i in \
+		*.html \
+		; do c1541 -attach ../lunix64.d64 -write $$i > /dev/null \
+		; done
+
+	cd scripts; for i in \
+		$(SAPPS) \
+		; do c1541 -attach ../lunix64.d64 -write $$i > /dev/null \
+		; done
+
+ifeq "$(MACHINE)" "atari"
+disc:	ataridisc
 else
-	  cd $(BINDIR) ; mksfxpkg $(MACHINE) ../pkg/core.$(MACHINE) \
-           "*loader" boot.$(MACHINE) lunix.$(MACHINE) $(MODULES)
-	  cd apps ; mksfxpkg $(MACHINE) ../pkg/apps.$(MACHINE) $(APPS) $(IAPPS)
-	  cd help ; mksfxpkg $(MACHINE) ../pkg/help.$(MACHINE) *.html
+disc:	cbmdisc
 endif
 
 clean :
@@ -88,10 +137,11 @@ distclean : clean
 	$(MAKE) -C kernel distclean
 	$(MAKE) -C devel_utils clean
 	$(MAKE) -C devel_utils/atari clean
-	-cd kernel ; rm boot.c* lunix.c* globals.txt
-	-cd bin64 ; rm $(MODULES) boot.* lunix.* lng.c64
-	-cd bin128 ;  rm $(MODULES) boot.* lunix.* lng.c128
-	-cd include ; rm jumptab.h jumptab.ca65.h ksym.h zp.h
+	$(MAKE) -C devel_utils/apple clean
+	-cd kernel ; rm -f boot.c* lunix.c* globals.txt
+	-cd bin64 ; rm -f $(MODULES) boot.* lunix.* lng.c64
+	-cd bin128 ;  rm -f $(MODULES) boot.* lunix.* lng.c128
+	-cd include ; rm -f jumptab.h jumptab.ca65.h ksym.h zp.h
 	-rm -rf pkg binatari
 	find . -name "*~" -exec rm -v \{\} \;
 	find . -name "#*" -exec rm -v \{\} \;
