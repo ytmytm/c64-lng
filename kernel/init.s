@@ -40,7 +40,8 @@ init:						; former called microshell
 		lda  #8
 		sta  (lk_tsp),y			; default device (8,0)
 
-.pwd_addr:	bit  pwd_default
+.pwd_addr:
+		bit  pwd_default
 		lda  #<pwd_default
 		ldy  pwd_addr+2
 		jsr  setenv			; PWD variable
@@ -56,7 +57,7 @@ init:						; former called microshell
 		sta  (lk_tsp),y
 		lda  #size_y
 		iny				; ldy  #tsp_termwy
-		sta  (lk_tsp),y				
+		sta  (lk_tsp),y
 
 		;; print startup message
 		ldx  console_fd
@@ -69,7 +70,21 @@ init:						; former called microshell
 		jsr  spalloc
 		bcs  out_of_mem
 		stx  tmp_page			; remember hi byte of page
+#ifndef HAVE_INITSCRIPT
 		jmp  ploop
+#else
+tryboot:
+		;; try to execute "lunixrc"
+		lda  console_fd
+		sta  appstruct2+0		; childs stdin
+		sta  appstruct2+1		; childs stdout
+		sta  appstruct2+2		; childs stderr
+
+		;; fork_to child process
+		lda  #<appstruct2
+		ldy  #>appstruct2
+		jmp  load_and_execute2
+#endif
 
 report_error_2:
 report_error:
@@ -99,7 +114,7 @@ ploop:
 
 		;; unknown command
 
-c_end:	
+c_end:
 		ldx  console_fd
 		bit  error_txt
 		jsr  strout
@@ -108,7 +123,8 @@ c_end:
 
 	-	iny
 		beq  c_end
-load_and_execute:		
+
+load_and_execute:
 		;; create new process (code loaded from disk)
 
 		lda  (userzp),y
@@ -138,6 +154,7 @@ load_and_execute:
 		;; fork_to child process
 		lda  #<appstruct
 		ldy  #>appstruct
+load_and_execute2:
 		jsr  forkto
 		bcs  report_error_2
 
@@ -252,9 +269,28 @@ console_fd:	.buf 1
 
 wait_struct:	.buf 7				; 7 bytes
 
-appstruct:		
+appstruct:
 		.byte 0,0,0
 		.buf  32
+
+#ifdef HAVE_INITSCRIPT
+;; boot file (lunixrc)
+;; we shouldnt use a shell _here_,
+;; but execute shell script via kernel
+appstruct2:
+		.byte 0,0,0
+		.text "sh"
+		.byte 0
+   		.text "-s"
+   		.byte 0
+   		.text "-r"
+   		.byte 0
+   		.text "-v"
+   		.byte 0
+   		.text "lunixrc"
+  		.byte 0
+		.buf  32-(3+3+8)
+#endif
 
 ;;; strings
 

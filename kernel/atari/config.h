@@ -39,6 +39,14 @@
 #define HAVE_O65
 
 
+;// Init shell script support
+;// -------------------------
+;// this forces kernel to load sh and execute lunixrc script upon boot
+;// instead of executing built-in microshell
+
+;#define HAVE_INITSCRIPT
+
+
 ;// Misc stuff
 ;// ----------
 ;// always_szu may save some memory (around 265 bytes), but usually
