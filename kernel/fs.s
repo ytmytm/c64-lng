@@ -1,5 +1,5 @@
 ;; for emacs: -*- MODE: asm; tab-width: 4; -*-
-	
+
 		;; filesystem interface
 
 #include <config.h>
@@ -128,6 +128,10 @@ pprefix:
 		.byte 0, MAJOR_IEC,8
 		.text "disk9"
 		.byte 0, MAJOR_IEC,9
+#ifdef HAVE_64NET2
+		.text "net64"
+		.byte 0, MAJOR_IEC,15
+#endif
 		.text "console"
 		.byte 0, MAJOR_CONSOLE,0
 		.text "pipe"

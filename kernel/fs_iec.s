@@ -3,7 +3,7 @@
 		;;  DATA, CLOCK and ATN)
 
 #include <config.h>
-		
+
 #include MACHINE_H
 #include <system.h>
 #include <kerrors.h>
@@ -25,246 +25,134 @@ byte_count		equ syszp+5
 byte			equ syszp+6
 status			equ syszp+7
 
-;**************************************************************************
-;		indirect I/O related subroutines
-;**************************************************************************
+		;; include lowlevel stuff
+#include "opt/iec_1541.s"
 
-send_talk:
-		ora  #$40
-		.byte $2c
-		
-send_listen:
-		ora  #$20
-		sta  byte
-		asl  a
-		ora  ch_state			; remember state of bus
-		sta  ch_state
-		jsr  attention
-		lda  #0
-		sta  EOI
-		sta  buffer_status
-
-raw_send_byte:
-		sei
-		jsr  DATA_lo
-		jsr  read_port
-		bcs  dev_not_present
-		jsr  CLOCK_lo
-		bit  EOI
-		bpl  +					; no EOI, then skip next two commands
-		
-	-	jsr  read_port
-		bcc  -
-	-	jsr  read_port
-		bcs  -
-		
-	+ -	jsr  read_port
-		bcc  -
-		jsr  CLOCK_hi
-		lda  #8
-		sta  bit_count
-
-	-	jsr  read_port
-		bcc  time_out0
-		lsr  byte
-		bcs  +
-		jsr  DATA_hi
-		bcc  ++
-	+	jsr  DATA_lo
-	+	jsr  CLOCK_lo
-		DELAY_10us
-		jsr  DATA_lo
-		jsr  CLOCK_hi
-		dec  bit_count
-		bne  -
-
-		ldy  #to_1ms
-		jsr  wait_data_hi_to
-		bcc  +
-		
-time_out0:
-		lda  #iecstatus_timeout
-		.byte $2c
-		
-dev_not_present:
-		lda  #iecstatus_devnotpresent
-		ora  status
-		sta  status
-		jsr  ATN_lo
-		jsr  delay_1ms
-		jsr  CLOCK_lo
-		jsr  DATA_lo
-		cli
-	+	rts
-		
-get_byte:
-		sei
-		jsr  CLOCK_lo
-	-	jsr  read_port			; wait for clock lo
-		bpl  -
-		lda  #0
-		sta  bit_count
-				
-	-	jsr  DATA_lo
-
-		ldy  #to_256us
-		jsr  wait_clock_hi_to	; wait with timeout
-		bpl  +
-
-		;; timeout (receive EOI)
-		lda  bit_count
-		bne  time_out0
-		
-		jsr  DATA_hi
-		jsr  CLOCK_lo
-		lda  #$ff
-		sta  EOI
-		sta  bit_count
-		bne  -
-		
-	+	lda  #8
-		sta  bit_count
-
-_bitloop:		
-		RECEIVE_BIT(byte)			; macro defined in MACHINE/iec.s
-		dec  bit_count
-		bne  _bitloop
-		
-		jsr  DATA_hi
-		bit  EOI
-		bpl  +
-
-		lda  #iecstatus_eof
-		ora  status
-		sta  status
-		jsr  delay_50us
-		jsr  CLOCK_lo
-		jsr  DATA_lo
-		
-	+	lda  byte
-		cli
-		clc
-		rts
+#ifdef HAVE_64NET2
+#include "opt/iec_64net2.s"
+		;; decide here which path to go:
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+; like:
+;		bit iec_dev_flag
+;		bmi +
+;		jmp send_byte_64net2
+;	+	jmp send_byte_iec
 
 send_byte:
-		bit  buffer_status
-		bpl  +
-		pha
-		lda  buffer
-		sta  byte
-		jsr  raw_send_byte
-		pla
-	+	sta  buffer
-		lda  #$ff
-		sta  buffer_status
-		rts
+		bit iec_dev_flag
+		bmi +
+		jmp send_byte_64net2
+	+	jmp send_byte_iec
 
-send_untalk:
-		sei
-		jsr  CLOCK_hi
-		jsr  ATN_hi
-		lda  #$5f
-		.byte $2c
-		
-send_unlisten:
-		lda  #0
-		sta  ch_state
-		lda  #$3f
-		pha
-		lda  buffer_status
-		bpl  +
-		sta  EOI
-		and  #$7f
-		sta  buffer_status
-		lda  buffer
-		sta  byte
-		jsr  raw_send_byte
-	+	lsr  EOI
-		jsr  attention
-		pla
-		sta  byte
-		jsr  raw_send_byte
-		jsr  ATN_lo
-		jsr  delay_50us
-		jsr  CLOCK_lo
-		jmp  DATA_lo
+get_byte:
+		bit iec_dev_flag
+		bmi +
+		jmp get_byte_64net2
+	+	jmp get_byte_iec
 
-sec_adr_after_talk:
-		sta  byte
-		sei
-		jsr  CLOCK_hi
-		jsr  DATA_lo
-		jsr  delay_1ms
-		jsr  raw_send_byte
-
-		sei
-		jsr  DATA_hi
-		jsr  ATN_lo
-		jsr  CLOCK_lo
-	-	jsr  read_port
-		bmi  -
-		cli
-		rts
+send_listen:
+		bit iec_dev_flag
+		bmi +
+		jmp send_listen_64net2
+	+	jmp send_listen_iec
 
 sec_adr_after_listen:
-		sta  byte
-		sei
-		jsr  CLOCK_hi
-		jsr  DATA_lo
-		jsr  delay_1ms
-		jsr  raw_send_byte
-		jmp  ATN_lo
+		bit iec_dev_flag
+		bmi +
+		jmp sec_adr_after_listen_64net2
+	+	jmp sec_adr_after_listen_iec
+
+send_unlisten:
+		bit iec_dev_flag
+		bmi +
+		jmp send_unlisten_64net2
+	+	jmp send_unlisten_iec
+
+send_talk:
+		bit iec_dev_flag
+		bmi +
+		jmp send_talk_64net2
+	+	jmp send_talk_iec
+
+sec_adr_after_talk:
+		bit iec_dev_flag
+		bmi +
+		jmp sec_adr_after_talk_64net2
+	+	jmp sec_adr_after_talk_iec
+
+send_untalk:
+		bit iec_dev_flag
+		bmi +
+		jmp send_untalk_64net2
+	+	jmp send_untalk_iec
 
 open_iec_file:
-		lda  #0
-		sta  status
-		lda  ch_device
-		jsr  send_listen
-		sei
-		jsr  CLOCK_hi
-		jsr  DATA_lo
-		jsr  delay_1ms
-		lda  ch_secadr
-		ora  #$f0
-		sta  byte
-		jsr  raw_send_byte
-		jsr  ATN_lo
-		lda  status
-		bne  ++					; error, then return
-		lda  #0
-		sta  byte_count
-
-	-	ldy  byte_count
-		cpy  filename_length
-		beq  +
-		lda  filename,y
-		jsr  send_byte
-		inc  byte_count
-		bne  -
-
-	+	jmp  send_unlisten
+		bit iec_dev_flag
+		bmi +
+		jmp open_iec_file_64net2
+	+	jmp open_iec_file_iec
 
 close_iec_file:
-		lda  ch_device
-		jsr  send_listen
-		lda  ch_secadr
-		and  #$ef
-		ora  #$e0
-		sta  byte
-		sei
-		jsr  CLOCK_hi
-		jsr  DATA_lo
-		jsr  delay_1ms
-		jsr  raw_send_byte
-		jsr  ATN_lo
-		jsr  send_unlisten
-		clc
-	+	rts
-					
+		bit iec_dev_flag
+		bmi +
+		jmp close_iec_file_64net2
+	+	jmp close_iec_file_iec
+#else
+; without 64net/2 support
+	send_byte		equ send_byte_iec
+	get_byte		equ get_byte_iec
+	send_listen		equ send_listen_iec
+	sec_adr_after_listen	equ sec_adr_after_listen_iec
+	send_unlisten		equ send_unlisten_iec
+	send_talk		equ send_talk_iec
+	sec_adr_after_talk	equ sec_adr_after_talk_iec
+	send_untalk		equ send_untalk_iec
+	open_iec_file		equ open_iec_file_iec
+	close_iec_file		equ close_iec_file_iec
+#endif
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+#ifdef HAVE_64NET2
+		;; set apropriate flag if current device is 64net2
+check_64net2_flag:
+		pha
+		php
+		lda ch_device
+		cmp #15
+		bne +
+		lda #0
+		.byte $2c
+	+	lda #128
+		sta iec_dev_flag
+		plp
+		pla
+		rts
+
+		;; check if current device is not a 64net/2 and sleep
+sleep_if_1541:
+		bit iec_dev_flag
+		bpl +
+		ldx  #<150
+		ldy  #>150
+		jsr  sleep				; sleep for (at least) 2.5 seconds
+	+	rts					; time for the drive to locate the file
+#else
+sleep_if_1541:
+		ldx  #<150
+		ldy  #>150
+		jsr  sleep				; sleep for (at least) 2.5 seconds
+							; time for the drive to locate the file
+check_64net2_flag:
+		rts					; dummy...
+#endif
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; everything below is common
+
 		;; needs ch_device set (changes ch_secadr to 15)
 		;; returns A=CBM-error number
 		;;  c=1 : i/o error
-		
+
 readout_errchannel:
 		ldy  #0
 		sty  filename_length
@@ -273,7 +161,7 @@ readout_errchannel:
 		jsr  open_iec_file
 		lda  status
 		bne  _deep_error1
-		
+
 		lda  ch_device
 		jsr  send_talk
 		lda  ch_secadr			; channel number 15 (CBM error channel)
@@ -291,7 +179,7 @@ readout_errchannel:
 		adc  byte_count
 		asl  a
 		sta  byte_count
-		
+
 		jsr  get_byte
 		ldx  status
 		bne  _deep_error2
@@ -320,7 +208,7 @@ readout_errchannel:
 		jsr  printk
 		dey
 		bpl  -
-		
+
 		lda  ch_device
 		ora  #"0"
 		jsr  printk
@@ -352,13 +240,13 @@ readout_errchannel:
 _deep_error2:
 		sei
 		jsr  send_untalk
-		
+
 _deep_error1:
 		cli
 		lda  #$ff				; unknown CBM-error
 		sec
 		rts
-		
+
 ;**************************************************************************
 ;		LNG filesystem interface wrapper
 ;**************************************************************************
@@ -372,7 +260,7 @@ illdev:
 		.byte $2c
 	-	lda  #lerr_notimp
 		jmp  catcherr
-		
+
 		;; iec_open
 		;;  open file on iec-device
 		;;
@@ -391,13 +279,13 @@ fs_iec_fopen:
 		bcc  illdev
 		cpx  #16
 		bcs  illdev
-		
+
 		stx  syszp+3
 		jsr  enter_atomic
 
 		ldy  #0
 		sty  fopen_flags		; clear all fopen-flags
-		
+
 	-	lda  (syszp),y
 #ifndef PETSCII
 		jsr  unix2cbm
@@ -413,7 +301,7 @@ fs_iec_fopen:
 		;;    ,p,r - for fmode_r (read only)
 		;;    ,p,w - for fmode_w (write only)
 		;;    ,p,a - for fmode_a (append, write only)
-		
+
 	+	lda  #","
 		sta  filename,y
 		sta  filename+2,y
@@ -435,7 +323,7 @@ fs_iec_fopen:
 		adc  #4
 _raw_fopen:
 		sta  filename_length
-		
+
 		jsr  disable_nmi
 		SPEED_1MHZ				; switch to 1MHz mode
 		jsr  close_channel
@@ -444,9 +332,10 @@ _raw_fopen:
 
 		;; the driver manages up to 8 open streams (secadr 2..9) for
 		;; each device (8..15)
-		
+
 		ldx  syszp+3
 		stx  ch_device
+		jsr check_64net2_flag
 		jsr  alloc_secadr
 		bcs  toomanyf
 		tya
@@ -474,7 +363,7 @@ _raw_fopen:
 		lda  ch_device
 		iny
 		sta  (syszp),y			; minor (=device number)
-		
+
 		lda  syszp+2
 		cmp  #fmode_ro
 		beq  +
@@ -491,11 +380,11 @@ _raw_fopen:
 		iny
 		txa
 		sta  (syszp),y			; ->flags
-		
+
 		ldy  #iecsmb_secadr
 		lda  ch_secadr
 		sta  (syszp),y			; remember secundary address
-		
+
 		ldy  #iecsmb_dirstate
 		lda  fopen_flags
 		sta  (syszp),y
@@ -512,7 +401,7 @@ _raw_fopen:
 _oerr3:
 		ldx  syszp+3
 		jsr  smb_free
-		
+
 _oerr2:
 		clc
 		lda  syszp+4
@@ -531,33 +420,31 @@ _oerr1:
 		jsr  leave_atomic
 		lda  byte_count			; (error code)
 		jmp  catcherr
-		
+
 		;; there are two ways to check, if fopen has been successfull
 		;;  - try a getc (simple, less overhead)
 		;;  - read back errorchannel (maybe more reliable)
 		;;     problem:	when closing channel 15 all other channels get closed
 		;;              also
 
-	+	ldx  #<150
-		ldy  #>150
-		jsr  sleep				; sleep for (at least) 2.5 seconds
-								; time for the drive to locate the file
+
+	+	jsr  sleep_if_1541		; give drive some time to locate file
 
 		jsr  readout_errchannel
 		beq  +
-		
+
 		ldy  #iecsmb_secadr
 		lda  (syszp),y
 		sta  ch_secadr
 		jsr  close_iec_file
 		jmp  _oerr3
-		
+
 	+	ldy  #iecsmb_status
 		lda  #0
 		sta  (syszp),y
 leave_all:
 		jsr  leave_atomic
-		
+
 		;; we're ready for get_byte
 
 	-	
@@ -588,6 +475,7 @@ fs_iec_fclose:
 		ldy  #fsmb_minor
 		lda  (syszp),y
 		sta  ch_device		
+		jsr check_64net2_flag
 		jsr  close_iec_file
 		SPEED_MAX				; switch to fast mode
 		jsr  enable_nmi
@@ -602,7 +490,7 @@ fs_iec_fclose:
 fs_iec_fgetc:
 		jsr  prep_inchannel
 		bcs  ++
-		
+
 		jsr  get_byte
 		sta  syszp+5
 		SPEED_MAX				; switch to fast mode
@@ -614,7 +502,7 @@ fs_iec_fgetc:
 		bne  get_ioerr
 		ldy  #iecsmb_status
 		sta  (syszp),y
-		
+
 	+	jsr  leave_atomic
 		lda  syszp+5
 		jmp  io_return
@@ -657,6 +545,7 @@ prep_inchannel:
 		ldy  #fsmb_minor
 		lda  (syszp),y
 		sta  ch_device
+		jsr check_64net2_flag
 		jsr  send_talk
 		lda  ch_secadr
 		jsr  sec_adr_after_talk
@@ -669,7 +558,7 @@ prep_inchannel:
 	+	lda  #lerr_eof	
 		sec
 		rts
-		
+
 fs_iec_fputc:
 		jsr  enter_atomic
 		jsr  disable_nmi
@@ -695,6 +584,7 @@ need_sendlisten:
 		ldy  #fsmb_minor
 		lda  (syszp),y
 		sta  ch_device
+		jsr check_64net2_flag
 		jsr  send_listen
 		lda  ch_secadr
 		jsr  sec_adr_after_listen
@@ -702,14 +592,14 @@ need_sendlisten:
 		lda  status
 		sta  (syszp),y
 		bne  _toioerr
-		
+
 	+	lda  syszp+5
 		jsr  send_byte
 		SPEED_MAX				; switch to fast mode
 		jsr  enable_nmi
 		lda  status
 		beq  +
-		
+
 		ldy  #iecsmb_status
 		sta  (syszp),y
 _toioerr:		
@@ -738,7 +628,7 @@ alloc_secadr:
 		dey
 		bpl  -
 		rts						; return with carry set
-		
+
 	+	lda  btab2r,y
 		ora  adrmap-8,x
 		sta  adrmap-8,x
@@ -764,7 +654,7 @@ enter_atomic:
 leave_atomic:
 		ldx  #lsem_iec
 		jmp  unlock
-		
+
 
 	-	lda  #lerr_deverror
 		.byte $2c	
@@ -776,7 +666,7 @@ leave_atomic:
 
 		;; syszp=file, syszp+2=command id
 		;; X=minor (device number)
-		
+
 fs_iec_fcmd:
 		cpx  #8
 		bcc  --
@@ -787,7 +677,7 @@ fs_iec_fcmd:
 		bne  -
 
 		;; delete file
-		
+
 		stx  syszp+3
 		jsr  enter_atomic
 		jsr  disable_nmi
@@ -796,9 +686,10 @@ fs_iec_fcmd:
 
 		ldx  syszp+3
 		stx  ch_device
+		jsr check_64net2_flag
 
 		;; open-name is "s:filename"
-		
+
 		lda  #83				; "s"
 		sta  filename
 		lda  #58				; ":"
@@ -826,7 +717,6 @@ fs_iec_fcmd:
 		clc
 		rts
 
-		
 	+	lda  byte_count
 		.byte $2c
 	-	lda  #lerr_deverror
@@ -834,7 +724,7 @@ fs_iec_fcmd:
 	-	lda  #lerr_nosuchdir
 _jtocatcherr:
 		jmp  catcherr
-		
+
 		;; iec_opendir
 		;;  open directory on iec-device
 
@@ -845,7 +735,7 @@ fs_iec_fopendir:
 		bcc  --
 		cpx  #16
 		bcs  --
-		
+
 		ldy  #0
 		lda  (syszp),y
 		bne  -					; iec (1541) only has one directory
@@ -855,12 +745,11 @@ fs_iec_fopendir:
 
 		lda  #$80
 		sta  fopen_flags
-		
+
 		lda  #"$"
 		sta  filename
 		lda  #1
 		jmp  _raw_fopen
-
 
 		;; dir-structure for LNG (= lib6502 standard):
 		;;   .buf 1    - valid bits (0:perm, 1:len, 2:date)
@@ -886,7 +775,7 @@ fs_iec_fopendir:
 	-	jmp  readdir_eof
 to_dir_error:	
 		jmp  dir_error
-				
+
 fs_iec_freaddir:
 		ldy  #iecsmb_dirstate
 		lda  (syszp),y
@@ -905,7 +794,7 @@ fs_iec_freaddir:
 		;; read trailing 254 bytes
 		lda  #254
 		sta  byte_count
-		
+
 	-	jsr  get_byte
 		ldx  status
 		bne  to_dir_error
@@ -999,12 +888,12 @@ skip_entry:
 
 	+	lda  status				; (EOI is received together with the last byte)
 		beq  +
-		
+
 		cmp  #iecstatus_eof
 		bne  readdir_ioerr
 		ldy  #iecsmb_status
 		sta  (syszp),y
-		
+
 	+	jmp  leave_all
 
 
@@ -1067,10 +956,13 @@ cbm2unix:
 ;;; ZEROpage: buffer_status 1
 ;;; ZEROpage: filename_length 1
 ;;; ZEROpage: fopen_flags 1
-
+#ifdef HAVE_64NET2
+;;; ZEROpage: iec_dev_flag 1
+; iec_dev_flag:	.buf 0	; bit 7 =1 - iec device, bit 7 =0 - 64net/2 device
+#endif
 ;ch_state:	.byte 0	; state of channel (idle/listen/talk)
 adrmap:		.byte 0,0,0,0, 0,0,0,0	; 8 possible sec-adrs per device (8..15)
-		
+
 ;ch_secadr:	.buf 1	; secondary address
 ;ch_device:	.buf 1	; device number
 ;EOI:		.buf 1	; bmi: end of transmission

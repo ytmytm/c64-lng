@@ -104,6 +104,17 @@
 ;#define HAVE_SCPU
 
 
+;// 64net/2 support
+;// ---------------
+;// if you have a PC capable of running 64net/2 and your C64/128 is hooked
+;// to it, you can enable 64net/2 support for IEC bus. This will currently
+;// allow you to do disk operations on partition 0
+;// for more information about 64net/2 go to
+;// http://sourceforge.net/projects/c64net
+
+;#define HAVE_64NET2
+
+
 ;// Misc stuff
 ;// ----------
 ;// always_szu may save some memory (around 265 bytes), but usually
@@ -139,11 +150,8 @@
 # define MULTIPLE_CONSOLES
 # define HAVE_VDC
 # ifndef HAVE_SCPU
-;// C128 without SCPU
-;#  define SPEED_MAX    lda #1:sta VIC_CLOCK
-;#  define SPEED_1MHZ   lda #0:sta VIC_CLOCK
-#  define SPEED_MAX
-#  define SPEED_1MHZ
+#  define SPEED_MAX    lda #1:sta VIC_CLOCK
+#  define SPEED_1MHZ   lda #0:sta VIC_CLOCK
 # else
 #  undef SPEED_MAX
 #  undef SPEED_1MHZ	

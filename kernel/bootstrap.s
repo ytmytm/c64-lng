@@ -336,6 +336,9 @@ welcome_txt:
 #ifdef MMU_STACK
 		.text "  - hardware stackswapping",$0a
 #endif
+#ifdef HAVE_64NET2
+		.text "  - 64net/2 support as /net64 device",$0a
+#endif
 ;this will be back...
 ;#ifdef HAVE_256K
 ;		.text "  - 256k RAM C128 compatibility",$0a
