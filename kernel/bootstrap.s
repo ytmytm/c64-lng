@@ -282,7 +282,7 @@ to_no_reu:
 welcome_txt:
 		.byte $0a
 		.text "Welcome to LUnix next generation (LNG)",$0a
-		.text "Version 0.17, -preliminary-",$0a,$0a
+		.text "Version 0.18, -preliminary-",$0a,$0a
 		.text "Compile time options:",$0a
 #ifdef PETSCII
 		.text "  - PETSCII character encoding",$0a
