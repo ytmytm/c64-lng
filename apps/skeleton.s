@@ -1,10 +1,11 @@
 		;; for emacs: -*- MODE: asm; tab-width: 4; -*-
-		;; application sceleton
+		;; application skeleton
 	
 #include <system.h>
 #include <stdio.h>
 #include <kerrors.h>
 #include <cstyle.h>
+#include <ident.h>
 				
 		start_of_code equ $1000
 
@@ -77,12 +78,12 @@ main_code:
 		;; exit(0)
 		
 		.byte $02				; end of code
+		ident(foo,0.0)
 
 		;; help text to print on error
 		
 txt_howto:
-		.text "usage:",$0a
-		.text "  more [file]",$0a
-		.text "  print file page wise",$0a,0
+		.text "Usage: foo [file]",$0a
+		.text "  insert short description",$0a,0
 		
 end_of_code:
