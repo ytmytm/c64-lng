@@ -179,12 +179,23 @@ http_nofile:
 		jmp  -
 		
 havename:
-		lda  #0
-	-	sta  filename,y
+		tya
+		bne  +
+
+	-	lda  defaultdocument,y
+		beq  +
+		sta  filename,y
+		iny
+		bne  -
+                
+
+	+	lda  #0
+		sta  filename,y
 		sty  filename_len
 		db("have filename")
+
 #ifdef DEBUG
-		ldx  stdout
+		ldx  #stdout
 		bit  filename
 		jsr  lkf_strout
 #endif
@@ -238,7 +249,7 @@ nextmime:
 		sec
 		jsr  fputc
 		iny
-		cpy  #4
+		cpy  #2
 		bne  -
 
 		;; head is complete ... read and pass file
@@ -425,8 +436,8 @@ ms5:	.text "application/octet-stream",0 ; for all unknown suffixes
 		;; generic HTML header
 
 txt_header:
-		.text "HTTP/1.0 200 OK",$0c,$0a
-		.text "Server: LUnix (LNG) Experimental WebServer V1.0",$0c,$0a
+		.text "HTTP/1.0 200 OK",$0a
+		.text "Server: LUnix (LNG) Experimental WebServer V1.1",$0a
 		.text "Content-type: ",0
 
 		;; HTML header for error reports
@@ -434,9 +445,9 @@ txt_header:
 txt_errhead1:
 		.text "HTTP/1.0 ",0
 txt_errhead2:
-		.text $0c,$0a
+		.text $0a
 		.text "Content-type: text/html"
- txt_headterm:	.byte $0c,$0a,$0c,$0a
+txt_headterm:	.byte $0a,$0a
 		.text "<html>"
 		.text "<head>"
 		.text "<title>ExperimentalWebServer-Error</title>"
@@ -444,7 +455,7 @@ txt_errhead2:
 		.text "<body>"
 		.text "<h3>HTTP/1.0 ",0
 txt_errhead3:
-		.text "</h3></body></html>",$0c,$0a,0
+		.text "</h3></body></html>",$0a,0
 
 txt_E:	
 txt_E400:
@@ -468,10 +479,14 @@ txt_unable:		.text "Unable to connect to remote host",$0a,"::",0
 
 		;; help text to print on error
 		;; (and user to hold filename later)
-filename:		
+
+filename:
 txt_howto:
 		.text "usage:",$0a
 		.text "  httpd",$0a
-		.text "  LNG Experimental WebServer V1.0",$0a,0
-		
+		.text "  LNG Experimental WebServer V1.1",$0a,0
+
+defaultdocument:
+		.text "index.html",0
+
 end_of_code:
