@@ -11,8 +11,6 @@
 ;	 (like preparing filename, printing errorcode)
 ; - maybe some temporary zeropage bytes can be shared with fs_iec (dunno)
 ; - if I would only know how to get listing similar to 'll' readdir would be way shorter
-; BUGS
-; - freaddir gives wrong length of the first file
 
 #include <config.h>
 
@@ -755,7 +753,7 @@ fs_ide64_freaddir:
 		and  #$40
 		bne  next_entry
 
-		lda  #$32
+		lda  #$20
 		sta  ide64_fopen_flags		; ignore first entry (diskname)
 
 	-	jsr  get_byte			; error won't happen here (this is always present)
