@@ -1441,15 +1441,7 @@ calcplen: ldy  #12
 		inc  userzp+7
 	+	rts
 
-; calculate 'random' bytes
-;  > A=#
-
-rnd:	lda  lstrnd
-		adc  #1
-		sta  lstrnd
-		rts
-
-ignore:	ldx  userzp+3
+ignore:		ldx  userzp+3
 		jmp  killbuffer
 
 	-	jmp  listen_success
@@ -1635,13 +1627,13 @@ listen_success:
 		sta  rcvnxta,x
 		;;   generate own initial seqencenumber
 		sec
-		jsr  rnd
+		jsr  random
 		sta  sndunad,x
-		jsr  rnd
+		jsr  random
 		sta  sndunac,x
-		jsr  rnd
+		jsr  random
 		sta  sndunab,x
-		jsr  rnd
+		jsr  random
 		sta  sndunaa,x
 		;;   store remoteport and ip
 		ldy  #1
@@ -2229,9 +2221,9 @@ ipv4_getsock:
 		sta  reclstb,x
 		lda  lk_ipid		  ; set process ID
 		sta  sockipid,x
-		jsr  rnd		   ; set initial local port (for passive open)
+		jsr  random		   ; set initial local port (for passive open)
 		sta  localportl,x
-		jsr  rnd
+		jsr  random
 		and  #$7f
 		ora  #$04				; just use ports 1024..32767
 		sta  localporth,x ;(don't know, if this is needed, but it doesn't hurt)
@@ -2287,13 +2279,13 @@ ipv4_open:
 		bne  -
 		lda  #1		    ; add JOB ??
 		sta  sockjob,x
-		jsr  rnd		   ; set initial seq-num
+		jsr  random		   ; set initial seq-num
 		sta  sndunaa,x
-		jsr  rnd
+		jsr  random
 		sta  sndunab,x
-		jsr  rnd
+		jsr  random
 		sta  sndunac,x
-		jsr  rnd
+		jsr  random
 		sta  sndunad,x
 		clc
 		rts
@@ -3437,8 +3429,8 @@ ipv4_sockinfo:
 ;		lda  $c1a0,x ; PID lo
 ; LAME!
 		ldy #0
-		lda #0
-		tax
+;		lda #0
+;		tax
 		pla
 		clc
 		cli
@@ -3562,7 +3554,6 @@ availbuf:   .byte 0
 ;; mydrvnum:   .byte $ff
 
 ownip:      .byte 0,0,0,0
-lstrnd:     .buf 1
 
 ack:        .buf 4
 seq:        .buf 4
@@ -3801,11 +3792,10 @@ initialize:
 		txa
 		dex
 		bpl  -
-		lda  $dc04
-		eor  $dc05
-		eor  $d011
-		eor  $d012
-		sta  lstrnd				; initialize seed of random number generator
+		jsr  random
+		tay
+		jsr  random
+		jsr  srandom				; initialize seed of random number generator
 
 		lda  lk_ipid
 		sta  slip_ipid

@@ -232,6 +232,7 @@ _swapperidle:
 idle_task:
 		;; this is, what the system does, when there is nothing to do
 		;; (do what you want here)
+		jsr  update_random
 		jmp  idle_task
 
 		;; function: locktsw

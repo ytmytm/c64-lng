@@ -1,4 +1,4 @@
-lkfunc_max equ 65		; number of visible functions
+lkfunc_max equ 67		; number of visible functions
 		
 kfunc_tab:		
 .word set_zpsize
@@ -66,3 +66,5 @@ kfunc_tab:
 .word keyb_joy1
 .word keyb_scan
 .word keyb_stat
+.word random
+.word srandom

@@ -3,9 +3,13 @@
 
 #include <kerrors.h>
 #include <system.h>
-		
+#include <config.h>
+
 		.global get_bitadr
 		.global strout
+		.global srandom
+		.global random
+		.global update_random
 		.global end_of_kernel
 
 		;; function:	get_bitadr
@@ -15,7 +19,7 @@
 		;; < bit instruction following "jsr..."
 		;; > X/Y = bitadr (A unchanged)
 		;; changes:		tmpzp(0,1)
-		
+
 get_bitadr:
 		sei						; get parameter passed by a BIT-instruction
 		tsx						; followed by the JSR-instruction.
@@ -46,13 +50,13 @@ get_bitadr:
 
 	+	lda  #lerr_illcode
 		jmp  suicerrout
-		
-		
+
+
 		;; function:	strout
 		;; print string
 		;; < X=fd, bit string_start after "jsr strout" command
 		;; > c=error or not
-		
+
 strout:
 		txa
 		jsr  get_bitadr
@@ -100,11 +104,32 @@ end_of_string:
 		clc
 		rts
 
-		;; function:	systime
-		;; function to access hardware RTC (real time clock)
-		;; in case of C64/128 it is the CIA1/CIA2
 
-		;; < 
-		
+srandom:	;; function:	srandom
+		;; Set random number generator seed
+		;; < A/Y - seed
+		;; > random number (which is so random here :)
+		sta lastrnd
+		sty lastrnd+1
+
+		;; function:	random
+		;; Get a random number
+		;; < nothing
+		;; > A random number
+random:
+		jsr update_random
+		lda lastrnd
+		rts
+
+		;; function:	update_random
+		;; Update random number generator
+		;; < nothing
+		;; > nothing
+
+update_random:
+#include MACHINE(random.s)
+
+lastrnd:	.word 0
+
 end:	
 end_of_kernel equ end+255
