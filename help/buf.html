@@ -1,0 +1,14 @@
+<html><title>buf</title>
+<body>
+Usage: buf<p><p>
+Buf is a quite simple application. Buf reads from 
+standard input and tries to keep everything in memory until a EOF 
+(end of file). After receiving an EOF buf prints all data from
+memory to standard output. <p><p>
+I used buf to receive text pasted into an LNG window when running a remote
+session (telnet from my PC to LNG), because it showed up that pasting directly
+into an LNG file (using "tee") degraded TCP/IP performance a lot. I suggest to 
+use "buf!tee" instead. <p><p>
+An other example: "cat file1!buf!tee file2" is usually faster 
+than "cp file1 file2" but doesn't work for huge files.
+<p></body></html>
