@@ -44,15 +44,10 @@ init:							; former called microshell
 		sta  (lk_tsp),y				
 
 		;; print startup message
-		
-		ldy  #0
-	-	lda  startup_txt,y
-		beq  +
-		jsr  cout
-		iny
-		bne  -
-		
-	+
+		ldx  console_fd
+		bit  startup_txt
+		jsr  strout
+
 		;; allocate temporary buffers
 		ldx  lk_ipid
 		ldy  #$00
@@ -89,10 +84,11 @@ ploop:
 
 		;; unknown command
 
-c_end:	lda  #"?"
-		jsr  cout
-		lda  #$0a
-		jsr  cout
+c_end:	
+		ldx  console_fd
+		bit  error_txt
+		jsr  strout
+
 		jmp  ploop
 
 	-	iny
@@ -207,7 +203,7 @@ readline:
 		inc  userzp
 		bne  -
 		dec  userzp
-		jmp  -					; (beware of bufferoverflows)
+		jmp  -					; (beware of buffer overflows)
 				
 read_return:
 		ldy  #0
@@ -236,7 +232,7 @@ hextab:	.text "0123456789abcdef"
 				
 child_message_txt:
 		.byte $0a
-		.asc "cHILD TERMINATED : \0"
+		.text "Child terminated: \0"
 
 console_fd:		.buf 1
 		
@@ -249,4 +245,5 @@ appstruct:
 ;;; strings
 
 startup_txt:	.text $0a,"Init v0.1",$0a,$00
+error_txt:		.text "? (l)oad command / e(x)it+reboot",$0a,0
 tmp_page:		.buf 1
