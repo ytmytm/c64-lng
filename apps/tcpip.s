@@ -3481,13 +3481,22 @@ enter_main_loop:
 
 main_loop:
 		cli
-		jsr  tout_check
-
 		jsr  pack_poll
+		jsr  tout_check
 		
-	-	sei
+		lda  #SOCKNUM-1
+		sta  userzp+2
+
+	-	ldx  userzp+2
+		lda  sockipid,x
+		cmp  #$ff
+		beq  +
+		jsr  sockserv
+	+	dec  userzp+2
+		bpl  -
+
+		sei
 		lda  iplst
-		and  tcplst
 		and  icmplst
 		and  udplst
 		cli
