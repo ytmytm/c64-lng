@@ -326,9 +326,10 @@ noide64:	ldx  #0
 		inx
 		bne  -
 	+
-	-	jmp  -
+		jmp  lkf_panic
+
 noide64_txt:	.text "Kernel panic: IDE64 not detected",$0a
-		.text "   (missing or firmware too old)",0
+		.text "   (missing or firmware too old)",$0a,0
 	+
 #endif
 

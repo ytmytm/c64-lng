@@ -1,5 +1,6 @@
 from 0.20 to 0.21
 -----------------
+fixed: init.s warnings, now SKIP_WORD/SKIPWORDV is used everywhere in kernel (MW)
 addded: configuration option for DIN keyboard layout (MW)
 removed: all PETSCII references (obsoleted for quite some time anyway) (MW)
 changed: updated TODO list, documentation (MW)

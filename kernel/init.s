@@ -17,8 +17,6 @@ out_of_mem:
 		lda  #lerr_outofmem
 		jmp  suicerrout
 
-#include MACHINE(reboot.s)
-
 init:						; former called microshell
 		lda  #3
 		jsr  set_zpsize			; use 3 bytes zeropage starting with userzp
@@ -120,6 +118,8 @@ c_end:
 		jsr  strout
 
 		jmp  ploop
+
+#include MACHINE(reboot.s)
 
 	-	iny
 		beq  c_end

@@ -153,6 +153,8 @@
 ;// CPU ignores the following 1 or 2 bytes
 #define SKIP_BYTE      .byte $24           ;// 8bit BIT instruction
 #define SKIP_WORD      .byte $2c           ;// 16bit BIT instruction
+#define SKIP_BYTEV     $24                 ;// 8bit BIT instruction
+#define SKIP_WORDV     $2c                 ;// 16bit BIT instruction
 
 #ifndef USING_CA65
 ;// code relocator continues at "adr" (ignores a region full of data)
