@@ -24,7 +24,7 @@ MODULES=sswiftlink sfifo64 rs232std swiftlink fifo64
 APPS=getty lsmod microterm ps sh sleep testapp wc cat tee uuencode \
      uudecode 232echo 232term kill rm ls buf cp uptime time meminfo \
      strminfo uname more beep help env date ciartc dcf77 smwrtc \
-     hextype clear true false echo touch \
+     hextype clear true false echo touch expand \
      b-co b-cs ide64rtc cd
 
 # Internet Applications
