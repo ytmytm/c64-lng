@@ -10,6 +10,7 @@ COMPFLAGS=
 #
 # MACHINE=c64 to create Commodore64 version (binaries in bin64)
 # MACHINE=c128 for Commodore128 version (binaries in bin128)
+# MACHINE=atari for Atari 65XE/800/130 version (no binaries right now)
 
 MACHINE=c64
 

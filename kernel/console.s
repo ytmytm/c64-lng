@@ -84,3 +84,7 @@ dirty equ *+1
 #  include "opt/vic_console_single.s"
 # endif
 #endif
+
+#ifdef ANTIC_CONSOLE
+# include "opt/antic_console.s"
+#endif

@@ -4,8 +4,9 @@
 
 #include <system.h>
 #include <kerrors.h>
-#include <cia.h>
-			
+#include <config.h>
+#include MACHINE_H
+
 .global lock
 .global unlock
 .global bmap
@@ -16,13 +17,13 @@
 		;; <  c=0 - non blocking
 
 		;; changes: tmpzp(5)
-		
-lock:	txa
+
+lock:		txa
 		and  #$c0				; sem.num>40 ? then software-failure
 		bne  _not_available
 		php
 		sei
-		
+
 		;; check, if the current task has already locked this semaphore
 		txa
 		and  #7
@@ -44,7 +45,7 @@ lock:	txa
 		lda  lk_semmap-tsp_semmap,y
 		and  tmpzp+5
 		bne  _block
-		
+
 		;; lock it
 		lda  lk_semmap-tsp_semmap,y
 		ora  tmpzp+5
@@ -52,12 +53,12 @@ lock:	txa
 		lda  (lk_tsp),y
 		ora  tmpzp+5
 		sta  (lk_tsp),y
-		
+
 _already_locked:
 		plp
 		rts
-		
-_block:	plp
+
+_block:		plp
 		bcc  _not_available
 		txa
 		pha						; remember number of semaphore
@@ -71,13 +72,13 @@ _block:	plp
 _not_available:
 		lda  #lerr_nosem
 		jmp  catcherr
-          
+
 		;; function: unlock
 		;; unlock locked system semaphore
 		;; < X=No. of semaphore
 		;; calls: mun_block
 
-unlock:	clc
+unlock:		clc
 		php
 		sei
 		cpx  #40
@@ -112,21 +113,21 @@ unlock:	clc
 		sta  lk_semmap,y
 		txa
 		pha						; remember number of semaphore
-		
+
 		jsr  _sem_cleanup		; call cleanup-routine
-		
+
 		pla
 		tax
 		lda  #waitc_semaphore
 		jsr  mun_block			; unblock all waiting tasks
-		
+
 		plp
 		rts
 
 _sem_cleanup:
 		tya
 		bne  +					; undefined semaphores
-		
+
 		;; defined semaphores
 		lda  #$2c				; (op-code of BIT $xxxx instruction)
 		cpx  #lsem_irq1
@@ -142,21 +143,23 @@ _sem_cleanup:
 
 	+	rts
 
-		
+
 _alertoff:						; (alert off)
 		sta  _irq_alertptr
+#ifdef HAVE_CIA
 		lda  #4
 		sta  CIA1_ICR
+#endif
 		rts
 
 _irq1off:						; (remove IRQ-job 1)
 		sta  _irq_jobptr
 		rts
-		
+
 _irq2off:						; (remove IRQ-job 2)
 		sta  _irq_jobptr+3
 		rts
-		
+
 _irq3off:						; (remove IRQ-job 3)
 		sta  _irq_jobptr+6
 		rts
@@ -185,4 +188,3 @@ __nmi_dis:
 		jmp  _nmi_dis
 
 bmap:	.byte 1,2,4,8,16,32,64,128
-

@@ -65,10 +65,14 @@ $(KERNEL) : $(OBJ)
 
 # final step of creating the boot loader (linking all objects)
 
+ifeq "$(MACHINE)" "c64"
+ START_ADDRESS=4096
+endif
 ifeq "$(MACHINE)" "c128"
  START_ADDRESS=4864
-else
- START_ADDRESS=4096
+endif
+ifeq "$(MACHINE)" "atari"
+ START_ADDRESS=20480
 endif
 
 $(BOOT) : $(BOOTOBJ)

@@ -1,0 +1,23 @@
+
+These are utilities useful for building LUnix kernel and transferring it to
+Atari.
+After you have boot.atari and kernel.atari copy them to a temporary subdirectory,
+copy there also makeimage (built from makeimage.c :) and run it there. You will
+have atari.bin which is file ready to be loaded by Atari DOS. Unfortunately I
+don't know how to move it to a bootable disk, so you must load it from DOS.
+
+Some tools from Internet that I have gathered here:
+
+femul-1.4.c	- every Atari poweruser knows what's that for :) (find in source
+		  code the port ttyS[0-4] and change it to correct one before
+		  compiling)
+
+unix2atr-0.9.c	- I use it to move atari.bin to a disk image so I can load it
+		  on Real Machine (tm) from DOS
+
+binload		- Atari binary format analyzer
+
+
+Maciej Witkowiak
+<ytm@elysium.pl>
+27.12.2000

@@ -306,8 +306,14 @@ welcome_txt:
 #ifdef PRINT_IECMSG
 		.text "  - print CBM (channel 15) messages",$0a
 #endif
+#ifdef VIC_CONSOLE
+		.text "  - VIC console",$0a
+#endif
 #ifdef VDC_CONSOLE
   		.text "  - VDC console",$0a
+#endif
+#ifdef ANTIC_CONSOLE
+		.text "  - ANTIC/GTIA console",$0a
 #endif
 #ifdef MULTIPLE_CONSOLES
 		.text "  - multiple consoles",$0a
@@ -334,6 +340,8 @@ txt_c64:
 		.text "Commodore 64",0
 txt_c128:
 		.text "Commodore 128",0
+txt_atari:
+		.text "Atari",0
 txt_pal:
 		.text " (PAL)",0
 txt_ntsc:
@@ -349,22 +357,32 @@ print_machine_type:
 		cmp  #larch_c64
 		beq  +
 		cmp  #larch_c128
-		bne  ++
-		ldy  #txt_c128-txt_c64
-		.byte $2c
+		beq  ++
+		cmp  #larch_atari
+		beq  +++
+		bne  ++++
 	+	ldy  #txt_c64-txt_c64
+		.byte $2c
+	+	ldy  #txt_c128-txt_c64
+		.byte $2c
+	+	ldy  #txt_atari-txt_c64
 		jsr  mout
+
 	+	lda  lk_archtype
 		ldy  #txt_pal-txt_c64
 		and  #larchf_pal
 		bne  +
 		ldy  #txt_ntsc-txt_c64
 	+	jsr  mout
+#ifdef HAVE_CIA
 		lda  CIA1_CRA			; on c64 and c128
 		ldy  #txt_50hz-txt_c64
 		and  #%10000000
 		bne  mout
 		ldy  #txt_60hz-txt_c64
+#else
+		ldy  #txt_50hz-txt_c64
+#endif
 mout:		lda  txt_c64,y
 		beq  +
 		jsr  lkf_printk
@@ -423,6 +441,9 @@ add_task_simple:
 #endif
 #ifdef VIC_CONSOLE
 # include "opt/vic_console_init.s"
+#endif
+#ifdef ANTIC_CONSOLE
+# include "opt/antic_console_init.s"
 #endif
 
 #ifdef PCAT_KEYB
