@@ -6,6 +6,9 @@
 #define LNG_MAGIC   $fffe
 #define LNG_VERSION $0013   ;// in decimal => 0, 19
 
+;// O65 file format version
+#define O65_MAGIC    $0001
+
 ;// jumptab-addresses are adapted at runtime (by the code relocator)
 ;// (i want binary compatible apps on all supported machines)
 #define lk_jumptab   $0200  ;// (virtual) start address of kernel jumptable

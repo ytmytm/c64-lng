@@ -570,6 +570,7 @@ LUnix native executable format
 ==============================
 
 (things might very well change)
+(if enabled, LUnix also supports .o65 binaries, read below)
 
 All LNG binaries start with some magic bytes:
 
@@ -684,3 +685,23 @@ Example 2 for illegal code
     my_pointer:
        (...)
 
+
+.o65 format support
+===================
+If enabled (#define HAVE_O65 in machine config.h) LUnix supports also .o65
+relocatable file format. While it is not required to have it in order to run
+applications that come with LNG in apps/ directory, it might be handy in the
+future, when with upcoming cc65 release LUnix will be supported as one of
+targets.
+You can learn more about .o65 on Andre Fachat's pages at:
+http://www.6502.org/users/andre/index.html
+
+The current implementation requires that the object file imports LUNIXKERNEL
+label, only in 16-bit relocation mode (like: jmp LUNIXKERNEL+4) with even
+offsets (0, 2, 4, ...). The order of calls is exactly the same as in
+kfunc_tab.s (LUNIXKERNEL+4 would be fopen).
+Execution address must be in the first byte of TEXT segment.
+If there is header option describing OS it must have value 2 (LUnix), version
+byte is ignored.
+Zero page base address should be equal to nmizp, which is the first byte on
+zero page that applications can use.

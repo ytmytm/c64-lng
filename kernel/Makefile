@@ -21,7 +21,7 @@ BOOT=boot.$(MACHINE)
 OBJ=init.o delay.o hook.o keyboard.o lock.o panic.o \
     schedule.o sleep.o suspend.o tasksw.o nmi.o console.o error.o \
     imemory.o addtask.o taskctrl.o signal.o smb.o fs.o \
-    fs_pipe.o fs_iec.o fs_cons.o fs_user.o reloc.o execute.o module.o misc.o
+    fs_pipe.o fs_iec.o fs_cons.o fs_user.o reloc.o execute.o module.o o65.o misc.o
 
 # bootloader objects (for "boot.*")
 BOOTOBJ=bootstrap.o calib.o

@@ -1,5 +1,6 @@
 from 0.19 to 0.20
 -------------------------------
+added: support for relocatable file format .o65 (MW)
 changed: New -i option for rm and handle multiple files (PD)
 Changed: New -vte options and handle multiple files (PD)
 added: False command (PD)

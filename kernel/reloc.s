@@ -1,13 +1,15 @@
 ;; For emacs: -*- MODE: asm; tab-width: 4; -*-
-	
+
 		;; code relocator
 		;; 2000Jan5 - added kernel functions @ virtual addresses
 
 #include <system.h>
 #include <kerrors.h>
+#include <config.h>
 
 		.global exe_test
 		.global exe_reloc
+		.global kfunc_tab
 
 		;; - system loads the first 256 bytes of an application.
 		;; - then calls exe_test to see if it is in a proper format
@@ -20,29 +22,29 @@
 		;;   run the application.
 
 btab:	.byte 128,64,32,16,8,4,2,1
-		
+
 _relobit0:                     ; tables for relocator
         .byte   0,167,  0,255,144,175,  0
         .byte 255,128,175,  0,255,128,175
         .byte   1,255,  0,175,  0,255,  0
         .byte 191,  0,255,  0,175,  1,247
         .byte   0,175,  0,247
-          
+
 _relobit1:
         .byte 223, 87,223, 95,207, 95,223
         .byte  95, 95, 95,223, 95, 95, 95
         .byte 223, 95,255, 95,223, 95,255
         .byte  79,223, 95,255, 95,223, 95
         .byte 255, 95,223, 95
-          
+
 		;; do a quick check of the data format
 		;; return with c=1, if the format is okay (and A=code size in pages)
-			
+
 	-	clc						; test's result is "no"
 		rts
 
 		;; function: exe_test
-		;; syszp points to first 265 bytes of code
+		;; syszp points to first 256 bytes of code
 exe_test:	
 
 		;; check for ($fffe) LNG-magic-bytes
@@ -53,6 +55,10 @@ exe_test:
 		lda  syszp
 		bne  -					; code must be page-aligned
 
+#ifdef HAVE_O65
+		;; magic bytes were checked earlier
+		ldy  #2
+#else
 		ldy  #0
 		lda  (syszp),y
 		cmp  #>LNG_MAGIC
@@ -61,24 +67,24 @@ exe_test:
 		lda  (syszp),y
 		cmp  #<LNG_MAGIC
 		bne  -
-
-		;; check version number
-		
 		iny
+#endif
+		;; check version number
+
 		lda  (syszp),y
 		cmp  #>LNG_VERSION		; hi byte of version must match exactly
 		bne  -					;  wrong version
 		iny
 		lda  #<LNG_VERSION
 		cmp  (syszp),y			; lo byte of system version must be at least
-								; equal
-		bcc  -					;  wrong version
+						; equal
+		bcc  -				;  wrong version
 
 		iny
 		lda  (syszp),y			; number of needed pages
-		
+
 		sec
-		rts						; ok it seems to be LUnix (LNG) native code !
+		rts				; ok it seems to be LUnix (LNG) native code !
 
 		;; function: exe_reloc
 		
@@ -88,9 +94,9 @@ exe_test:
 
 		;; < syszp+1 = hi-byte of code to relocated
 		;; < syszp+0 = 0, (syszp) must point to valid exe-header
-		
+
 		;; changes: syszp(0,1,2,3,4,5)
-		
+
 exe_reloc:
 		ldy  #5
 		lda  (syszp),y			; original base address (hi)		
@@ -110,7 +116,7 @@ exe_reloc:
 		inx
 		lda  #6
 		sta  syszp
-		
+
 	-	txa
 		cmp  lk_memnxt,y		; search for end of segment
 		bne  +
@@ -124,7 +130,7 @@ exe_reloc:
 		sec
 		sbc  syszp+2			; convert to original context
 		sta  syszp+4			; hi-byte+1 of end
-		
+
 _reloc_:
 		;;   syszp    points to code to relocate
 		;;   syszp+2  offset
@@ -134,7 +140,7 @@ _reloc_:
 		;; reloc: generates error-messages if there are illegal
 		;; opcodes or code isn't terminated with a $02-instruction
 		;; i COULD also check for pagefaults or illegal use of zeropage
- 
+
 		ldy  #0					; get size of instruction by looking into
 		lda  (syszp),y			; the reloc-table
 		tax
@@ -159,13 +165,13 @@ _reloc_:
 		bne  _addlen			; skip if size is not 3
 
 		;; is a 3 byte instruction
-		
+
 		ldy  #2
 		lda  (syszp),y			; hi-byte of destination
 		cmp  #>lk_jumptab		; (calling kernel function?)
 		bne  +
-		
-		dey						; (kernel address remapping)
+
+		dey				; (kernel address remapping)
 		lda  (syszp),y
 		cmp  #lkfunc_max<<1
 		bcs  _illegal			; (must be less than number of functions)
@@ -177,19 +183,19 @@ _reloc_:
 		iny
 		lda  kfunc_tab+1,x		; (hi byte)
 		bne  ++
-		
+
 	+	cmp  syszp+3			; destination within code segment ?
 		bcc  ++					; (no)
 		cmp  syszp+4
 		bcs  ++					; (no)
 		adc  syszp+2			; byte that has to be converted
-		
+
 	+	sta  (syszp),y			; hi-byte of destination
-		
-	+	lda  #3					; length of instruction is 3
+
+	+	lda  #3				; length of instruction is 3
 
 _addlen:
-		clc						; add length to position
+		clc				; add length to position
 		adc  syszp
 		sta  syszp
 		bcc  _reloc_
@@ -209,7 +215,7 @@ _err_illcode:
 		;; some of them are used in this binary format
 		;;   $0c is absjmp for _reloc_, skip a region of pure data
 		;;   $02 ends _reloc_
-          		
+
 _illegal:
 		ldy  #0
 		lda  (syszp),y
@@ -231,7 +237,7 @@ _illegal:
 		cmp  lk_ipid
 		bne  _err_illcode		; end of codesegment without $02 instruction!!
 		jmp  _reloc_			; continue relocation
-		
+
 _end:	
 		ldx  #6					; return with X/Y = base+6
 		ldy  syszp+5

@@ -115,6 +115,16 @@
 ;#define HAVE_64NET2
 
 
+;// .o65 file format support
+;// ------------------------
+;// .o65 is a relocatable file format different than LNG native one.
+;// Soon cc65 (a free C compiler for 6502) will have support for building
+;// LNG applications and the output format had to be .o65. Hence enable this
+;// if you want to execute applications built using cc65. (costs ~900 bytes)
+
+;#define HAVE_O65
+
+
 ;// Misc stuff
 ;// ----------
 ;// always_szu may save some memory (around 265 bytes), but usually
