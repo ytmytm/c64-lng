@@ -1,5 +1,6 @@
 from 0.20 to 0.21
 -----------------
+fixed: "uname -p" command shows processor name (GK)
 changed: more keyboard code is common throughout archs (MW)
 changed: Makefile fixes so package/disc works for all archs (MW)
 added: lkf_loado65 kernel-function; it loads o65 modules without running them (GK)
@@ -108,7 +109,7 @@ added: RTC emulation using CIA1 (Alexander Bluhm)
 from 0.17 to 0.18 (Sep 25 2000)
 -------------------------------
 added: experimental 6510/8500 detection code (see bootstrap.s)
-fixed: IRQ hooking/unlocking, 
+fixed: IRQ hooking/unlocking,
        add_module might return with set carry without error,
        Some Makefile fixes (Alexander Bluhm)
 added: beep application (trivial) (DD)
@@ -133,7 +134,7 @@ added: first implementation of help (html viewer)
 added: help subdirectory for on-line help pages
 changed: c64arch now more quiet (and prints help when called without args)
 changed: luna now supports "\n\r\t\0" in .text ".." and does no longer
-         convert character arguments (eg. #"x") to petscii 
+         convert character arguments (eg. #"x") to petscii
 added: lld -N for generating LNG executables
 
 
@@ -166,7 +167,7 @@ fixed:  small glitch in lupo (specialfunctions with -r switch)
 fixed:  bug in calibration (bogoMIPS calculation) fixed
 added:  TCP/IP automatic address configuration
 added:  PAL/NTSC, 50/60Hz awareness
-added:  Errol Smith's PPP code 
+added:  Errol Smith's PPP code
 changed: moved modules directory into the kernel sub-tree
 added:  Maciej Witkowiak's code for a native C128 version of LNG
 changed: console and keyboard driver splitted into static and init part
@@ -197,7 +198,7 @@ fixed:  "[0001] unhandled: 00" error message from micro shell
 
 from 0.12 to 0.13 (Sep 22 1999)
 -------------------------------
-added:  console driver now supports 2 virtual consoles (compile option 
+added:  console driver now supports 2 virtual consoles (compile option
         MULTIPLE_CONSOLES)
 added:  new driver for standard RS232 userport interface (for SLIP)
 changed: moved compile time switches from Makefile into config.h
@@ -271,7 +272,7 @@ from 0.07 to 0.08 (Mar 26 1999)
 too much to count!
 added:  basic serial i/o routines
         basic filesystem stuff (not yet complete)
-        code relocator 
+        code relocator
         simple shell ("micros-hell")
         ...
 fixes:  countless .-)
@@ -284,7 +285,7 @@ changed:       machine dependencies
 
 from 0.05 to 0.06 (Nov 8 1997)
 ------------------------------
-added:         some ANSI escape codes for console.s (enough for running IRC 
+added:         some ANSI escape codes for console.s (enough for running IRC
                remotely)
 added:         microterminal for swiftlink (NMI, $de00, 9600 Baud, 8N1)
 
