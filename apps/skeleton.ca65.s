@@ -4,7 +4,8 @@
 		;; 06.04.2002
 
 ;; To write/compile any application using ca65 just put them into lng/apps
-;; directory and name as *.ca65.s
+;; directory, name as APP.ca65.s and add APP.o65 to APPS list in Makefile
+;;
 ;; Makefile will take care of everything and the resulting file will be
 ;; *.o65 to reflect that it is in .o65 format. That filename extension really
 ;; means nothing for LUnix
@@ -35,6 +36,7 @@
 
 		.export _main
 
+		.segment "CODE"			; we're in CODE segment now
 		;; (task is entered here)
 _main:
 		jsr  parse_commandline
@@ -117,12 +119,14 @@ L02:		bit  txt_howto		; incorrect address upon loading
 		;; or just
 		;; exit(0)
 
+		.segment "RODATA"	; now we're in read-only data segment
 		ident(foo,0.0)
 
 		;; this might be confusing when moving parts of code
 		;; from old LNG apps to ca65 - there is no '.text'
 		;; assembler command - use always '.byte'
 
+		.segment "DATA"		; and now we switch to r/w data segment
 		;; help text to print on error
 txt_howto:
 		.byte "Usage: foo [file]",$0a
@@ -132,3 +136,9 @@ txt_howto:
 txt_information:
 		.byte ".o65 relocator works flawlessly",$0a,0
 
+		;; here's BSS segment, space for it will not be included in
+		;; output file, it will be allocated during load
+
+		.segment "BSS"
+big_buffer:
+		.res 1024		; note the size of resulting file is <1024
