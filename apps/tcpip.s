@@ -1627,13 +1627,13 @@ listen_success:
 		sta  rcvnxta,x
 		;;   generate own initial seqencenumber
 		sec
-		jsr  random
+		jsr  lkf_random
 		sta  sndunad,x
-		jsr  random
+		jsr  lkf_random
 		sta  sndunac,x
-		jsr  random
+		jsr  lkf_random
 		sta  sndunab,x
-		jsr  random
+		jsr  lkf_random
 		sta  sndunaa,x
 		;;   store remoteport and ip
 		ldy  #1
@@ -2221,9 +2221,9 @@ ipv4_getsock:
 		sta  reclstb,x
 		lda  lk_ipid		  ; set process ID
 		sta  sockipid,x
-		jsr  random		   ; set initial local port (for passive open)
+		jsr  lkf_random		   ; set initial local port (for passive open)
 		sta  localportl,x
-		jsr  random
+		jsr  lkf_random
 		and  #$7f
 		ora  #$04				; just use ports 1024..32767
 		sta  localporth,x ;(don't know, if this is needed, but it doesn't hurt)
@@ -2279,13 +2279,13 @@ ipv4_open:
 		bne  -
 		lda  #1		    ; add JOB ??
 		sta  sockjob,x
-		jsr  random		   ; set initial seq-num
+		jsr  lkf_random		   ; set initial seq-num
 		sta  sndunaa,x
-		jsr  random
+		jsr  lkf_random
 		sta  sndunab,x
-		jsr  random
+		jsr  lkf_random
 		sta  sndunac,x
-		jsr  random
+		jsr  lkf_random
 		sta  sndunad,x
 		clc
 		rts
@@ -3792,10 +3792,10 @@ initialize:
 		txa
 		dex
 		bpl  -
-		jsr  random
+		jsr  lkf_random
 		tay
-		jsr  random
-		jsr  srandom				; initialize seed of random number generator
+		jsr  lkf_random
+		jsr  lkf_srandom		; initialize seed of random number generator
 
 		lda  lk_ipid
 		sta  slip_ipid
