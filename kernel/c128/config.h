@@ -193,4 +193,16 @@
 # define SPEED_1MHZ
 #endif
 
+;// this should allow s/fifo64 drivers to compile, don't know if they actually work in
+;// C128 native mode
+;
+;// UART Configuration (fifo64/sfifo64 drivers)
+;// UART base adress
+;#define UART_BASE $de00	;// IDE64
+#define UART_BASE $de08		;// Silversurfer
+
+;// UART Oscillator Frequency in khz (rounded)
+;#define UART_OSC_1843  ;// IDE64
+#define UART_OSC_7373	;// Silversurfer
+
 #endif
