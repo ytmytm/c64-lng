@@ -8,7 +8,7 @@
 ; - OPTION=alt, START=ex1, SELECT=ex2, HELP=ex3, CAPS
 
 		;; table for $e? keys
-locktab:	.byte keyb_ctrl, keyb_shiftl|keyb_shiftr, keyb_caps, keyb_ex3
+locktab:	.byte keyb_ctrl, keyb_lshift|keyb_rshift, keyb_caps, keyb_ex3
 
 		;; UNIX (ascii) decoding tables
 

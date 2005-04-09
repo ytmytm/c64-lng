@@ -3,6 +3,7 @@ from 0.21 to 0.22
 added: HAVE_IDEDOS9 option for IDEDOS>=0.9x, gives true directory listings (MW)
 fixed: dir listing works for IDEDOS 0.9x too (MW)
 fixed: broken 1st file on IDE64 dir list (MW)
+fixed: bug #1087107 typos in atari/keyboard.s (MW)
 
 from 0.20 to 0.21 (Sep 10 2004)
 -----------------
