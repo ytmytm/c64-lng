@@ -95,9 +95,9 @@ cbmpackage : binaries
 	cd apps ; mksfxpkg $(MACHINE) ../pkg/apps.$(MACHINE) $(APPS) $(IAPPS)
 	cd help ; mksfxpkg $(MACHINE) ../pkg/help.$(MACHINE) *.html
 	cd scripts ; mksfxpkg $(MACHINE) ../pkg/scripts.$(MACHINE) $(SAPPS)
-	echo "The following may fail"
+	@echo "The following may fail"
 	-cd samples ; \
-	 cp --target-directory=. luna/skeleton ca65/skeleton.o65 cc65/hello ; \
+	 cp luna/skeleton ca65/skeleton.o65 cc65/hello . ; \
 	 mksfxpkg $(MACHINE) ../pkg/samples.$(MACHINE) skeleton skeleton.o65 hello ; \
 	 rm skeleton skeleton.o65 hello
 
