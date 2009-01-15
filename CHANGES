@@ -1,5 +1,7 @@
 from 0.21 to 0.22
 -----------------
+added: error message in date command when date string is wrong (DD)
+added: support of comments starting wtih // in source files (DD)
 added: HAVE_IDEDOS9 option for IDEDOS>=0.9x, gives true directory listings (MW)
 fixed: dir listing works for IDEDOS 0.9x too (MW)
 fixed: broken 1st file on IDE64 dir list (MW)
