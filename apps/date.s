@@ -23,6 +23,7 @@
 #include <system.h>
 #include <stdio.h>
 #include <debug.h>
+#include <kerrors.h>
 
 start_of_code:
 		
@@ -324,6 +325,18 @@ haddr_date:	bit	date
 haddr_unix:	bit	unix
 haddr_ntp:	bit	ntp
 
+_illdate:
+		ldx     #stderr
+                bit     illdate_txt
+                jsr     lkf_strout
+                lda     #1
+                rts
+
+_converror:	;; data conversion error ?
+		cmp	#lerr_illarg
+		beq	_illdate
+		jmp	lkf_catcherr
+
 		;; print time in seconds from 1970.01.01 01.00.00 UTC
 print_unix:
 		lda	#4
@@ -339,7 +352,7 @@ print_unix:
 		lda	haddr_unix+2
 		sta	userzp+3
 		jsr	datetounix
-		nop
+		bcs	_converror
 
 		lda	unix+3
 		jsr	print_hex8
@@ -376,9 +389,8 @@ print_ntp:
 		lda	haddr_ntp+2
 		sta	userzp+3
 		jsr	datetontp
-		nop
-
-		
+		bcs	_converror
+	
 		lda	ntp+0
 		jsr	print_hex8
 		nop
@@ -427,6 +439,8 @@ howto_txt:
 
 illarg_txt:	.text	"illegal argument -- ",0
 illdat_txt:	.text	"illegal data -- ",$0a," ",0
+
+illdate_txt:	.text	"illegal date, can not convert", $0a, 0
 
 optstring:	.text	"t:d:w:z:unh",0
 timearg:	.byte	0
