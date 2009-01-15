@@ -20,6 +20,7 @@
 
 #include <system.h>
 #include <jumptab.h>
+#include <kerrors.h>
 
 .global datetounix
 .global datetontp
@@ -199,7 +200,7 @@ datetounix:
 
 		rts
 
-error:		lda	#$77		; FIXME: what to take here ?
+error:		lda	#lerr_illarg	; FIXME: what to take here ?
 		jmp	lkf_catcherr
 		
 
