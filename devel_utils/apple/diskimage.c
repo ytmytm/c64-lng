@@ -2,7 +2,12 @@
 #include <stdlib.h>
 #include <sys/types.h> /*for u_int8_t*/
 #include <unistd.h>
+
+#if __APPLE__
+#include <unistd.h> 
+#else
 #include <getopt.h>
+#endif
 
 int verbose = 0;
 int phys2log[] = {0x00, 0x0D, 0x0B, 0x09, 0x07, 0x05, 0x03, 0x01,
