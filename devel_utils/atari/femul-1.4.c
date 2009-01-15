@@ -90,7 +90,7 @@
  * Standard include files
  */
 #include <stdio.h>
-#include <termio.h>
+#include <termios.h>
 #include <errno.h>
 #include <fcntl.h>
 #include <stdlib.h>
