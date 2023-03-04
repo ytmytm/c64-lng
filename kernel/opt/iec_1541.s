@@ -141,10 +141,10 @@ send_untalk_iec:
 		.byte $2c
 		
 send_unlisten_iec:
-		lda  #0
-		sta  ch_state
 		lda  #$3f
 		pha
+		lda  #0
+		sta  ch_state
 		lda  buffer_status
 		bpl  +
 		sta  EOI
