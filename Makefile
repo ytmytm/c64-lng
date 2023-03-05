@@ -106,8 +106,8 @@ cbmpackage : binaries
 	 rm skeleton skeleton.o65 hello
 
 ataripackage: binaries
-	makeimage $(BINDIR)/boot.$(MACHINE) $(BINDIR)/lunix.$(MACHINE) $(BINDIR)/atari.bin
-	cp $(BINDIR)/atari.bin pkg
+	makeimage $(BINDIR)/boot.$(MACHINE) $(BINDIR)/lunix.$(MACHINE) $(BINDIR)/atari.xex
+	cp $(BINDIR)/atari.xex pkg
 
 ataridisc: binaries
 	makeatr lng-$(MACHINE).atr $(BINDIR)/atari.bin
