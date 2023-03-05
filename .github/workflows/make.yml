@@ -62,5 +62,5 @@ jobs:
     - name: Upload Atari
       uses: actions/upload-artifact@v3.1.2
       with:
-        name: LUnix_Atari_disk_image_atr
-        path: pkg/atari.bin
+        name: LUnix_Atari_XEX
+        path: pkg/atari.xex
