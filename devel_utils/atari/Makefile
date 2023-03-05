@@ -11,9 +11,9 @@ OLDAPPS=binload-2.5 atr2unix-1.2 unix2atr-0.9
 
 all : $(APPS)
 
-ifeq "$(HOSTCPU)" "powerpc"
+ifneq "$(HOSTCPU)" "x86_64"
 femul-1.4 :
-	@echo "*** ERROR *** femul is not compilable for PowerPC - sorry"
+	@echo "*** ERROR *** femul is not compilable for $(HOSTCPU) - sorry"
 endif
 
 clean :
