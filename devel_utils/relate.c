@@ -411,8 +411,10 @@ main(int argc, char ** argv)
   printf("\n outputs = %s",etmp->out_list); 
   printf("\n comment = %s",etmp->comment); 
 	printf("\n Changes = "); print_str(etmp->changes);
-	if (etmp->calls) 
-	  printf("\n Unresolved calls = "); print_str(etmp->calls);
+	if (etmp->calls) {
+	  printf("\n Unresolved calls = ");
+	  print_str(etmp->calls);
+	}
 	printf("\n");
 	etmp=etmp->next;
   }
