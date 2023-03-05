@@ -1,4 +1,4 @@
-name: LUnix NG Kernel+APS
+name: LUnix NG Kernel+APPS
 
 on:
   push:
@@ -13,19 +13,54 @@ jobs:
 
     steps:
     - uses: actions/checkout@v3
-    - name: make devel
+
+    - name: make devel tools
       run: make devel
+
     - name: make kernel for C64 
       run: make binaries MACHINE=c64
+
     - name: make apps for C64
       run: make apps
+
+    - name: make package for C64
+      run: make cbmpackage MACHINE=c64
+
     - name: cleanup after C64
       run: make clean
+
     - name: make kernel for C128
       run: make binaries MACHINE=c128
+
     - name: make apps for C128
       run: make apps
+
+    - name: make package for C128
+      run: make cbmpackage MACHINE=c128
+
     - name: cleanup after C128
       run: make clean
-    - name: make kernel for atari
+
+    - name: make kernel for Atari
       run: make binaries MACHINE=atari
+
+    - name: make disk image for Atari
+      run: make ataripackage MACHINE=atari
+
+    - name: Upload C64 files
+      uses: actions/upload-artifact@v3.1.2
+      with:
+        name: LUnix_C64_self-extracting_archive
+        path: pkg/*.c64
+    
+    - name: Upload C128 files
+      uses: actions/upload-artifact@v3.1.2
+      with:
+        name: LUnix_C128_self-extracting_archive
+        path: pkg/*.c128
+
+    - name: Upload Atari
+      uses: actions/upload-artifact@v3.1.2
+      with:
+        name: LUnix_Atari_XEX
+        path: pkg/atari.xex
