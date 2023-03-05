@@ -12,7 +12,7 @@ COMPFLAGS=
 # MACHINE=c128 for Commodore128 version (binaries in bin128)
 # MACHINE=atari for Atari 65XE/800/130 version (no binaries right now)
 
-MACHINE=c64
+MACHINE ?=c64
 
 # Modules to include in package (created with "make package")
 
@@ -85,11 +85,11 @@ devel :
 	$(MAKE) -C devel_utils/apple
 
 binaries: all
-	-mkdir $(BINDIR)
+	-mkdir -p $(BINDIR)
 	-cp kernel/boot.$(MACHINE) kernel/lunix.$(MACHINE) $(MODULES:%=kernel/modules/%) $(BINDIR)
 
 cbmpackage : binaries
-	-mkdir pkg
+	-mkdir -p pkg
 	cd $(BINDIR) ; mksfxpkg $(MACHINE) ../pkg/core.$(MACHINE) \
            "*loader" boot.$(MACHINE) lunix.$(MACHINE) $(MODULES)
 	cd apps ; mksfxpkg $(MACHINE) ../pkg/apps.$(MACHINE) $(APPS) $(IAPPS)
