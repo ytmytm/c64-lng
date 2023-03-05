@@ -16,7 +16,11 @@ MACHINE ?=c64
 
 # Modules to include in package (created with "make package")
 
+ifeq ($(MACHINE),atari)
+MODULES=
+else
 MODULES=sswiftlink sfifo64 rs232std swiftlink fifo64
+endif
 
 # Applications to include in package
 # the applications (in binary form) do not depend on the machine selection
