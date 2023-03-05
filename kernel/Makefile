@@ -32,7 +32,7 @@ OBJ=init.o delay.o hook.o keyboard.o lock.o panic.o \
 # Boot-loader objects (for "boot.*")
 BOOTOBJ=bootstrap.o calib.o
 
-all : $(KERNEL) $(BOOT) modules lng_kfunc.txt
+all : $(KERNEL) $(BOOT) modules
 
 # Rules
 %.o : %.s ; luna -qOo $@ $< $(COMPFLAGS)
